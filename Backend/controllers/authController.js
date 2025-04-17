@@ -23,12 +23,7 @@ const loginUser = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      user
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -36,34 +31,37 @@ const loginUser = async (req, res) => {
   }
 };
 
-const SignUp = async (req, res) => {
-    console.log(req.body) ;
-    const { email, password } = req.body;
-    const db = getDB();
-  
-    try {
-      const existing = await db.collection('users').findOne({ email });
-      if (existing) return res.status(400).json({ message: 'Email already exists' });
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      const newuser = {
-        email,
-        password: hashedPassword,
-        role: "admin",
-      };
-  
-      const result = await db.collection('users').insertOne(newuser);
-  
-      res.status(201).json({
-        message: "User created successfully",
-        userId: result.insertedId,
-      });
-    } catch (error) {
-      console.error("Signup Error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  };
+const AddUser = async (req, res) => {
+  console.log(req.body);
+  const { password, email, ...rest } = req.body;
+  const db = getDB();
+
+  try {
+    const existing = await db.collection('users').findOne({ email });
+    if (existing) return res.status(400).json({ message: 'Email already exists' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the new user object with hashed password
+    const newUser = {
+      ...rest,
+      email,
+      password: hashedPassword,
+      createdAt: new Date(), // optional: track user creation time
+    };
+
+    const result = await db.collection('users').insertOne(newUser);
+
+    res.status(201).json({
+      message: "User created successfully",
+      userId: result.insertedId,
+    });
+  } catch (error) {
+    console.error("Signup Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
   
 
-module.exports = { loginUser , SignUp};
+module.exports = { loginUser , AddUser};

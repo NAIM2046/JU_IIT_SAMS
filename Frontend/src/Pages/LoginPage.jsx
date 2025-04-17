@@ -1,13 +1,29 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import useAxiosPublic from "../TokenAdd/useAxiosPublic";
 
 const LoginPage= () => {
+  const navigate = useNavigate();
+  const axiosPublic = useAxiosPublic();
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
-    console.log(email, password);
+    axiosPublic.post("/api/auth/login", { email, password })
+      .then((response) => {
+        const token = response.data.token;
+        localStorage.setItem("token", token);
+      
+        const role = response.data.user.role;
+        if(role === "admin") navigate("/admin");
+        else if(role === "teacher") navigate("/teacherDashboard");
+        else if(role === "student") navigate("/studentDashboard");
+      }).catch((error) => {
+        console.error("Login failed:", error.response.data.message);
+        alert(error.response.data.message);
+      });
+    // navigate(`/${password}`);
   };
 
   

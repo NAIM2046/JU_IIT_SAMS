@@ -3,7 +3,12 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainLayout from "../Layouts/MainLayout";
 import HomeLayout from "../Layouts/HomeLayout";
 import LoginPage from "../Pages/LoginPage";
-import Teacher from "../Components/DashBoards/Teacher";
+import Teacher from "../Components/AdminDashboard/Teacher";
+import Admin from "../Components/AdminDashboard/Admin";
+import Student from "../Components/AdminDashboard/Student";
+import TeacherSection from "../Components/TeacherDashboard/TeacherSection";
+import StudentSection from "../Components/StudentDashboard/StudentSection";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -19,8 +24,25 @@ const router = createBrowserRouter([
         element: <LoginPage></LoginPage>
       },
       {
-        path: "/teacher",
+        path: "/addteacher",
         element: <Teacher></Teacher>
+      },
+      {
+        path: "/admin",
+        element: <Admin></Admin>
+      },
+      {
+        path: "/addstudent",
+        element: <Student></Student>
+      },
+      
+      {
+        path: "/teacherDashboard",
+        element: <TeacherSection></TeacherSection>
+      },
+      {
+        path: "/studentDashboard",
+        element: <StudentSection></StudentSection>
       }
     ]
   },

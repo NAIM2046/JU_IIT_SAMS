@@ -6,8 +6,7 @@ const addSchedule = async (req, res) => {
   const db = getDB();
 
   try {
-   
-
+  
     const result = await db.collection('schedules').insertOne(schedule);
 
     res.status(201).json({

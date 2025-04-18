@@ -16,7 +16,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/schedule', scheduleRoutes);
+app.use('/api', scheduleRoutes);
+
 connectDB().then(() => {
   app.listen(port, () => {
     console.log(`✅ Server running at http://localhost:${port}`);

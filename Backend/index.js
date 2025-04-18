@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes.js');
+const scheduleRoutes = require('./routes/scheduleRoutes.js');
 require('dotenv').config();
 
 const app = express();
@@ -15,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-
+app.use('/api/schedule', scheduleRoutes);
 connectDB().then(() => {
   app.listen(port, () => {
     console.log(`✅ Server running at http://localhost:${port}`);

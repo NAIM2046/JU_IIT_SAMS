@@ -1,19 +1,79 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-
+import React from "react";
+import { NavLink, Outlet } from "react-router-dom";
+import { IoMenuOutline } from "react-icons/io5";
+import {
+  FaAd,
+  FaBook,
+  FaCalendar,
+  FaHome,
+  FaList,
+  FaMinus,
+  FaShoppingCart,
+  FaUser,
+  FaUsers,
+  FaUtensils,
+} from "react-icons/fa";
+import Navbar from "../../Shared/Navbar";
+//import useAdmin from "../useMenu/useAdmin";
 const Admin = () => {
-    return (
-        <div className='w-11/12 mx-auto m-10'>
-            <div>
-                <h1 className='text-center text-3xl mb-10 font-bold'>Admin Section</h1>
-            </div>
-            <div className='flex gap-3'>
-                <Link to={`/addteacher`} className="btn">Add Teacher</Link>
-                <Link to={`/addstudent`} className="btn">Add Student</Link>
-                <Link to={`/assignteacher`} className="btn">Assign Teacher</Link>
-            </div>
+  return (
+    <div>
+      <Navbar></Navbar>
+      <div className="flex">
+        <div className="w-64 min-h-screen bg-orange-400">
+          <ul className="menu p-4">
+            <>
+              <li>
+                <NavLink to="/adminDashboard">
+                  <FaHome></FaHome> Admin Home
+                </NavLink>
+              </li>
+
+              <li>
+                <NavLink to="/adminDashboard/addteacher">
+                  <FaUtensils></FaUtensils> Add Teacher
+                </NavLink>
+              </li>
+
+              <li>
+                <NavLink to="/adminDashboard/addstudent">
+                  <FaList></FaList> Add Student
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/adminDashboard/manageschedule">
+                  <FaBook></FaBook>Manage Schedule
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/adminDashboard/users">
+                  <FaUsers></FaUsers> All Users
+                </NavLink>
+              </li>
+            </>
+
+            <div className="divider"></div>
+            <li>
+              <NavLink to="/">
+                {" "}
+                <FaHome></FaHome> Home
+              </NavLink>
+            </li>
+
+            <li>
+              <NavLink to="/menu">
+                {" "}
+                <IoMenuOutline /> Menu
+              </NavLink>
+            </li>
+          </ul>
         </div>
-    );
+        <div className="flex-1">
+          <Outlet></Outlet>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Admin;

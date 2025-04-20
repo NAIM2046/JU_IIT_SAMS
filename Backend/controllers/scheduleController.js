@@ -6,13 +6,20 @@ const addSchedule = async (req, res) => {
   const db = getDB();
 
   try {
-  
-    const result = await db.collection('schedules').insertOne(schedule);
+    
+    const deleteSchedule = await db.collection('schedules').deleteMany({});
 
+    if(deleteSchedule.deletedCount > 0) {
+
+    const result = await db.collection('schedules').insertOne(schedule);
     res.status(201).json({
       message: 'Schedule created successfully',
       scheduleId: result.insertedId,
     });
+    }
+  
+
+   
   } catch (error) {
     console.error('Error adding schedule:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -21,7 +28,7 @@ const addSchedule = async (req, res) => {
 const getSchedule = async (req, res) => {
     const db = getDB();
     try {
-      const schedule = await db.collection('schedules').find({}).toArray();
+      const schedule = await db.collection('schedules').find().toArray();
       res.status(200).json(schedule);
     } catch (error) {
       console.error('Error fetching schedule:', error);

@@ -13,8 +13,11 @@ import {
   FaUsers,
   FaUtensils,
 } from "react-icons/fa";
+import useStroge from "../../stroge/useStroge";
 //import useAdmin from "../useMenu/useAdmin";
 const StudentSection = () => {
+  const { user } = useStroge();
+  console.log(user);
   const isAdmin = true;
   return (
     <div className="flex">

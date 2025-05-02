@@ -1,9 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
+import useStroge from "../../stroge/useStroge";
 
 const Student = () => {
   const axiosPrivate = useAxiosPrivate();
-
+  const { fetchClass, classlist } = useStroge();
+  const [student, setStudent] = useState();
+  const fetchStudent = async () => {
+    try {
+      const response = await axiosPrivate.get("/api/auth/getstudent");
+      setStudent(response.data);
+      console.log("Student data:", response.data); // ⬅️ Add this line
+    } catch (error) {
+      console.error("Error fetching student data:", error);
+    }
+  };
+  useEffect(() => {
+    fetchClass();
+    fetchStudent(); // Fetch student data when the component mounts
+  }, []);
+  console.log("Classlist:", classlist); // ⬅️ Add this line
   const handleFormSubmission = (e) => {
     e.preventDefault();
     const form = e.target;
@@ -25,43 +41,27 @@ const Student = () => {
       class: className,
       section,
       roll,
-      password:"123456", 
+      password: "123456",
       gender,
       guardians: {
         fatherName,
         motherName,
         phoneNumber,
-        email,
       },
+      email,
 
-      dailyRecord: [
-        {
-          
-        }
-      ]
-      ,
+      dailyRecord: [{}],
       exam: {
-        classTest: [
-          {
-
-          }
-        ],
-        halfYearly: [
-          {
-
-          }
-        ],
-        finalExam: [
-          {
-
-          }
-        ],
+        classTest: [{}],
+        halfYearly: [{}],
+        finalExam: [{}],
       },
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    axiosPrivate.post("/api/auth/adduser", studentInfo)
+    axiosPrivate
+      .post("/api/auth/adduser", studentInfo)
       .then((response) => {
         console.log("Student added successfully:", response.data);
         form.reset(); // Reset the form after successful submission
@@ -69,8 +69,23 @@ const Student = () => {
       .catch((error) => {
         console.error("Error adding student:", error);
       });
-
   };
+
+  const handleDeleteStudent = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this student?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await axiosPrivate.delete(`/api/auth/deleteuser/${id}`);
+      setStudent((prev) => prev.filter((s) => s._id !== id));
+      console.log("Student deleted:", id);
+    } catch (error) {
+      console.error("Error deleting student:", error);
+    }
+  };
+  console.log(classlist);
 
   return (
     <div className="mb-10">
@@ -103,13 +118,22 @@ const Student = () => {
                 <div className="flex mx-auto flex-col md:flex-row mb-3 md:mb-5 gap-3 md:gap-10 w-full md:w-11/12 justify-center items-center">
                   <div className="w-full md:w-1/2">
                     <label className="fieldset-label">Class</label>
-                    <input
-                      type="text"
-                      className="input w-full focus:outline-none"
+                    <select
                       name="class"
-                      placeholder="Class"
-                    />
+                      className="select w-full focus:outline-none"
+                      defaultValue=""
+                    >
+                      <option disabled value="">
+                        Select Class
+                      </option>
+                      {classlist.map((cls, index) => (
+                        <option key={index} value={cls.class}>
+                          {cls.class}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+
                   <div className="w-full md:w-1/2">
                     <label className="fieldset-label">Section</label>
                     <input
@@ -132,7 +156,11 @@ const Student = () => {
                   </div>
                   <div className="w-full md:w-1/2">
                     <label className="fieldset-label">Gender</label>
-                    <select defaultValue="Pick a color" name="gender" className="select w-full focus:outline-none">
+                    <select
+                      defaultValue="Pick a color"
+                      name="gender"
+                      className="select w-full focus:outline-none"
+                    >
                       <option value="choose gender">Choose Gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -181,14 +209,58 @@ const Student = () => {
                   </div>
                 </div>
                 <div className="flex mx-auto gap-10 w-full md:w-11/12 justify-center items-center">
-                  <button className="btn btn-neutral mt-4">
-                    Add Student
-                  </button>
+                  <button className="btn btn-neutral mt-4">Add Student</button>
                 </div>
               </div>
             </form>
           </div>
         </div>
+      </div>
+      <div className="w-full md:w-3/4 mx-auto mt-10 overflow-x-auto">
+        <h2 className="text-xl font-semibold mb-4 text-center">Student List</h2>
+        <table className="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Class</th>
+              <th>Roll</th>
+              <th>Section</th>
+              <th>Gender</th>
+              <th>Email</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {student?.length > 0 ? (
+              student.map((s, index) => (
+                <tr key={s._id}>
+                  <td>{index + 1}</td>
+                  <td>{s.name}</td>
+                  <td>{s.class}</td>
+                  <td>{s.roll}</td>
+                  <td>{s.section}</td>
+                  <td>{s.gender}</td>
+                  <td>{s.email}</td>
+                  <td>
+                    <button
+                      onClick={() => handleDeleteStudent(s._id)}
+                      className="btn btn-sm btn-error text-white"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="8" className="text-center py-4">
+                  No students found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

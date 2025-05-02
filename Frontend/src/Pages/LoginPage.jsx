@@ -1,11 +1,12 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAxiosPublic from "../TokenAdd/useAxiosPublic";
+import useStroge from "../stroge/useStroge";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const axiosPublic = useAxiosPublic();
-
+  const { setUser } = useStroge();
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -15,8 +16,16 @@ const LoginPage = () => {
       .then((response) => {
         const token = response.data.token;
         localStorage.setItem("token", token);
+        const user = {
+          email: response.data.user.email,
+          role: response.data.user.role,
+          name: response.data.user.name,
+          id: response.data.user._id,
+        };
 
         const role = response.data.user.role;
+        setUser(user);
+        console.log("User data:", response.data.user); // ⬅️ Add this line
         if (role === "admin") navigate("/adminDashboard");
         else if (role === "teacher") navigate("/teacherDashboard");
         else if (role === "student") navigate("/studentDashboard");

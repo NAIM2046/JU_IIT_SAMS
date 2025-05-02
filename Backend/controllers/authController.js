@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { getDB } = require('../config/db.js');
 require('dotenv').config();
+const { ObjectId } = require("mongodb");
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -61,7 +62,37 @@ const AddUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const getTeacher = async (req, res) => {
+  const db = getDB();
+  try {
+    const teacher = await db.collection('users').find({ role: "teacher" }).toArray();
+    if (!teacher) return res.status(404).json({ message: 'No teacher found' });
+    res.json(teacher);
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+const getStudent = async (req, res) => {
+  const db = getDB();
+    const student = await db.collection('users').find({ role: "student" }).toArray();
+    if (!student) return res.status(404).json({ message: 'No student found' }); 
+    res.json(student);
 
-  
+}
+const DeleteUser = async (req, res) => {
+  const db = getDB();
+  const { id } = req.params;
+  console.log(id);
+  try {
+    const result = await db.collection('users').deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
-module.exports = { loginUser , AddUser};
+
+module.exports = { loginUser, AddUser, getTeacher, getStudent , DeleteUser };

@@ -46,8 +46,8 @@ const Admin = () => {
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/adminDashboard/users">
-                  <FaUsers></FaUsers> All Users
+                <NavLink to="/adminDashboard/classManage">
+                  <FaUsers></FaUsers> Class and subject Manage
                 </NavLink>
               </li>
             </>

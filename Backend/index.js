@@ -3,6 +3,7 @@ const cors = require('cors');
 const { connectDB } = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes.js');
 const scheduleRoutes = require('./routes/scheduleRoutes.js');
+const classAndSubRoutes = require('./routes/classAndSubRoutes.js'); // Assuming you have this route defined
 require('dotenv').config();
 
 const app = express();
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api', scheduleRoutes);
+app.use('/api' , classAndSubRoutes) ; // Assuming you have classAndSubRoutes defined
 
 connectDB().then(() => {
   app.listen(port, () => {

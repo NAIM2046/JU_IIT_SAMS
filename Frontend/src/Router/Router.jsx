@@ -10,6 +10,10 @@ import TeacherSection from "../Components/TeacherDashboard/TeacherSection";
 import StudentSection from "../Components/StudentDashboard/StudentSection";
 import ScheduleManage from "../Components/AdminDashboard/ScheduleManage";
 import AdminHome from "../Components/AdminDashboard/AdminHome";
+import AdminClassManage from "../Components/AdminDashboard/AdminClassManage";
+import TeacherHome from "../Components/TeacherDashboard/TeacherHome";
+import TeacherSchedule from "../Components/TeacherDashboard/TeacherSchedule";
+import EveryClass from "../Components/TeacherDashboard/EveryClass";
 
 const router = createBrowserRouter([
   {
@@ -41,11 +45,29 @@ const router = createBrowserRouter([
         path: "/adminDashboard/manageschedule",
         element: <ScheduleManage></ScheduleManage>,
       },
+      {
+        path: "/adminDashboard/classManage",
+        element: <AdminClassManage></AdminClassManage>,
+      },
     ],
   },
   {
     path: "/teacherDashboard",
     element: <TeacherSection></TeacherSection>,
+    children: [
+      {
+        path: "/teacherDashboard",
+        element: <TeacherHome></TeacherHome>,
+      },
+      {
+        path: "/teacherDashboard/schedule",
+        element: <TeacherSchedule></TeacherSchedule>,
+      },
+      {
+        path: "/teacherDashboard/Class/:class",
+        element: <EveryClass></EveryClass>,
+      },
+    ],
   },
   {
     path: "/studentDashboard",

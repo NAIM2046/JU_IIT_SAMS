@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
+import useStroge from "../../stroge/useStroge";
 
 const days = [
   "Monday",
@@ -15,21 +16,26 @@ const ScheduleManage = () => {
   const [scheduleData, setScheduleData] = useState({});
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { fetchClass, classlist, fetchTeacher, teacherList } = useStroge();
+  const [selectedClass, setSelectedClass] = useState("6");
+  const [subjectsList, setSubjectsList] = useState([]);
+  useEffect(() => {
+    const currentClass = classlist.find((cls) => cls.class === selectedClass);
+    setSubjectsList(currentClass?.subjects || []);
+  }, [selectedClass, classlist]);
+
+  useEffect(() => {
+    fetchClass();
+    fetchTeacher();
+  }, []);
+  console.log("Teacher list:", teacherList); // ⬅️ Add this line
+
+  console.log("Class list:", subjectsList); // ⬅️ Add this line
 
   const AxoisSecure = useAxiosPrivate();
 
   useEffect(() => {
-    AxoisSecure.get("/api/getschedule")
-      .then((res) => {
-        const data = Array.isArray(res.data) ? res.data[0] : res.data;
-        console.log("Fetched schedule:", data);
-
-        setTimeSlots(Array.isArray(data.timeSlots) ? data.timeSlots : []);
-        setScheduleData(data.schedule || {});
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    loadScheduleForClass(selectedClass);
   }, []);
 
   const handleCellChange = (day, time, field, value) => {
@@ -54,7 +60,12 @@ const ScheduleManage = () => {
         const updated = { ...prev };
         days.forEach((day) => {
           if (!updated[day]) updated[day] = {};
-          updated[day][newTime] = { subject: "", class: "", room: "" };
+          updated[day][newTime] = {
+            subject: "",
+            class: "",
+            room: "",
+            teacher: "",
+          };
         });
         return updated;
       });
@@ -106,17 +117,57 @@ const ScheduleManage = () => {
   };
 
   const saveSchedule = async () => {
+    console.log("class : " + selectedClass);
     await AxoisSecure.post("/api/addschedule", {
+      classNumber: selectedClass,
       timeSlots,
       schedule: scheduleData,
     });
     alert("Schedule saved successfully!");
   };
 
+  const loadScheduleForClass = async (classNumber) => {
+    if (!classNumber) return;
+
+    setLoading(true);
+
+    try {
+      const res = await AxoisSecure.get(`/api/getschedule/${classNumber}`);
+      const data = Array.isArray(res.data) ? res.data[0] : res.data;
+
+      setTimeSlots(Array.isArray(data?.timeSlots) ? data.timeSlots : []);
+      setScheduleData(data?.schedule || {});
+      // setSelectedClass(data?.classNumber); // track current class ID in state
+    } catch (error) {
+      console.error("Error fetching schedule for class:", error);
+      setTimeSlots([]);
+      setScheduleData({});
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <div className="p-4">Loading schedule...</div>;
 
   return (
     <div className="p-4">
+      <select
+        className="mb-4 p-2 border rounded"
+        value={selectedClass}
+        onChange={(e) => {
+          const classNumber = e.target.value;
+          setSelectedClass(classNumber);
+          loadScheduleForClass(classNumber);
+        }}
+      >
+        <option value="">Select Class</option>
+        {classlist.map((cls) => (
+          <option key={cls._id} value={cls.class}>
+            {cls.class}
+          </option>
+        ))}
+      </select>
+
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300">
           <thead>
@@ -153,29 +204,57 @@ const ScheduleManage = () => {
                 </td>
                 {days.map((day) => {
                   const cell = scheduleData[day]?.[slot] || {};
+                  console.log("Cell data:", cell); // ⬅️ Add this line
                   return (
                     <td key={day + slot} className="border px-2 py-1">
-                      <input
-                        type="text"
+                      <select
                         className="w-full mb-1 text-xs p-1 border rounded"
-                        placeholder="Subject"
                         value={cell.subject || ""}
                         onChange={(e) =>
                           handleCellChange(day, slot, "subject", e.target.value)
                         }
-                      />
-                      <input
-                        type="text"
-                        className="w-full mb-1 text-xs p-1 border  rounded focus:border-red-600"
-                        placeholder="Class"
+                      >
+                        <option value="">Select Subject</option>
+                        {subjectsList.map((subject, idx) => (
+                          <option key={idx} value={subject}>
+                            {subject}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="w-full mb-1 text-xs p-1 border rounded"
                         value={cell.class || ""}
                         onChange={(e) =>
                           handleCellChange(day, slot, "class", e.target.value)
                         }
-                      />
+                      >
+                        <option value="">Select Class</option>
+                        {classlist.map((cls) => (
+                          <option key={cls._id} value={cls.class}>
+                            {cls.class}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="w-full mb-1 text-xs p-1 border rounded"
+                        value={cell.teacher || ""}
+                        onChange={(e) =>
+                          handleCellChange(day, slot, "teacher", e.target.value)
+                        }
+                      >
+                        <option value="">Select Teacher</option>
+                        {teacherList.map((teacher) => (
+                          <option key={teacher._id} value={teacher.name}>
+                            {teacher.name}
+                          </option>
+                        ))}
+                      </select>
+
                       <input
                         type="text"
-                        className="w-full text-xs p-1 border rounded"
+                        className="w-full text-xs p-1 border rounded mt-1"
                         placeholder="Room"
                         value={cell.room || ""}
                         onChange={(e) =>

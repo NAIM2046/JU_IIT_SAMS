@@ -94,5 +94,17 @@ const DeleteUser = async (req, res) => {
   }
 };
 
-
-module.exports = { loginUser, AddUser, getTeacher, getStudent , DeleteUser };
+  const getStudentByClassandSection = async (req, res) => {
+    const { class: className } = req.params;
+    const db = getDB();
+  
+    try {
+      const students = await db.collection('users').find({ role: "student", class: className }).toArray();
+      if (!students || students.length === 0) return res.status(404).json({ message: 'No students found' });
+      res.json(students);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+module.exports = { loginUser, AddUser, getTeacher, getStudent , DeleteUser , getStudentByClassandSection };

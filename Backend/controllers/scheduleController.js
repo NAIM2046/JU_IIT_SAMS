@@ -25,6 +25,8 @@ const addSchedule = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
 const getSchedule = async (req, res) => {
     const db = getDB();
     const { classNumber } = req.params; // Assuming classNumber is passed as a URL parameter

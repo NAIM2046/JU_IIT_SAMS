@@ -49,13 +49,6 @@ const Student = () => {
         phoneNumber,
       },
       email,
-
-      dailyRecord: [{}],
-      exam: {
-        classTest: [{}],
-        halfYearly: [{}],
-        finalExam: [{}],
-      },
       createdAt: new Date(),
       updatedAt: new Date(),
     };

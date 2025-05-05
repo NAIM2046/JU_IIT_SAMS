@@ -1,5 +1,6 @@
 const { getDB } = require('../config/db.js');
 require('dotenv').config();
+
 const addClassAndSub = async (req, res) => {
   const db = getDB();
   const { classNumber, subjects } = req.body;
@@ -12,6 +13,7 @@ const addClassAndSub = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 const getClassAndSub = async (req, res) => {
   const db = getDB();
   try {
@@ -22,6 +24,8 @@ const getClassAndSub = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
 const addSubjectToClass = async (req, res) => {
   const db = getDB();
     const { classNumber } = req.params; // Assuming classNumber is passed as a URL parameter
@@ -38,6 +42,8 @@ const addSubjectToClass = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
 const deleteClass = async (req, res) => {
   const db = getDB();
   const { classNumber } = req.params; // Assuming classNumber is passed as a URL parameter
@@ -52,6 +58,8 @@ const deleteClass = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
 const removeSubjectFromClass = async (req, res) => {
     const db = getDB();
     const { classNumber } = req.params;

@@ -52,7 +52,6 @@ const AddUser = async (req, res) => {
     };
 
     const result = await db.collection('users').insertOne(newUser);
-
     res.status(201).json({
       message: "User created successfully",
       userId: result.insertedId,
@@ -62,6 +61,8 @@ const AddUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 const getTeacher = async (req, res) => {
   const db = getDB();
   try {
@@ -107,4 +108,7 @@ const DeleteUser = async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
+
+
+
 module.exports = { loginUser, AddUser, getTeacher, getStudent , DeleteUser , getStudentByClassandSection };

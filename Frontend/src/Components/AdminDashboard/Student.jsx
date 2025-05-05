@@ -15,6 +15,8 @@ const Student = () => {
       console.error("Error fetching student data:", error);
     }
   };
+
+
   useEffect(() => {
     fetchClass();
     fetchStudent(); // Fetch student data when the component mounts
@@ -57,6 +59,12 @@ const Student = () => {
       .post("/api/auth/adduser", studentInfo)
       .then((response) => {
         console.log("Student added successfully:", response.data);
+        const userid = response.data.userId;
+        if(userid){
+         axiosPrivate.post(`/api/attendance/initialAttendanceInfo/${userid}`).then((res) => {
+          console.log("response from add student", res);
+         })
+        }
         form.reset(); // Reset the form after successful submission
       })
       .catch((error) => {

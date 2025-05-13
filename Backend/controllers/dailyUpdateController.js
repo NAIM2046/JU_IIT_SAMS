@@ -7,16 +7,6 @@ const updateAllAttendance = async (req, res) => {
     const studentIds = req.body.studentIds;
     const status = req.body.status;
     console.log(req.body);
-
-    // // Validate input
-    // if (!Array.isArray(studentIds) {
-    //   return res.status(400).json({ message: 'studentIds must be an array' });
-    // }
-    // if (!['present', 'absent'].includes(status)) {
-    //   return res.status(400).json({ message: 'Status must be "present" or "absent"' });
-    // }
-
-    // Prepare the update operation
     const addDate = () => {
       const today = new Date();
       const day = String(today.getDate()).padStart(2, "0");

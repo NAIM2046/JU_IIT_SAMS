@@ -27,6 +27,8 @@ const verifyAdmin = (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized: Invalid token' });
   }
 };
+
+
  const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 

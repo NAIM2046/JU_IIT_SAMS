@@ -17,7 +17,6 @@ const EveryClass = () => {
         setStudents(data.data);
       });
   }, []);
-  console.log(students);
   // Handle attendance change
   const handleAttendanceChange = (studentId, isPresent) => {
     setStudents(
@@ -38,21 +37,33 @@ const EveryClass = () => {
     );
   };
 
-  // Save to MongoDB via Express API
+  //
   const saveData = async () => {
     try {
-      // const response = await fetch('/api/students', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(students)
-      // });
-      // const data = await response.json();
-      console.log("Data to save:", students);
-      alert("Data saved successfully (check console)");
+      axiosSecure
+        .post("/api/attendance/classNumberUpdate", {
+          classname: scheduleData.class,
+        })
+        .then((res) => {
+          console.log("Successfully Incremented class number");
+        });
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Error saving data");
     }
+  };
+
+  const updateAllAttendance = (status) => {
+    const allIds = students.map((item) => item._id);
+    const attendanceInfo = {
+      studentIds: allIds,
+      status: status,
+    };
+
+    axiosSecure
+      .post("api/attendance/updateAllAttendance", attendanceInfo)
+      .then((res) => {
+        console.log(res);
+      });
   };
 
   return (
@@ -72,7 +83,25 @@ const EveryClass = () => {
                 Roll
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Attendance
+                <div className="flex gap-2 items-center">
+                  <div>Attendance</div>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                      onChange={() => updateAllAttendance("P")}
+                    />
+                    <span className="ml-2 text-sm text-gray-700">P</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                      onChange={() => updateAllAttendance("A")}
+                    />
+                    <span className="ml-2 text-sm text-gray-700">A</span>
+                  </label>
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Class Assessment
@@ -169,7 +198,7 @@ const EveryClass = () => {
         onClick={saveData}
         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
       >
-        Save Data
+        Finish Class
       </button>
     </div>
   );

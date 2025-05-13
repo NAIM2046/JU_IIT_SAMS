@@ -20,7 +20,6 @@ const EveryClass = () => {
         setStudents(data.data);
       });
   }, []);
-
   // Handle attendance change
   const handleAttendanceChange = (studentId, isPresent) => {
     setStudents(
@@ -41,27 +40,28 @@ const EveryClass = () => {
     );
   };
 
-  
   //
   const saveData = async () => {
     try {
-      axiosSecure.post('/api/attendance/classNumberUpdate', {classname: scheduleData.class}).then((res) => {
-        console.log("Successfully Incremented class number");
-      })
+      axiosSecure
+        .post("/api/attendance/classNumberUpdate", {
+          classname: scheduleData.class,
+        })
+        .then((res) => {
+          console.log("Successfully Incremented class number");
+        });
     } catch (error) {
       console.error("Error saving data:", error);
     }
   };
 
-
-  const updateAllAttendance = (status) =>{
-    const allIds = students.map(item => item._id);
+  const updateAllAttendance = (status) => {
+    const allIds = students.map((item) => item._id);
     const attendanceInfo = {
       studentIds: allIds,
-      status: status
-    }
+      status: status,
+    };
 
-    setSelectedAttendance(status);
     axiosSecure.post('api/attendance/updateAllAttendance', attendanceInfo).then((res) => {
       console.log(res);
     })
@@ -96,7 +96,7 @@ const EveryClass = () => {
                       name="attendance"
                     />
                     <span className="ml-2 text-sm text-gray-700">P</span>
-                    </label>
+                  </label>
                   <label className="inline-flex items-center">
                     <input
                       type="checkbox"

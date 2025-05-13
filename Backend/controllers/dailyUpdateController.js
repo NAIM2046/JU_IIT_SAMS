@@ -70,19 +70,34 @@ const addInitialAttendanceInfo = async (req, res) => {
 };
 
 const classNumberUpdate = async (req, res) => {
+  const addDate = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const year = today.getFullYear();
+    const finalDate = day + month + year;
+    return finalDate;
+  };
   const db = getDB();
   const className = req.body.classname;
   try {
-    const result = await db.collection('attendanceInfo').updateOne(
+    const updateResult = await db.collection("attendanceInfo").updateOne(
       { className: className },
       {
-        $setOnInsert: {
-          className: className,
-        },
-        $inc: { totalClassCount: 1 }, // Will set to 1 on insert due to MongoDB behavior
-      },
-      { upsert: true }
+        $push: { classDateList: addDate()},
+        $inc: { totalClassCount: 1 },
+      }
     );
+
+    // If no document was updated, insert a new one
+    if (updateResult.matchedCount === 0) {
+      await db.collection("attendanceInfo").insertOne({
+        className: className,
+        classDateList: [addDate()],
+        totalClassCount: 1,
+      });
+    }
+
     res.send({ message: "class added successfully" });
   } catch (error) {
     console.log("Error Found While Incrasing Number of class", error);

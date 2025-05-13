@@ -4,6 +4,9 @@ import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 
 const EveryClass = () => {
   // Sample data - in a real app, this would come from your Express API
+
+  const [selectedAttendance, setSelectedAttendance] = useState(null);
+
   const location = useLocation();
   const scheduleData = location.state?.schedule || null;
   console.log(scheduleData);
@@ -58,6 +61,7 @@ const EveryClass = () => {
       status: status
     }
 
+    setSelectedAttendance(status);
     axiosSecure.post('api/attendance/updateAllAttendance', attendanceInfo).then((res) => {
       console.log(res);
     })
@@ -88,6 +92,8 @@ const EveryClass = () => {
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                       onChange={() => updateAllAttendance("P")}
+                      checked={selectedAttendance === "P"}
+                      name="attendance"
                     />
                     <span className="ml-2 text-sm text-gray-700">P</span>
                     </label>
@@ -96,6 +102,8 @@ const EveryClass = () => {
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
                       onChange={() => updateAllAttendance("A")}
+                      checked={selectedAttendance === "A"}
+                      name="attendance"
                     />
                     <span className="ml-2 text-sm text-gray-700">A</span>
                   </label>

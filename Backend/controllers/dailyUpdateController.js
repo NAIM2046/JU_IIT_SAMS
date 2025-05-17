@@ -54,11 +54,16 @@ const addInitialAttendanceInfo = async (req, res) => {
   const db = getDB();
   const id = req.params.id;
   console.log(id);
+  const subjectList = ["biology", "chemistry", "english"];
   const attendanceInfo = {
     id,
-    attendanceList: [],
-    totalPresent: 0,
   };
+
+  subjectList.forEach(item => {
+    attendanceInfo[item] = [];
+  });
+
+  
   try {
     const result = await db
       .collection("attendanceInfo")

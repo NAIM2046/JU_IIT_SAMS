@@ -15,11 +15,47 @@ const EveryClass = () => {
 
   const axiosSecure = useAxiosPrivate();
   useEffect(() => {
+    if (!scheduleData) return;
+
+    // 1. Load students
     axiosSecure
       .get(`/api/auth/getStudentByClassandSection/${scheduleData.class}`)
       .then((data) => {
         setStudents(data.data);
         console.log("students", students);
+        const loadedStudents = data.data;
+        setStudents(loadedStudents);
+
+        // 2. Then load attendance info for today + subject
+        const today = new Date();
+        const formattedDate = `${today.getDate().toString().padStart(2, "0")}${(
+          today.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}${today.getFullYear()}`;
+
+        const studentIds = loadedStudents.map((s) => s._id);
+
+        axiosSecure
+          .post("/api/attendance/getAttendanceByDateAndSubject", {
+            studentIds,
+            date: formattedDate,
+            subject: scheduleData.subject,
+          })
+          .then((response) => {
+            const attendanceMap = {};
+            response.data.forEach((item) => {
+              attendanceMap[item.id] = item.attendance;
+            });
+
+            // 3. Update students state with pre-filled attendance
+            setStudents((prev) =>
+              prev.map((s) => ({
+                ...s,
+                attendance: attendanceMap[s._id] || "", // fallback to blank if not found
+              }))
+            );
+          });
       });
   }, []);
 
@@ -44,14 +80,9 @@ const EveryClass = () => {
     );
   };
 
+  console.log(students);
+
   // Handle assessment change
-  const handleAssessmentChange = (studentId, assessment) => {
-    setStudents(
-      students.map((student) =>
-        student._id === studentId ? { ...student, assessment } : student
-      )
-    );
-  };
 
   students.forEach(item => {
     console.log(item.attendance);
@@ -87,13 +118,17 @@ const EveryClass = () => {
                 Roll
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex gap-2 items-center">
+                <div className=" gap-2 items-center">
                   <div>Attendance</div>
+                  <p>set default</p>
                   <label className="inline-flex items-center">
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                      onChange={() => updateAllAttendance("P")}
+                      onChange={() => {
+                        setSelectedAttendance("P");
+                        updateAllAttendance("P");
+                      }}
                       checked={selectedAttendance === "P"}
                       name="attendance"
                     />
@@ -103,16 +138,16 @@ const EveryClass = () => {
                     <input
                       type="checkbox"
                       className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                      onChange={() => updateAllAttendance("A")}
+                      onChange={() => {
+                        setSelectedAttendance("A");
+                        updateAllAttendance("A");
+                      }}
                       checked={selectedAttendance === "A"}
                       name="attendance"
                     />
                     <span className="ml-2 text-sm text-gray-700">A</span>
                   </label>
                 </div>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Class Assessment
               </th>
             </tr>
           </thead>
@@ -131,7 +166,7 @@ const EveryClass = () => {
                       <input
                         type="checkbox"
                         className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                        checked={student.attendance !== "A"}
+                        checked={student.attendance === "P"}
                         onChange={(e) =>
                           handleAttendanceChange(student._id, e.target.checked)
                         }
@@ -148,51 +183,6 @@ const EveryClass = () => {
                         }
                       />
                       <span className="ml-2 text-sm text-gray-700">A</span>
-                    </label>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex space-x-4">
-                    <label className="inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        name={`assessment-${student._id}`}
-                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                        value="G"
-                        checked={
-                          student.assessment === "G" || !student.assessment
-                        }
-                        onChange={() =>
-                          handleAssessmentChange(student._id, "G")
-                        }
-                      />
-                      <span className="ml-2 text-sm text-gray-700">G</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        name={`assessment-${student._id}`}
-                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                        value="B"
-                        checked={student.assessment === "B"}
-                        onChange={() =>
-                          handleAssessmentChange(student._id, "B")
-                        }
-                      />
-                      <span className="ml-2 text-sm text-gray-700">B</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        name={`assessment-${student._id}`}
-                        className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                        value="E"
-                        checked={student.assessment === "E"}
-                        onChange={() =>
-                          handleAssessmentChange(student._id, "E")
-                        }
-                      />
-                      <span className="ml-2 text-sm text-gray-700">E</span>
                     </label>
                   </div>
                 </td>

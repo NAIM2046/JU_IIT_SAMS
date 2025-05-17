@@ -10,6 +10,7 @@ const EveryClass = () => {
   const location = useLocation();
   const scheduleData = location.state?.schedule || null;
   console.log(scheduleData);
+
   const [students, setStudents] = useState([]);
 
   const axiosSecure = useAxiosPrivate();
@@ -18,8 +19,20 @@ const EveryClass = () => {
       .get(`/api/auth/getStudentByClassandSection/${scheduleData.class}`)
       .then((data) => {
         setStudents(data.data);
+        console.log("students", students);
       });
   }, []);
+
+
+  useEffect(()=>{
+    axiosSecure
+      .post(`api/attendance/updateAttendanceAndGetStatus`, {className:scheduleData.class, subject:scheduleData.subject})
+      .then(res => {
+        console.log("update", res.data);
+      });
+  }, [])
+
+
   // Handle attendance change
   const handleAttendanceChange = (studentId, isPresent) => {
     setStudents(
@@ -40,31 +53,20 @@ const EveryClass = () => {
     );
   };
 
+  students.forEach(item => {
+    console.log(item.attendance);
+  })
   //
   const saveData = async () => {
     try {
-      axiosSecure
-        .post("/api/attendance/classNumberUpdate", {
-          classname: scheduleData.class,
-        })
-        .then((res) => {
-          console.log("Successfully Incremented class number");
-        });
+      
     } catch (error) {
       console.error("Error saving data:", error);
     }
   };
 
   const updateAllAttendance = (status) => {
-    const allIds = students.map((item) => item._id);
-    const attendanceInfo = {
-      studentIds: allIds,
-      status: status,
-    };
-
-    axiosSecure.post('api/attendance/updateAllAttendance', attendanceInfo).then((res) => {
-      console.log(res);
-    })
+    
   }
 
 

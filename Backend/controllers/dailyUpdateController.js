@@ -1,80 +1,9 @@
 const { getDB } = require("../config/db.js");
 require("dotenv").config();
 
-const updateAllAttendance = async (req, res) => {
+
+const updateAttendanceAndGetStatus = async (req, res) => {
   const db = getDB();
-  try {
-    const studentIds = req.body.studentIds;
-    const status = req.body.status;
-    console.log(req.body);
-    const addDate = () => {
-      const today = new Date();
-      const day = String(today.getDate()).padStart(2, "0");
-      const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-      const year = today.getFullYear();
-      const finalDate = day + month + year;
-      return finalDate;
-    };
-
-    const attendanceRecord = {
-      date: addDate(),
-      status,
-    };
-
-    const updateDoc = {
-      $push: { attendanceList: attendanceRecord },
-    };
-
-    if (status === "P") {
-      updateDoc.$inc = { totalPresent: 1 };
-    }
-
-    // Perform bulk update
-    const result = await db
-      .collection("attendanceInfo")
-      .updateMany({ id: { $in: studentIds } }, updateDoc);
-
-    res.json({
-      success: true,
-      message: `Updated ${result.modifiedCount} students`,
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
-    });
-  } catch (error) {
-    console.error("Error in bulk attendance update:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update attendance",
-      error: error.message,
-    });
-  }
-};
-
-const addInitialAttendanceInfo = async (req, res) => {
-  const db = getDB();
-  const id = req.params.id;
-  console.log(id);
-  const subjectList = ["biology", "chemistry", "english"];
-  const attendanceInfo = {
-    id,
-  };
-
-  subjectList.forEach(item => {
-    attendanceInfo[item] = [];
-  });
-
-  
-  try {
-    const result = await db
-      .collection("attendanceInfo")
-      .insertOne(attendanceInfo);
-    res.status(200).json({ message: "Initial Data Inserted Successfully." });
-  } catch (error) {
-    console.log("Initial Attendance Error", error);
-  }
-};
-
-const classNumberUpdate = async (req, res) => {
   const addDate = () => {
     const today = new Date();
     const day = String(today.getDate()).padStart(2, "0");
@@ -82,35 +11,41 @@ const classNumberUpdate = async (req, res) => {
     const year = today.getFullYear();
     const finalDate = day + month + year;
     return finalDate;
-  };
-  const db = getDB();
-  const className = req.body.classname;
-  try {
-    const updateResult = await db.collection("attendanceInfo").updateOne(
-      { className: className },
-      {
-        $push: { classDateList: addDate()},
-        $inc: { totalClassCount: 1 },
-      }
-    );
-
-    // If no document was updated, insert a new one
-    if (updateResult.matchedCount === 0) {
-      await db.collection("attendanceInfo").insertOne({
-        className: className,
-        classDateList: [addDate()],
-        totalClassCount: 1,
-      });
-    }
-
-    res.send({ message: "class added successfully" });
-  } catch (error) {
-    console.log("Error Found While Incrasing Number of class", error);
   }
-};
+  
+  const {className, subject} = req.body;
+  const filter  = {class:className, subject: subject, date:addDate()};
+  const exists = await db.collection('attendanceInfo').findOne(filter);
+
+  if(exists){
+    console.log("sort");
+    const records = exists.records;
+    console.log(exists);
+    records.sort((a, b) => parseInt(a.roll)-parseInt(b.roll));
+    res.send(records);
+    return;
+  }
+
+  const students = await db.collection('users').find({class:className}).toArray();
+  const records = students.map(item => ({
+    studentId: item._id,
+    roll: parseInt(item.roll),
+    status: 'P'
+  }))
+
+  records.sort((a, b) => a.roll - b.roll);
+
+  const newAttendance = {
+    date: addDate(),
+    class: className,
+    subject: subject,
+    records
+  }
+
+  const result = await db.collection('attendanceInfo').insertOne(newAttendance);
+  res.send({message: "Updated Successfully", records})
+}
 
 module.exports = {
-  addInitialAttendanceInfo,
-  updateAllAttendance,
-  classNumberUpdate,
+  updateAttendanceAndGetStatus,
 };

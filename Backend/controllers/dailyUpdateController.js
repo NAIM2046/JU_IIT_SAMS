@@ -4,41 +4,71 @@ require("dotenv").config();
 const updateAllAttendance = async (req, res) => {
   const db = getDB();
   try {
-    const studentIds = req.body.studentIds;
-    const status = req.body.status;
-    console.log(req.body);
-    const addDate = () => {
-      const today = new Date();
-      const day = String(today.getDate()).padStart(2, "0");
-      const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-      const year = today.getFullYear();
-      const finalDate = day + month + year;
-      return finalDate;
-    };
+    const { studentIds, status, subject } = req.body;
 
-    const attendanceRecord = {
-      date: addDate(),
-      status,
-    };
+    const today = (() => {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, "0");
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = now.getFullYear();
+      return day + month + year; // Example: "15052025"
+    })();
 
-    const updateDoc = {
-      $push: { attendanceList: attendanceRecord },
-    };
+    let updatedCount = 0;
+    let insertedCount = 0;
 
-    if (status === "P") {
-      updateDoc.$inc = { totalPresent: 1 };
+    for (const studentId of studentIds) {
+      const student = await db.collection("attendanceInfo").findOne({ id: studentId });
+
+      if (!student) continue;
+
+      const alreadyExists = student.attendanceList?.find(
+        (record) => record.date === today && record.subject === subject
+      );
+
+      if (alreadyExists) {
+        // Update status only
+        const result = await db.collection("attendanceInfo").updateOne(
+          {
+            id: studentId,
+            "attendanceList.date": today,
+            "attendanceList.subject": subject,
+          },
+          {
+            $set: {
+              "attendanceList.$.status": status,
+             
+            },
+          }
+        );
+        updatedCount += result.modifiedCount;
+      } else {
+        // Insert new attendance record and update totalPresent if status is "P"
+        const attendanceRecord = {
+          date: today,
+          status,
+          subject,
+        };
+
+        const updateDoc = {
+          $push: { attendanceList: attendanceRecord },
+        };
+
+       
+
+        const result = await db
+          .collection("attendanceInfo")
+          .updateOne({ id: studentId }, updateDoc);
+
+        insertedCount += result.modifiedCount;
+      }
     }
-
-    // Perform bulk update
-    const result = await db
-      .collection("attendanceInfo")
-      .updateMany({ id: { $in: studentIds } }, updateDoc);
 
     res.json({
       success: true,
-      message: `Updated ${result.modifiedCount} students`,
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
+      message: `Attendance processed. Inserted: ${insertedCount}, Updated: ${updatedCount}`,
+      insertedCount,
+      updatedCount,
     });
   } catch (error) {
     console.error("Error in bulk attendance update:", error);
@@ -49,6 +79,7 @@ const updateAllAttendance = async (req, res) => {
     });
   }
 };
+
 
 const addInitialAttendanceInfo = async (req, res) => {
   const db = getDB();
@@ -102,10 +133,39 @@ const classNumberUpdate = async (req, res) => {
   } catch (error) {
     console.log("Error Found While Incrasing Number of class", error);
   }
+}; 
+ const getAttendanceByDateAndSubject = 
+ async (req, res) => {
+  const db = getDB();
+  const { studentIds, date, subject } = req.body;
+
+  try {
+    const allStudents = await db.collection("attendanceInfo").find({
+      id: { $in: studentIds }
+    }).toArray();
+
+    // Now filter attendanceList for each student in JS
+    const filtered = allStudents.map(student => {
+      const matchedAttendance = student.attendanceList?.find(
+        item => item.date === date && item.subject === subject
+      );
+
+      return {
+        id: student.id,
+        attendance: matchedAttendance ? matchedAttendance.status : null
+      };
+    });
+
+    res.json(filtered);
+  } catch (err) {
+    console.error("Error fetching attendance data:", err);
+    res.status(500).json({ success: false, message: "Failed to get attendance data" });
+  }
 };
 
 module.exports = {
   addInitialAttendanceInfo,
   updateAllAttendance,
   classNumberUpdate,
+  getAttendanceByDateAndSubject,
 };

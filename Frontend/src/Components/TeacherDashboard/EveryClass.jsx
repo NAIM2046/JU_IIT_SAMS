@@ -30,29 +30,6 @@ const EveryClass = () => {
         )
           .toString()
           .padStart(2, "0")}${today.getFullYear()}`;
-
-        const studentIds = loadedStudents.map((s) => s._id);
-
-        axiosSecure
-          .post("/api/attendance/getAttendanceByDateAndSubject", {
-            studentIds,
-            date: formattedDate,
-            subject: scheduleData.subject,
-          })
-          .then((response) => {
-            const attendanceMap = {};
-            response.data.forEach((item) => {
-              attendanceMap[item.id] = item.attendance;
-            });
-
-            // 3. Update students state with pre-filled attendance
-            setStudents((prev) =>
-              prev.map((s) => ({
-                ...s,
-                attendance: attendanceMap[s._id] || "", // fallback to blank if not found
-              }))
-            );
-          });
       });
   }, []);
 

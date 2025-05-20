@@ -28,7 +28,9 @@ const EveryClass = () => {
 
         let updatedStudents = res.data.map((student) => ({
           ...student,
-          attendance: "", // no default
+          attendance: "",
+          totalTasks: 0,
+          latestEvaluation: "",
         }));
 
         // 2. Check attendance record
@@ -52,7 +54,28 @@ const EveryClass = () => {
           }
         } catch (error) {
           // No attendance found — skip
+          console.error("Attendance not found:", error);
           setIsAttendanceSubmitted(false);
+        }
+
+        try {
+          const performanceRes = await AxiosSecure.get(
+            `/api/performance/byClassAndSubject/${schedule.class}/${schedule.subject}`
+          );
+          const performanceData = performanceRes.data;
+
+          updatedStudents = updatedStudents.map((student) => {
+            const performance = performanceData.find(
+              (perf) => perf.studentId === student._id
+            );
+            return {
+              ...student,
+              totalTasks: performance?.totalTasks || 0,
+              latestEvaluation: performance?.latestEvaluation || "",
+            };
+          });
+        } catch (err) {
+          console.error("Failed to fetch performance:", err);
         }
 
         setStudents(updatedStudents);
@@ -74,7 +97,7 @@ const EveryClass = () => {
     ).padStart(2, "0")}${today.getFullYear()}`;
 
     try {
-      await AxiosSecure.post("/api/attendance/update-single", {
+      const res = await AxiosSecure.post("/api/attendance/update-single", {
         className: schedule.class,
         subject: schedule.subject,
         date: dateStr,
@@ -83,6 +106,7 @@ const EveryClass = () => {
         status,
         students, // send all students so backend can create new attendance if needed
       });
+      console.log(res.data);
 
       setStudents((prev) =>
         prev.map((student) =>
@@ -126,6 +150,35 @@ const EveryClass = () => {
     }
   };
   // console.log(schedule.subject);
+
+  const updateStudentPerformance = async (studentId, evaluation) => {
+    try {
+      const res = await AxiosSecure.post("/api/performance/updata", {
+        studentId,
+        subject: schedule.subject,
+        className: schedule.class,
+        evaluation,
+      });
+
+      console.log(res.data);
+      const { totalTasks } = res.data;
+
+      // Optionally update frontend state to reflect changes immediately
+      setStudents((prev) =>
+        prev.map((student) =>
+          student._id === studentId
+            ? {
+                ...student,
+                totalTasks: totalTasks || 0,
+                latestEvaluation: evaluation,
+              }
+            : student
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update performance:", err);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -174,7 +227,41 @@ const EveryClass = () => {
                 {student.roll}
               </td>
               <td className="border border-gray-300 px-4 py-2">N/A</td>
-              <td className="border border-gray-300 px-4 py-2">N/A</td>
+              <td className="border border-gray-300 px-4 py-2">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
+                      onClick={() =>
+                        updateStudentPerformance(student._id, "Bad")
+                      }
+                    >
+                      Bad
+                    </button>
+                    <button
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs px-2 py-1 rounded"
+                      onClick={() =>
+                        updateStudentPerformance(student._id, "Good")
+                      }
+                    >
+                      Good
+                    </button>
+                    <button
+                      className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded"
+                      onClick={() =>
+                        updateStudentPerformance(student._id, "Excellent")
+                      }
+                    >
+                      Excellent
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-700 mt-1">
+                    Tasks Done: {student.totalTasks || 0}{" "}
+                    <p> lest: {student.latestEvaluation}</p>
+                  </div>
+                </div>
+              </td>
+
               <td className="border border-gray-300 px-4 py-2">
                 <div className="flex justify-center gap-4">
                   <label className="flex items-center gap-1">

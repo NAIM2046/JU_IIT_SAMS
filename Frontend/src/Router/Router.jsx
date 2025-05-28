@@ -14,13 +14,14 @@ import AdminClassManage from "../Components/AdminDashboard/AdminClassManage";
 import TeacherHome from "../Components/TeacherDashboard/TeacherHome";
 import TeacherSchedule from "../Components/TeacherDashboard/TeacherSchedule";
 import EveryClass from "../Components/TeacherDashboard/EveryClass";
-import ClassHistory from "../Components/TeacherDashboard/ClassHistory";
+import AdminNotice from "../Components/AdminDashboard/AdminNotice";
 import StudentHome from "../Components/StudentDashboard/StudentHome";
 import StudentProfile from "../Components/StudentDashboard/StudentProfile";
 import StudentSchedule from "../Components/StudentDashboard/StudentSchedule";
-import AdminNotice from "../Components/AdminDashboard/AdminNotice";
-import TeacherNotice from "../Components/TeacherDashboard/TeacherNotice";
 import StudentNotice from "../Components/StudentDashboard/StudentNotice";
+import TeacherNotice from "../Components/TeacherDashboard/TeacherNotice";
+import { Home } from "../Pages/Exam/Home";
+import ClassHistory from "../Components/TeacherDashboard/ClassHistory";
 
 const router = createBrowserRouter([
   {
@@ -79,12 +80,16 @@ const router = createBrowserRouter([
         element: <EveryClass></EveryClass>,
       },
       {
-        path: "/teacherDashboard/classhistory",
-        element: <ClassHistory></ClassHistory>,
-      },
-      {
         path: "/teacherDashboard/notice",
         element: <TeacherNotice></TeacherNotice>,
+      },
+      {
+        path: "/teacherDashboard/exam",
+        element: <Home></Home>,
+      },
+      {
+        path: "/teacherDashboard/classhistory",
+        element: <ClassHistory></ClassHistory>,
       },
     ],
   },

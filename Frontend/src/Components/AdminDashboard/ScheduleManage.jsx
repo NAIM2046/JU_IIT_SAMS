@@ -19,6 +19,7 @@ const ScheduleManage = () => {
   const { fetchClass, classlist, fetchTeacher, teacherList } = useStroge();
   const [selectedClass, setSelectedClass] = useState("6");
   const [subjectsList, setSubjectsList] = useState([]);
+  
   useEffect(() => {
     const currentClass = classlist.find((cls) => cls.class === selectedClass);
     setSubjectsList(currentClass?.subjects || []);

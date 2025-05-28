@@ -9,6 +9,7 @@ const performanceRoutes = require('./routes/PerformanceRoute.js') ;
 const classHistoryRoutes = require('./routes/classHistoryRoutes') ; // Assuming you have this route defined
 const startCronJob = require('./cron/autoInsertPendingClasses.js'); 
 const noticeRoutes = require('./routes/NoticeRoutes.js');
+const examRoutes = require('./routes/examRoutes.js');
 require('dotenv').config();
 
 const app = express();
@@ -30,6 +31,8 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/performance' , performanceRoutes) ;
 app.use ('/api/classHistory' , classHistoryRoutes) ;
 app.use('/api', noticeRoutes); // Assuming you have classHistroyRoute defined
+app.use('/api/performance' , performanceRoutes);
+app.use('/api/exam', examRoutes);
 
 connectDB().then(() => {
   app.listen(port, () => {

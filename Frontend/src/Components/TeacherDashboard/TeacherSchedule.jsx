@@ -9,7 +9,9 @@ const TeacherSchedule = () => {
   const { user } = useStroge();
   const AxiosSecure = useAxiosPrivate();
   const teacherName = user.name; // Set your teacher name
+  
   console.log(user);
+
   useEffect(() => {
     // Simulated API data
     AxiosSecure.get("/api/getallschedule")
@@ -21,6 +23,28 @@ const TeacherSchedule = () => {
         console.error("Error fetching schedules:", error);
       });
   }, []);
+
+  console.log(allSchedules);
+
+  const teacherClasses = [];
+  const teacherSubject = [];
+  allSchedules.map(item => {
+    const days = Object.keys(item.schedule);
+    const object1 = item.schedule;
+    days.forEach(item => {
+      const object2 = Object.keys(object1[item]);
+      const object3 = object1[item];
+      object2.forEach(item => {
+        if(object3[item].teacher === user.name){
+          teacherClasses.push(object3[item].class);
+          teacherSubject.push(object3[item].subject);
+        }
+      })
+    });
+  });
+
+  console.log([...new Set(teacherClasses)]);
+  console.log([...new Set(teacherSubject)]);
 
   useEffect(() => {
     if (allSchedules.length > 0) {

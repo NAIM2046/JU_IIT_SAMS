@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import Navbar from "../../Shared/Navbar";
 import { FaHome, FaBars, FaRoute, FaList } from "react-icons/fa";
 import useStroge from "../../stroge/useStroge";
+import { PiExamFill } from "react-icons/pi";
 
 const TeacherSection = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,13 +56,21 @@ const TeacherSection = () => {
                 <FaList />
                 <span>Class History</span>
               </NavLink>
-               <NavLink
+              <NavLink
                 to="/teacherDashboard/notice"
                 className="flex items-center space-x-1 text-white hover:text-gray-200"
                 onClick={() => setIsMenuOpen(false)} // auto close menu on click
               >
                 <FaList />
                 <span>Notice </span>
+              </NavLink>
+              <NavLink
+                to="/teacherDashboard/exam"
+                className="flex items-center space-x-1 text-white hover:text-gray-200"
+                onClick={() => setIsMenuOpen(false)} // auto close menu on click
+              >
+                <PiExamFill />
+                <span>Exam</span>
               </NavLink>
             </li>
             {/* You can add more links here */}

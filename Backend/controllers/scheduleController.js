@@ -6,20 +6,15 @@ const addSchedule = async (req, res) => {
   const db = getDB();
 
   try {
-     const quary = {classNumber: schedule.classNumber};
+    const quary = {classNumber: schedule.classNumber};
     const deleteSchedule = await db.collection('schedules').deleteOne(quary);
-
-    
 
     const result = await db.collection('schedules').insertOne(schedule);
     res.status(201).json({
       message: 'Schedule created successfully',
       scheduleId: result.insertedId,
     });
-    
-  
-
-   
+     
   } catch (error) {
     console.error('Error adding schedule:', error);
     res.status(500).json({ message: 'Internal server error' });

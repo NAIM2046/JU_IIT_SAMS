@@ -6,6 +6,7 @@ const scheduleRoutes = require('./routes/scheduleRoutes.js');
 const classAndSubRoutes = require('./routes/classAndSubRoutes.js'); // Assuming you have this route defined
 const attendanceRoutes = require('./routes/attendanceRoutes.js');
 const performanceRoutes = require('./routes/PerformanceRoute.js') ;
+const examRoutes = require('./routes/examRoutes.js');
 require('dotenv').config();
 
 const app = express();
@@ -22,7 +23,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', scheduleRoutes);
 app.use('/api' , classAndSubRoutes) ; // Assuming you have classAndSubRoutes defined
 app.use('/api/attendance', attendanceRoutes);
-app.use('/api/performance' , performanceRoutes)
+app.use('/api/performance' , performanceRoutes);
+app.use('/api/exam', examRoutes);
 
 connectDB().then(() => {
   app.listen(port, () => {

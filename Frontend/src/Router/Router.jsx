@@ -14,6 +14,7 @@ import AdminClassManage from "../Components/AdminDashboard/AdminClassManage";
 import TeacherHome from "../Components/TeacherDashboard/TeacherHome";
 import TeacherSchedule from "../Components/TeacherDashboard/TeacherSchedule";
 import EveryClass from "../Components/TeacherDashboard/EveryClass";
+import { Home } from "../Pages/Exam/Home";
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ const router = createBrowserRouter([
         path: "/teacherDashboard/Class/:class",
         element: <EveryClass></EveryClass>,
       },
+      {
+        path: "/teacherDashboard/exam",
+        element: <Home></Home>
+      }
     ],
   },
   {

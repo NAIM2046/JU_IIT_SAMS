@@ -70,8 +70,11 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-gray-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition">
               <div className="avatar placeholder">
-                <div className="bg-primary text-white rounded-full w-9 h-9   text-center  text-2xl  font-bold">
-                  {user?.name?.[0]?.toUpperCase()}
+                <div className="bg-primary text-white rounded-full w-12 h-12   text-center  text-2xl  font-bold">
+                  <img
+                    src={user.photoURL || "https://i.ibb.co/G9wkJbX/user.webp"}
+                    alt="user photo"
+                  />
                 </div>
               </div>
               <span className="hidden sm:block font-sm text-gray-700">

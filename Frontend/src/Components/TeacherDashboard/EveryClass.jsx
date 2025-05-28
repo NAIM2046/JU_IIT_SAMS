@@ -5,20 +5,24 @@ import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 const EveryClass = () => {
   const location = useLocation();
   const schedule = location.state?.schedule;
+  const DateFormate = location.state?.formattedDate;
+  const teacherName = location.state?.teacherName;
   const [students, setStudents] = useState([]);
   const [defaultAttendance, setDefaultAttendance] = useState("");
   const [isAttendanceSubmitted, setIsAttendanceSubmitted] = useState(false); // "P", "A", or ""
 
   const AxiosSecure = useAxiosPrivate();
 
+  console.log(schedule, DateFormate, teacherName);
+
   useEffect(() => {
     const fetchStudents = async () => {
       if (!schedule?.class || !schedule?.subject) return;
 
-      const date = new Date();
-      const formattedDate = `${String(date.getDate()).padStart(2, "0")}${String(
-        date.getMonth() + 1
-      ).padStart(2, "0")}${date.getFullYear()}`; // e.g., 19052025
+      // const date = new Date();
+      // const formattedDate = `${String(date.getDate()).padStart(2, "0")}${String(
+      //   date.getMonth() + 1
+      // ).padStart(2, "0")}${date.getFullYear()}`; // e.g., 19052025
 
       try {
         // 1. Get student list
@@ -36,7 +40,7 @@ const EveryClass = () => {
         // 2. Check attendance record
         try {
           const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.class}/${schedule.subject}/${formattedDate}`
+            `/api/attendance/check/${schedule.class}/${schedule.subject}/${DateFormate}`
           );
 
           const existingAttendance = attendanceRes.data;
@@ -91,16 +95,16 @@ const EveryClass = () => {
   const updateSingleStudentAttendance = async (studentId, roll, status) => {
     if (!schedule?.class || !schedule?.subject) return;
 
-    const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2, "0")}${String(
-      today.getMonth() + 1
-    ).padStart(2, "0")}${today.getFullYear()}`;
+    // const today = new Date();
+    // const dateStr = `${String(today.getDate()).padStart(2, "0")}${String(
+    //   today.getMonth() + 1
+    // ).padStart(2, "0")}${today.getFullYear()}`;
 
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
         className: schedule.class,
         subject: schedule.subject,
-        date: dateStr,
+        date: DateFormate,
         studentId,
         roll,
         status,
@@ -123,16 +127,16 @@ const EveryClass = () => {
   // Handle default attendance for all
   const handleDefaultAttendanceChange = async (status) => {
     if (!schedule?.class || !schedule?.subject) return;
-    const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2, "0")}${String(
-      today.getMonth() + 1
-    ).padStart(2, "0")}${today.getFullYear()}`;
+    // const today = new Date();
+    // const dateStr = `${String(today.getDate()).padStart(2, "0")}${String(
+    //   today.getMonth() + 1
+    // ).padStart(2, "0")}${today.getFullYear()}`;
 
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
         className: schedule.class,
         subject: schedule.subject,
-        date: dateStr,
+        date: DateFormate,
         students,
         defaultStatus: status,
       });
@@ -177,6 +181,26 @@ const EveryClass = () => {
       );
     } catch (err) {
       console.error("Failed to update performance:", err);
+    }
+  };
+
+  const handleSaveClass = async () => {
+    try {
+      const response = await AxiosSecure.post("/api/classHistory/save", {
+        className: schedule.class,
+        subject: schedule.subject,
+        date: DateFormate,
+
+        teacherName: teacherName,
+        status: "Completed",
+        totalStudents: students.length,
+        totalPresent: students.filter((s) => s.attendance === "P").length,
+        totalAbsent: students.filter((s) => s.attendance === "A").length,
+      });
+
+      console.log("Class history saved", response.data);
+    } catch (error) {
+      console.error("Failed to save class history", error);
     }
   };
 
@@ -302,6 +326,9 @@ const EveryClass = () => {
           ))}
         </tbody>
       </table>
+      <button onClick={handleSaveClass} className="btn btn-info">
+        save Class
+      </button>
     </div>
   );
 };

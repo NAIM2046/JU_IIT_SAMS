@@ -14,6 +14,13 @@ import AdminClassManage from "../Components/AdminDashboard/AdminClassManage";
 import TeacherHome from "../Components/TeacherDashboard/TeacherHome";
 import TeacherSchedule from "../Components/TeacherDashboard/TeacherSchedule";
 import EveryClass from "../Components/TeacherDashboard/EveryClass";
+import ClassHistory from "../Components/TeacherDashboard/ClassHistory";
+import StudentHome from "../Components/StudentDashboard/StudentHome";
+import StudentProfile from "../Components/StudentDashboard/StudentProfile";
+import StudentSchedule from "../Components/StudentDashboard/StudentSchedule";
+import AdminNotice from "../Components/AdminDashboard/AdminNotice";
+import TeacherNotice from "../Components/TeacherDashboard/TeacherNotice";
+import StudentNotice from "../Components/StudentDashboard/StudentNotice";
 
 const router = createBrowserRouter([
   {
@@ -49,6 +56,10 @@ const router = createBrowserRouter([
         path: "/adminDashboard/classManage",
         element: <AdminClassManage></AdminClassManage>,
       },
+      {
+        path: "/adminDashboard/noticeManage",
+        element: <AdminNotice></AdminNotice>,
+      },
     ],
   },
   {
@@ -67,11 +78,37 @@ const router = createBrowserRouter([
         path: "/teacherDashboard/Class/:class",
         element: <EveryClass></EveryClass>,
       },
+      {
+        path: "/teacherDashboard/classhistory",
+        element: <ClassHistory></ClassHistory>,
+      },
+      {
+        path: "/teacherDashboard/notice",
+        element: <TeacherNotice></TeacherNotice>,
+      },
     ],
   },
   {
     path: "/studentDashboard",
     element: <StudentSection></StudentSection>,
+    children: [
+      {
+        path: "/studentDashboard",
+        element: <StudentHome></StudentHome>,
+      },
+      {
+        path: "/studentDashboard/profile",
+        element: <StudentProfile></StudentProfile>,
+      },
+      {
+        path: "/studentDashboard/classroutine",
+        element: <StudentSchedule></StudentSchedule>,
+      },
+      {
+        path: "/studentDashboard/notice",
+        element: <StudentNotice></StudentNotice>,
+      },
+    ],
   },
 ]);
 

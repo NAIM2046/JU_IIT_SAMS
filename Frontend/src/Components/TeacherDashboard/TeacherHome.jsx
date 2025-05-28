@@ -9,6 +9,11 @@ const TeacherHome = () => {
   const { user } = useStroge();
   const navigate = useNavigate();
 
+  const date = new Date();
+  const formattedDate = `${String(date.getDate()).padStart(2, "0")}${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}${date.getFullYear()}`;
+
   const AxiosSecure = useAxiosPrivate();
   useEffect(() => {
     const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
@@ -53,13 +58,13 @@ const TeacherHome = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {schedules?.length > 0 ? (
-          schedules.map((schedule) => (
+          schedules.map((schedule, index) => (
             <div
-              key={schedule.id}
+              key={index}
               className="bg-blue-900 shadow-lg rounded-lg p-6 text-white hover:shadow-lg transition"
               onClick={() =>
                 navigate(`/teacherDashboard/Class/${schedule.class}`, {
-                  state: { schedule },
+                  state: { schedule, formattedDate, teacherName: user.name },
                 })
               }
             >

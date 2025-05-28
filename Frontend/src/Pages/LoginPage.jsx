@@ -16,15 +16,15 @@ const LoginPage = () => {
       .then((response) => {
         const token = response.data.token;
         localStorage.setItem("token", token);
-        const user = {
-          email: response.data.user.email,
-          role: response.data.user.role,
-          name: response.data.user.name,
-          id: response.data.user._id,
-        };
+        // const user = {
+        //   email: response.data.user.email,
+        //   role: response.data.user.role,
+        //   name: response.data.user.name,
+        //   id: response.data.user._id,
+        // };
 
         const role = response.data.user.role;
-        setUser(user);
+        setUser(response.data.user);
         console.log("User data:", response.data.user); // ⬅️ Add this line
         if (role === "admin") navigate("/adminDashboard");
         else if (role === "teacher") navigate("/teacherDashboard");

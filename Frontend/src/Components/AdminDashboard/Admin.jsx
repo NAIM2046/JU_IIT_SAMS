@@ -8,6 +8,7 @@ import {
   FaHome,
   FaList,
   FaMinus,
+  FaNotesMedical,
   FaShoppingCart,
   FaUser,
   FaUsers,
@@ -48,6 +49,11 @@ const Admin = () => {
               <li>
                 <NavLink to="/adminDashboard/classManage">
                   <FaUsers></FaUsers> Class and subject Manage
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/adminDashboard/noticeManage">
+                  <FaNotesMedical></FaNotesMedical> Notice Manage
                 </NavLink>
               </li>
             </>

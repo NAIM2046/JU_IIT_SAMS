@@ -47,6 +47,22 @@ const TeacherSection = () => {
                 <FaList />
                 <span>Schedule</span>
               </NavLink>
+              <NavLink
+                to="/teacherDashboard/classhistory"
+                className="flex items-center space-x-1 text-white hover:text-gray-200"
+                onClick={() => setIsMenuOpen(false)} // auto close menu on click
+              >
+                <FaList />
+                <span>Class History</span>
+              </NavLink>
+               <NavLink
+                to="/teacherDashboard/notice"
+                className="flex items-center space-x-1 text-white hover:text-gray-200"
+                onClick={() => setIsMenuOpen(false)} // auto close menu on click
+              >
+                <FaList />
+                <span>Notice </span>
+              </NavLink>
             </li>
             {/* You can add more links here */}
           </ul>

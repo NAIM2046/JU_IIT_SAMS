@@ -129,10 +129,59 @@ const getAttendancebyClass_sub_data = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 }
+const getAttendanceByStudentId = async (req , res) =>{
+  const db = getDB() ; 
+  const AttendanceInfo = db.collection("attendanceInfo");
+  console.log(req.params) ;
+  const { id : studentId } = req.params;
+
+  try{
+    const data = await AttendanceInfo.aggregate([
+      {
+        $unwind: "$records" 
+      } , 
+      {
+        $match: {
+          "records.studentId": studentId
+        }
+      } ,
+      {
+        $group: {
+          _id: "$records.studentId", 
+          totalClasses: {$sum: 1}, 
+          presentCount: {
+            $sum: {
+              $cond: [{$eq: ["$records.status", "P"]}, 1, 0]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          studentId: "$_id", 
+          totalClasses: 1,
+          presentCount: 1
+        }
+      }
+    ]).toArray() ;
+    res.json(data[0] || {
+
+
+
+    }) ;
+
+  }catch(err){
+    console.error("Error fetching attendance by student ID:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+
+}
 
 module.exports = {
   getAttendancebyClass_sub_data,
   setAttendanceDefault,
-  updataAttendanceSingle
+  updataAttendanceSingle ,
+  getAttendanceByStudentId
   // Add other functions here as needed
 }

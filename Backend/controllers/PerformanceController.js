@@ -99,8 +99,67 @@ const getPerformanceByClassAndSubject = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const performanceSummaryByStudentId = async (req , res)=>{
+  const db = getDB() ; 
+  const {studentid} = req.params ; 
+  //console.log("Fetching performance summary for studentId:", studentid);
+  const collection = db.collection("performanceInfo")  ; 
+  try{
+   const data = await collection.aggregate([
+    {
+      $match: {studentId: studentid}
+    } ,
+    {
+      $group:{
+        _id: "$studentId",
+        totalTasks: {$sum: "$totalTasks"},
+        excellent: {$sum: "$excellentCount"},
+        good: {$sum: "$goodCount"}, 
+        bad: {$sum: "$badCount"}
+      }
+    },
+    {
+      $project: {
+        _id: 0 ,
+        studentId: "$_id",
+        totalTasks: 1, 
+        excellent: 1,
+        good: 1,
+        bad: 1,
+        excellentPercentage: {
+          $multiply: [{$divide: ["$excellent" , "$totalTasks"]} , 100]
+        },
+        goodPercentage: {
+          $multiply: [{$divide: ["$good" , "$totalTasks"]} , 100]
+        },
+        badPercentage: {
+          $multiply: [{$divide: ["$bad" , "$totalTasks"]} , 100]
+        }
+        
+
+      }
+    }
+   ]).toArray() ;
+   res.json(data[0] || {
+    studentId: studentid,
+    totalTasks: 0,
+    excellent: 0,
+    good: 0,
+    bad: 0,
+    excellentPercentage: 0,
+    goodPercentage: 0,
+    badPercentage: 0
+   }) ;
+  }
+  catch(err){
+    console.error("Error fetching performance summary:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+
+}
 
 module.exports = {
   UpdatePerformance,
     getPerformanceByClassAndSubject,
+  performanceSummaryByStudentId
 };

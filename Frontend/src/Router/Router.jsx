@@ -20,8 +20,12 @@ import StudentProfile from "../Components/StudentDashboard/StudentProfile";
 import StudentSchedule from "../Components/StudentDashboard/StudentSchedule";
 import StudentNotice from "../Components/StudentDashboard/StudentNotice";
 import TeacherNotice from "../Components/TeacherDashboard/TeacherNotice";
-import { Home } from "../Pages/Exam/Home";
+
 import ClassHistory from "../Components/TeacherDashboard/ClassHistory";
+import ExamHome from "../Pages/Exam/ExamHome";
+import RankList from "../Components/StudentDashboard/RankList";
+import SubjectsPer_Summ from "../Components/StudentDashboard/SubjectsPer_Summ";
+import ReportCard from "../Components/StudentDashboard/ReportCard";
 
 const router = createBrowserRouter([
   {
@@ -85,7 +89,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/teacherDashboard/exam",
-        element: <Home></Home>,
+        element: <ExamHome></ExamHome>,
       },
       {
         path: "/teacherDashboard/classhistory",
@@ -112,6 +116,18 @@ const router = createBrowserRouter([
       {
         path: "/studentDashboard/notice",
         element: <StudentNotice></StudentNotice>,
+      },
+      {
+        path: "/studentDashboard/ranklist",
+        element: <RankList></RankList>,
+      },
+      {
+        path: "/studentDashboard/performance",
+        element: <SubjectsPer_Summ></SubjectsPer_Summ>,
+      },
+      {
+        path: "/studentDashboard/reportCard",
+        element: <ReportCard></ReportCard>,
       },
     ],
   },

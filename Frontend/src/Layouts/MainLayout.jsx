@@ -4,6 +4,7 @@ import Footer from "../Shared/Footer";
 import { Outlet } from "react-router-dom";
 import useAxiosPrivate from "../TokenAdd/useAxiosPrivate";
 import useStroge from "../stroge/useStroge";
+import Home from "../Pages/Home/Home";
 
 const MainLayout = () => {
   const AXiosSecure = useAxiosPrivate();
@@ -49,7 +50,7 @@ const MainLayout = () => {
         <Navbar />
       </div>
       <div>
-        <Outlet></Outlet>
+        <Home></Home>
       </div>
       <div>
         <Footer></Footer>

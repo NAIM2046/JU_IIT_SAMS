@@ -75,6 +75,12 @@ const removeSubjectFromClass = async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
+  const getSubjectbyClass = async(req , res) =>{
+    const db = getDB() ; 
+    const classNumber =  req.params.class ; 
+    const result =  await db.collection("classes").findOne({class: classNumber}) ;
+    res.status(200).json(result) ;
+  }
 
 module.exports = {
   addClassAndSub,
@@ -82,4 +88,6 @@ module.exports = {
   addSubjectToClass,
   deleteClass,
     removeSubjectFromClass,
+    getSubjectbyClass
+    
 }

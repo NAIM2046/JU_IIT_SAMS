@@ -1,103 +1,252 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
   FaAd,
   FaBook,
-  FaCalendar,
   FaContao,
+  FaDollarSign,
   FaHome,
-  FaList,
-  FaShoppingCart,
+  FaIdCard,
   FaUsers,
 } from "react-icons/fa";
+import { MdOutlineFormatListNumbered } from "react-icons/md";
 import useStroge from "../../stroge/useStroge";
-
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import Navbar from "../../Shared/Navbar";
+import Footer from "../../Shared/Footer";
 
 const StudentSection = () => {
   const AxiosSecure = useAxiosPrivate();
   const { user } = useStroge();
+  const [ranklist, setRanklist] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  console.log(user);
+  const classNumber = user.class;
+
+  useEffect(() => {
+    AxiosSecure.get(`/api/exam/rank_summary/${classNumber}`).then((res) => {
+      setRanklist(res.data);
+    });
+  }, [AxiosSecure, classNumber]);
+
+  const currentStudentRank = ranklist.find(
+    (student) => student._id === user._id
+  );
 
   return (
-    <div>
-      {/* Header with avatar */}
-      <div className="flex justify-between items-center mt-1 px-6">
-        <Navbar></Navbar>
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+
+      {/* Mobile Sidebar Toggle Button */}
+      <div className="md:hidden bg-white shadow sticky top-0 z-50 px-4 py-2 flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-orange-500">Student Panel</h2>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle Sidebar"
+          className="text-3xl text-gray-800 focus:outline-none"
+        >
+          ☰
+        </button>
       </div>
 
-      {/* Sidebar + Main Content + Right Side Panel */}
-      <div className="flex">
-        {/* Left Sidebar */}
-        <div className="w-44 min-h-screen bg-orange-400">
-          <ul className="menu p-4">
-            <li>
-              <NavLink to="/studentDashboard/classroutine">
-                <FaHome /> Class Routine
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/dashboard/performance">
-                <FaBook /> Performance Summary
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/dashboard/ranklist">
-                <FaUsers /> Rank & Leaderboard
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/dashboard/badges">
-                <FaAd /> Badges & Points
-              </NavLink>
-            </li>
+      <div className="flex flex-col order-1 md:flex-row">
+        {/* Sidebar */}
+        <aside
+          className={`${
+            sidebarOpen ? "block absolute z-40" : "hidden"
+          } md:block bg-orange-400 w-44 min-h-screen p-4 text-white font-semibold`}
+        >
+          <ul className="space-y-2 text-white font-medium">
+            {[
+              {
+                to: "/studentDashboard/classroutine",
+                icon: <FaHome className="text-lg" />,
+                label: "Class Routine",
+              },
+              {
+                to: "/studentDashboard/performance",
+                icon: <FaBook className="text-lg" />,
+                label: "Subjects Performance",
+              },
+              {
+                to: "/studentDashboard/ranklist",
+                icon: <MdOutlineFormatListNumbered className="text-lg" />,
+                label: "Rank List",
+              },
+              {
+                to: "/dashboard/badges",
+                icon: <FaAd className="text-lg" />,
+                label: "Badges & Points",
+              },
+              {
+                to: "/studentDashboard/profile",
+                icon: <FaUsers className="text-lg" />,
+                label: "Profile",
+              },
+              {
+                to: "/studentDashboard/reportCard",
+                icon: <FaIdCard className="text-lg" />,
+                label: "View ReportCard",
+              },
+              {
+                to: "/studentDashboard/notice",
+                icon: <FaContao className="text-lg" />,
+                label: "Notice",
+              },
+            ].map((item, index) => (
+              <li key={index}>
+                <NavLink
+                  to={item.to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                      isActive ? "bg-blue-600 text-white" : "hover:bg-blue-500"
+                    }`
+                  }
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </NavLink>
+              </li>
+            ))}
+
+            <div className="border-t border-gray-400 my-3" />
 
             <li>
-              <NavLink to={`/studentDashboard/profile`}>
-                <FaUsers /> Profile
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to={`/studentDashboard/notice`}>
-                <FaContao /> Notice
-              </NavLink>
-            </li>
-            <div className="divider"></div>
-            <li>
-              <NavLink to="/">
-                <FaHome /> Home
+              <NavLink
+                to="/"
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                    isActive ? "bg-blue-600 text-white" : "hover:bg-blue-500"
+                  }`
+                }
+              >
+                <FaHome className="text-lg" />
+                <span>Home</span>
               </NavLink>
             </li>
           </ul>
-        </div>
+        </aside>
 
         {/* Main Content */}
-        <div className="flex-1 p-4">
+        <main className="flex-col-1 md:flex-1 order-3 md:order-2">
           <Outlet />
-        </div>
+        </main>
 
-        {/* Right Sidebar for Badges & Recommendations */}
-        <div className="w-64 p-4 bg-gray-100 border-l hidden md:block">
-          {/* Rank Badge */}
-          <div className="bg-white p-4 rounded-xl shadow-md mb-4">
-            <h4 className="text-lg font-bold mb-2">🏅 Your Rank</h4>
-            <p className="text-2xl text-orange-600 font-extrabold">
-              #5 in Class
-            </p>
-          </div>
+        {/* Right Profile Sidebar */}
+        <aside className="w-full  md:w-50 lg:w-80 p-4 order-2 md:order-3">
+          <div className="bg-white rounded-xl shadow p-4">
+            <h4 className="text-lg font-bold mb-2">🎮 Your Profile Badge</h4>
 
-          {/* Recommended Actions */}
-          <div className="bg-white p-4 rounded-xl shadow-md">
-            <h4 className="text-lg font-bold mb-2">🌟 Recommendations</h4>
-            <ul className="list-disc list-inside text-sm space-y-1">
-              <li>Attend all remaining monthly exams</li>
-              <li>Improve Math score by 10%</li>
-              <li>Review English grammar lessons</li>
-            </ul>
+            {currentStudentRank ? (
+              <>
+                <div className="flex justify-between items-center">
+                  <p className="text-xl  text-green-500 font-bold">
+                    #{currentStudentRank.rank} in Class
+                  </p>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Total Marks</p>
+                    <p className="text-md font-bold text-green-600">
+                      {currentStudentRank.totalGetMarks}/
+                      {currentStudentRank.totalFullMark}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mb-1">🎯 Progress</p>
+                  <div className="w-full bg-gray-200 h-4 rounded-full">
+                    <div
+                      className={`h-4 rounded-full transition-all duration-300 ${
+                        (currentStudentRank.totalGetMarks /
+                          currentStudentRank.totalFullMark) *
+                          100 >=
+                        80
+                          ? "bg-yellow-400"
+                          : (currentStudentRank.totalGetMarks /
+                                currentStudentRank.totalFullMark) *
+                                100 >=
+                              50
+                            ? "bg-gray-400"
+                            : "bg-orange-400"
+                      }`}
+                      style={{
+                        width: `${(currentStudentRank.totalGetMarks / currentStudentRank.totalFullMark) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Badge Name */}
+                <div className="text-center mt-6">
+                  {(() => {
+                    const percentage =
+                      (currentStudentRank.totalGetMarks /
+                        currentStudentRank.totalFullMark) *
+                      100;
+
+                    let badge = {
+                      title: "",
+                      color: "",
+                      emoji: "",
+                      gradient: "",
+                      remark: "",
+                    };
+
+                    if (percentage >= 80) {
+                      badge = {
+                        title: "Gold Champion",
+                        color: "text-yellow-500",
+                        emoji: "🥇",
+                        gradient:
+                          "from-yellow-400 via-yellow-300 to-yellow-500",
+                        remark: "Remarkable Student",
+                      };
+                    } else if (percentage >= 50) {
+                      badge = {
+                        title: "Silver Warrior",
+                        color: "text-gray-600",
+                        emoji: "🥈",
+                        gradient: "from-gray-300 via-gray-200 to-gray-400",
+                        remark: "Consistent Performer",
+                      };
+                    } else {
+                      badge = {
+                        title: "Bronze Starter",
+                        color: "text-orange-600",
+                        emoji: "🥉",
+                        gradient:
+                          "from-orange-400 via-orange-300 to-orange-500",
+                        remark: "Keep Going!",
+                      };
+                    }
+
+                    return (
+                      <div
+                        className={`inline-block px-6 py-4 rounded-xl bg-gradient-to-br ${badge.gradient} shadow-lg`}
+                      >
+                        <p className={`font-bold text-xl ${badge.color}`}>
+                          {badge.emoji} {badge.title}
+                        </p>
+                        <p className="text-sm mt-1 text-white italic">
+                          {badge.remark}
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-500 text-sm">Loading your rank...</p>
+            )}
           </div>
-        </div>
+        </aside>
+      </div>
+
+      <div className="order-4">
+        <Footer />
       </div>
     </div>
   );

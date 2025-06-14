@@ -10,6 +10,7 @@ const classHistoryRoutes = require('./routes/classHistoryRoutes') ; // Assuming 
 const startCronJob = require('./cron/autoInsertPendingClasses.js'); 
 const noticeRoutes = require('./routes/NoticeRoutes.js');
 const examRoutes = require('./routes/examRoutes.js');
+const{ startCronJobUpdata} = require("./cron/Monthly_update.js") ;
 require('dotenv').config();
 
 const app = express();
@@ -34,9 +35,11 @@ app.use('/api', noticeRoutes); // Assuming you have classHistroyRoute defined
 app.use('/api/performance' , performanceRoutes);
 app.use('/api/exam', examRoutes);
 
+
 connectDB().then(() => {
   app.listen(port, () => {
     console.log(`✅ Server running at http://localhost:${port}`);
   });
   startCronJob(); // Start the cron job
+  startCronJobUpdata(); // Start the monthly update cron job
 });

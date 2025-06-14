@@ -11,11 +11,6 @@ const Home = () => {
         <p className="text-lg mb-4 text-gray-700">
           Empowering students, teachers, and admins with smart tools.
         </p>
-        <Link to="/login">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-            Login
-          </button>
-        </Link>
       </div>
     </div>
   );

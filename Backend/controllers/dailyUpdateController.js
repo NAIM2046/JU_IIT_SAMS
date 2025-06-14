@@ -132,7 +132,7 @@ const getAttendancebyClass_sub_data = async (req, res) => {
 const getAttendanceByStudentId = async (req , res) =>{
   const db = getDB() ; 
   const AttendanceInfo = db.collection("attendanceInfo");
-  console.log(req.params) ;
+  //console.log(req.params) ;
   const { id : studentId } = req.params;
 
   try{
@@ -177,11 +177,60 @@ const getAttendanceByStudentId = async (req , res) =>{
   }
 
 }
+const getAttendanceByStd_subject = async(req , res) =>{
+  const info =  req.body  ; 
+   // console.log(info) ;
+  const db = getDB() ; 
+  const collAttendance = db.collection("attendanceInfo") ; 
+  const result =await collAttendance.aggregate([
+    {
+      $match:{
+        class:info.classNumber , 
+        subject: info.subject 
+      }
+    } ,
+    {
+      $unwind: "$records"
+    } ,
+    {
+      $match: {
+        "records.studentId" : info.studentId 
+      }
+    },  
+    {
+      $group: {
+        _id: "$records.status",
+        count: {$sum: 1}
+      }
+    },
+    {
+      $project: {
+        _id: 0, 
+        status: "$_id",
+        count: 1
+         
+      }
+    }
+  ]).toArray() ;
+  const attendanceSummary = {
+    present: 0,
+    absent: 0
+  };
+
+  result.forEach(item => {
+    if (item.status === 'P') attendanceSummary.present = item.count;
+    else if (item.status === 'A') attendanceSummary.absent = item.count;
+  });
+
+  res.status(200).json(attendanceSummary);
+ 
+}
 
 module.exports = {
   getAttendancebyClass_sub_data,
   setAttendanceDefault,
   updataAttendanceSingle ,
-  getAttendanceByStudentId
+  getAttendanceByStudentId ,
   // Add other functions here as needed
+  getAttendanceByStd_subject
 }

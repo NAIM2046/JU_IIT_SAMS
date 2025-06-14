@@ -157,9 +157,20 @@ const performanceSummaryByStudentId = async (req , res)=>{
   }
 
 }
+const getPerformanceById_subeject = async (req , res) =>{
+  const db = getDB() ;
+  const info = req.body ;  
+  const quary = {
+    studentId: info.id ,
+    subject: info.subject
+  } 
+  const result = await db.collection("performanceInfo").find(quary).toArray()
+  res.json(result[0]) ;
+}
 
 module.exports = {
   UpdatePerformance,
     getPerformanceByClassAndSubject,
-  performanceSummaryByStudentId
+  performanceSummaryByStudentId ,
+  getPerformanceById_subeject
 };

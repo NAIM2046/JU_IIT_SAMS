@@ -4,6 +4,8 @@ import "./index.css";
 import App from "./App.jsx";
 import { RouterProvider } from "react-router-dom";
 import router from "./Router/Router.jsx";
+import { Buffer } from "buffer";
+window.Buffer = Buffer;
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

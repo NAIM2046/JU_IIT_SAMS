@@ -1,169 +1,326 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
+import { toast } from "react-toastify";
+import { FiPlus, FiTrash2, FiX, FiBook, FiSave } from "react-icons/fi";
 
 const AdminClassManage = () => {
+  const axiosPrivate = useAxiosPrivate();
   const [classNumber, setClassNumber] = useState("");
   const [subjectInput, setSubjectInput] = useState("");
   const [subjectList, setSubjectList] = useState([]);
   const [classes, setClasses] = useState([]);
-  const AxiosSecure = useAxiosPrivate();
+  const [loading, setLoading] = useState(false);
+  const [newSubjectInputs, setNewSubjectInputs] = useState({});
 
   // Fetch all classes on load
   useEffect(() => {
     fetchClasses();
   }, []);
-  console.log("Classes:", classes); // ⬅️ Add this line
+
   const fetchClasses = async () => {
     try {
-      const res = await AxiosSecure.get("/api/getclassandsub");
-      console.log("Class data:", res.data); // ⬅️ Add this line
+      setLoading(true);
+      const res = await axiosPrivate.get("/api/getclassandsub");
       setClasses(Array.isArray(res.data) ? res.data : []);
+
+      // Initialize new subject inputs
+      const inputs = {};
+      res.data.forEach((cls) => {
+        inputs[cls.class] = "";
+      });
+      setNewSubjectInputs(inputs);
     } catch (err) {
+      toast.error("Failed to fetch classes");
       console.error("Failed to fetch classes:", err);
-      setClasses([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddSubjectToList = () => {
-    if (subjectInput.trim()) {
-      setSubjectList([...subjectList, subjectInput.trim()]);
-      setSubjectInput("");
+    if (!subjectInput.trim()) {
+      toast.warning("Please enter a subject name");
+      return;
     }
+    if (subjectList.includes(subjectInput.trim())) {
+      toast.warning("This subject already exists in the list");
+      return;
+    }
+    setSubjectList([...subjectList, subjectInput.trim()]);
+    setSubjectInput("");
+  };
+
+  const handleRemoveSubjectFromList = (subjectToRemove) => {
+    setSubjectList(subjectList.filter((sub) => sub !== subjectToRemove));
   };
 
   const handleCreateClass = async () => {
-    const classnew = {
-      class: classNumber,
-      subjects: subjectList,
-    };
-    console.log("Class data:", classnew); // ⬅️ Add this line
-    if (!classNumber || subjectList.length === 0)
-      return alert("Fill all fields");
+    if (!classNumber) {
+      toast.warning("Please enter a class number");
+      return;
+    }
+    if (subjectList.length === 0) {
+      toast.warning("Please add at least one subject");
+      return;
+    }
 
-    await AxiosSecure.post("/api/addclassandsub", {
-      classNumber,
-      subjects: subjectList,
-    });
-
-    setClassNumber("");
-    setSubjectList([]);
-    fetchClasses();
+    try {
+      setLoading(true);
+      await axiosPrivate.post("/api/addclassandsub", {
+        classNumber,
+        subjects: subjectList,
+      });
+      toast.success(`Class ${classNumber} created successfully`);
+      setClassNumber("");
+      setSubjectList([]);
+      fetchClasses();
+    } catch (err) {
+      toast.error("Failed to create class");
+      console.error("Failed to create class:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddSubjectToExisting = async (classNumber, subject) => {
-    console.log("Adding subject:", classNumber, subject); // ⬅️ Add this line
-    await AxiosSecure.put(`/api/classes/${classNumber}/add-subject`, {
-      subject,
-    });
-    fetchClasses();
+    if (!subject.trim()) {
+      toast.warning("Please enter a subject name");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await axiosPrivate.put(`/api/classes/${classNumber}/add-subject`, {
+        subject,
+      });
+      toast.success(`Subject added to Class ${classNumber}`);
+
+      // Clear the input for this class
+      setNewSubjectInputs((prev) => ({ ...prev, [classNumber]: "" }));
+      fetchClasses();
+    } catch (err) {
+      toast.error("Failed to add subject");
+      console.error("Failed to add subject:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRemoveSubject = async (classNumber, subject) => {
-    await AxiosSecure.put(`/api/classes/${classNumber}/remove-subject`, {
-      subject,
-    });
-    fetchClasses();
+    if (!window.confirm(`Remove "${subject}" from Class ${classNumber}?`))
+      return;
+
+    try {
+      setLoading(true);
+      await axiosPrivate.put(`/api/classes/${classNumber}/remove-subject`, {
+        subject,
+      });
+      toast.success(`Subject removed from Class ${classNumber}`);
+      fetchClasses();
+    } catch (err) {
+      toast.error("Failed to remove subject");
+      console.error("Failed to remove subject:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteClass = async (classNum) => {
+    if (!window.confirm(`Delete Class ${classNum} and all its subjects?`))
+      return;
+
     try {
-      await AxiosSecure.delete(`/api/classes/${classNum}`);
-      fetchClasses(); // Refresh the class list after deletion
+      setLoading(true);
+      await axiosPrivate.delete(`/api/classes/${classNum}`);
+      toast.success(`Class ${classNum} deleted successfully`);
+      fetchClasses();
     } catch (err) {
+      toast.error("Failed to delete class");
       console.error("Failed to delete class:", err);
-      alert("Failed to delete class. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">📘 Class & Subject Manager</h2>
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          Class & Subject Management
+        </h1>
 
-      {/* Add New Class Section */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-xl font-semibold mb-2">➕ Add New Class</h3>
-        <input
-          type="number"
-          placeholder="Class Number"
-          value={classNumber}
-          onChange={(e) => setClassNumber(e.target.value)}
-          className="border p-2 mr-2"
-        />
-        <input
-          type="text"
-          placeholder="Subject Name"
-          value={subjectInput}
-          onChange={(e) => setSubjectInput(e.target.value)}
-          className="border p-2 mr-2"
-        />
-        <button
-          onClick={handleAddSubjectToList}
-          className="bg-blue-500 text-white px-3 py-2 rounded"
-        >
-          Add Subject
-        </button>
-        <div className="mt-2">
-          {subjectList.map((sub, idx) => (
-            <span
-              key={idx}
-              className="bg-gray-200 px-2 py-1 mr-2 mt-2 inline-block rounded"
-            >
-              {sub}
-            </span>
-          ))}
-        </div>
-        <button
-          onClick={handleCreateClass}
-          className="mt-4 bg-green-600 text-white px-4 py-2 rounded"
-        >
-          ✅ Create Class
-        </button>
-      </div>
+        {/* Add New Class Section */}
+        <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Create New Class
+          </h2>
 
-      {/* All Classes */}
-      <div className="bg-white p-4 rounded shadow">
-        <h3 className="text-xl font-semibold mb-4">📋 All Classes</h3>
-        {classes?.map((cls) => (
-          <div key={cls._id} className="mb-4 border-b pb-2">
-            <h4 className="font-bold text-lg flex justify-between items-center">
-              <span>Class {cls.class}</span>
-              <button
-                onClick={() => handleDeleteClass(cls.class)}
-                className="text-red-500 text-sm"
-              >
-                🗑️ Delete Class
-              </button>
-            </h4>
-            <ul className="ml-4 mt-2">
-              {cls.subjects.map((sub, idx) => (
-                <li key={idx} className="flex justify-between items-center">
-                  <span>{sub}</span>
-                  <button
-                    onClick={() => handleRemoveSubject(cls.class, sub)}
-                    className="text-red-500 text-sm"
-                  >
-                    ❌ Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-2 flex items-center gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Class Number *
+              </label>
               <input
-                type="text"
-                placeholder="New Subject"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleAddSubjectToExisting(cls.class, e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-                className="border p-1 px-2"
+                type="number"
+                placeholder="e.g., 6 for Class 6"
+                value={classNumber}
+                onChange={(e) => setClassNumber(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="1"
+                max="12"
               />
-              <span className="text-sm text-gray-500">Press Enter to add</span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Add Subjects *
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Subject name"
+                  value={subjectInput}
+                  onChange={(e) => setSubjectInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleAddSubjectToList()
+                  }
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={handleAddSubjectToList}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
+                >
+                  <FiPlus /> Add
+                </button>
+              </div>
             </div>
           </div>
-        ))}
+
+          {subjectList.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Subjects to Add:
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {subjectList.map((sub, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                  >
+                    {sub}
+                    <button
+                      onClick={() => handleRemoveSubjectFromList(sub)}
+                      className="ml-2 text-blue-600 hover:text-blue-800"
+                    >
+                      <FiX size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleCreateClass}
+            disabled={loading || !classNumber || subjectList.length === 0}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 flex items-center gap-2"
+          >
+            <FiSave /> Create Class
+          </button>
+        </div>
+
+        {/* All Classes Section */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Existing Classes
+          </h2>
+
+          {loading && !classes.length ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : classes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No classes found. Create your first class above.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {classes.map((cls) => (
+                <div
+                  key={cls._id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                      <FiBook className="text-blue-500" /> Class {cls.class}
+                    </h3>
+                    <button
+                      onClick={() => handleDeleteClass(cls.class)}
+                      className="text-red-600 hover:text-red-800 flex items-center gap-1 text-sm"
+                    >
+                      <FiTrash2 /> Delete Class
+                    </button>
+                  </div>
+
+                  {cls.subjects.length > 0 ? (
+                    <ul className="mb-4 space-y-2">
+                      {cls.subjects.map((sub, idx) => (
+                        <li
+                          key={idx}
+                          className="flex justify-between items-center bg-gray-50 px-3 py-2 rounded"
+                        >
+                          <span>{sub}</span>
+                          <button
+                            onClick={() => handleRemoveSubject(cls.class, sub)}
+                            className="text-red-500 hover:text-red-700 flex items-center gap-1 text-sm"
+                          >
+                            <FiX /> Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="mb-4 text-gray-500 text-sm">
+                      No subjects added yet
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Add new subject"
+                      value={newSubjectInputs[cls.class] || ""}
+                      onChange={(e) =>
+                        setNewSubjectInputs((prev) => ({
+                          ...prev,
+                          [cls.class]: e.target.value,
+                        }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddSubjectToExisting(cls.class, e.target.value);
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() =>
+                        handleAddSubjectToExisting(
+                          cls.class,
+                          newSubjectInputs[cls.class] || ""
+                        )
+                      }
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1"
+                      disabled={!newSubjectInputs[cls.class]}
+                    >
+                      <FiPlus /> Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

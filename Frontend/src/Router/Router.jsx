@@ -26,6 +26,9 @@ import ExamHome from "../Pages/Exam/ExamHome";
 import RankList from "../Components/StudentDashboard/RankList";
 import SubjectsPer_Summ from "../Components/StudentDashboard/SubjectsPer_Summ";
 import ReportCard from "../Components/StudentDashboard/ReportCard";
+import StudentRoute from "./StudentRoute";
+import TeacherRoute from "./TeacherRoute";
+import AdminRoute from "./AdminRoute";
 
 const router = createBrowserRouter([
   {
@@ -39,7 +42,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/adminDashboard",
-    element: <Admin></Admin>,
+    element: (
+      <AdminRoute>
+        <Admin></Admin>
+      </AdminRoute>
+    ),
     children: [
       {
         path: "/adminDashboard",
@@ -69,7 +76,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/teacherDashboard",
-    element: <TeacherSection></TeacherSection>,
+    element: (
+      <TeacherRoute>
+        <TeacherSection></TeacherSection>
+      </TeacherRoute>
+    ),
     children: [
       {
         path: "/teacherDashboard",
@@ -99,7 +110,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/studentDashboard",
-    element: <StudentSection></StudentSection>,
+    element: (
+      <StudentRoute>
+        <StudentSection></StudentSection>
+      </StudentRoute>
+    ),
     children: [
       {
         path: "/studentDashboard",

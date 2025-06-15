@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
+import {
+  FiUser,
+  FiBook,
+  FiCheckCircle,
+  FiXCircle,
+  FiAward,
+  FiTrendingUp,
+  FiTrendingDown,
+  FiSave,
+} from "react-icons/fi";
+import { FaChalkboardTeacher } from "react-icons/fa";
 
 const EveryClass = () => {
   const location = useLocation();
@@ -9,22 +20,17 @@ const EveryClass = () => {
   const teacherName = location.state?.teacherName;
   const [students, setStudents] = useState([]);
   const [defaultAttendance, setDefaultAttendance] = useState("");
-  const [isAttendanceSubmitted, setIsAttendanceSubmitted] = useState(false); // "P", "A", or ""
+  const [isAttendanceSubmitted, setIsAttendanceSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const AxiosSecure = useAxiosPrivate();
 
-  console.log(schedule, DateFormate, teacherName);
-
   useEffect(() => {
     const fetchStudents = async () => {
-      if (!schedule?.class || !schedule?.subject) return;
-
-      // const date = new Date();
-      // const formattedDate = `${String(date.getDate()).padStart(2, "0")}${String(
-      //   date.getMonth() + 1
-      // ).padStart(2, "0")}${date.getFullYear()}`; // e.g., 19052025
-
       try {
+        if (!schedule?.class || !schedule?.subject) return;
+
         // 1. Get student list
         const res = await AxiosSecure.get(
           `/api/auth/getStudentByClassandSection/${schedule.class}`
@@ -57,11 +63,11 @@ const EveryClass = () => {
             });
           }
         } catch (error) {
-          // No attendance found — skip
           console.error("Attendance not found:", error);
           setIsAttendanceSubmitted(false);
         }
 
+        // 3. Get performance data
         try {
           const performanceRes = await AxiosSecure.get(
             `/api/performance/byClassAndSubject/${schedule.class}/${schedule.subject}`
@@ -85,20 +91,17 @@ const EveryClass = () => {
         setStudents(updatedStudents);
       } catch (err) {
         console.error("Failed to fetch students:", err);
+        setError("Failed to load student data");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStudents();
-  }, [schedule?.class, schedule?.subject]);
+  }, [schedule?.class, schedule?.subject, DateFormate, AxiosSecure]);
 
-  // Handle individual student attendance change
   const updateSingleStudentAttendance = async (studentId, roll, status) => {
     if (!schedule?.class || !schedule?.subject) return;
-
-    // const today = new Date();
-    // const dateStr = `${String(today.getDate()).padStart(2, "0")}${String(
-    //   today.getMonth() + 1
-    // ).padStart(2, "0")}${today.getFullYear()}`;
 
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
@@ -108,9 +111,8 @@ const EveryClass = () => {
         studentId,
         roll,
         status,
-        students, // send all students so backend can create new attendance if needed
+        students,
       });
-      console.log(res.data);
 
       setStudents((prev) =>
         prev.map((student) =>
@@ -124,13 +126,8 @@ const EveryClass = () => {
     }
   };
 
-  // Handle default attendance for all
   const handleDefaultAttendanceChange = async (status) => {
     if (!schedule?.class || !schedule?.subject) return;
-    // const today = new Date();
-    // const dateStr = `${String(today.getDate()).padStart(2, "0")}${String(
-    //   today.getMonth() + 1
-    // ).padStart(2, "0")}${today.getFullYear()}`;
 
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
@@ -141,7 +138,6 @@ const EveryClass = () => {
         defaultStatus: status,
       });
 
-      // Update local state
       setStudents((prev) =>
         prev.map((student) => ({
           ...student,
@@ -153,7 +149,6 @@ const EveryClass = () => {
       console.error("Failed to set default attendance:", err);
     }
   };
-  // console.log(schedule.subject);
 
   const updateStudentPerformance = async (studentId, evaluation) => {
     try {
@@ -164,10 +159,8 @@ const EveryClass = () => {
         evaluation,
       });
 
-      console.log(res.data);
       const { totalTasks } = res.data;
 
-      // Optionally update frontend state to reflect changes immediately
       setStudents((prev) =>
         prev.map((student) =>
           student._id === studentId
@@ -190,7 +183,6 @@ const EveryClass = () => {
         className: schedule.class,
         subject: schedule.subject,
         date: DateFormate,
-
         teacherName: teacherName,
         status: "Completed",
         totalStudents: students.length,
@@ -198,137 +190,234 @@ const EveryClass = () => {
         totalAbsent: students.filter((s) => s.attendance === "A").length,
       });
 
-      console.log("Class history saved", response.data);
+      if (response.data) {
+        alert("Class saved successfully!");
+      }
     } catch (error) {
       console.error("Failed to save class history", error);
+      alert("Failed to save class. Please try again.");
     }
   };
 
-  return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">
-        Students in Class {schedule?.class}
-      </h2>
-      <table className="table-auto border border-gray-300 w-full">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border border-gray-300 px-4 py-2">Name</th>
-            <th className="border border-gray-300 px-4 py-2">Roll</th>
-            <th className="border border-gray-300 px-4 py-2">Homework</th>
-            <th className="border border-gray-300 px-4 py-2">Performance</th>
-            <th className="border border-gray-300 px-4 py-2 text-center">
-              <div>Attendance</div>
-              <div className="flex justify-center gap-4 mt-1">
-                <label className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={defaultAttendance === "P"}
-                    disabled={isAttendanceSubmitted}
-                    onChange={() => handleDefaultAttendanceChange("P")}
-                  />
-                  P
-                </label>
-                <label className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={defaultAttendance === "A"}
-                    disabled={isAttendanceSubmitted}
-                    onChange={() => handleDefaultAttendanceChange("A")}
-                  />
-                  A
-                </label>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {students?.map((student) => (
-            <tr key={student._id} className="text-center">
-              <td className="border border-gray-300 px-4 py-2">
-                {student.name}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {student.roll}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">N/A</td>
-              <td className="border border-gray-300 px-4 py-2">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex gap-2">
-                    <button
-                      className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
-                      onClick={() =>
-                        updateStudentPerformance(student._id, "Bad")
-                      }
-                    >
-                      Bad
-                    </button>
-                    <button
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs px-2 py-1 rounded"
-                      onClick={() =>
-                        updateStudentPerformance(student._id, "Good")
-                      }
-                    >
-                      Good
-                    </button>
-                    <button
-                      className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded"
-                      onClick={() =>
-                        updateStudentPerformance(student._id, "Excellent")
-                      }
-                    >
-                      Excellent
-                    </button>
-                  </div>
-                  <div className="text-xs text-gray-700 mt-1">
-                    Tasks Done: {student.totalTasks || 0}{" "}
-                    <p> lest: {student.latestEvaluation}</p>
-                  </div>
-                </div>
-              </td>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
-              <td className="border border-gray-300 px-4 py-2">
-                <div className="flex justify-center gap-4">
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      name={`attendance-${student._id}`}
-                      value="P"
-                      checked={student.attendance === "P"}
-                      onChange={() =>
-                        updateSingleStudentAttendance(
-                          student._id,
-                          student.roll,
-                          "P"
-                        )
-                      }
-                    />
-                    P
-                  </label>
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      name={`attendance-${student._id}`}
-                      value="A"
-                      checked={student.attendance === "A"}
-                      onChange={() =>
-                        updateSingleStudentAttendance(
-                          student._id,
-                          student.roll,
-                          "A"
-                        )
-                      }
-                    />
-                    A
-                  </label>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <button onClick={handleSaveClass} className="btn btn-info">
-        save Class
-      </button>
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <FiXCircle className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FaChalkboardTeacher className="mr-3 text-blue-600" />
+            Class Management
+          </h1>
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center">
+                <FiBook className="text-blue-500 mr-2" />
+                <span className="font-medium">Subject:</span>
+                <span className="ml-2">{schedule?.subject}</span>
+              </div>
+              <div className="flex items-center">
+                <FiUser className="text-blue-500 mr-2" />
+                <span className="font-medium">Class:</span>
+                <span className="ml-2">{schedule?.class}</span>
+              </div>
+              <div className="flex items-center">
+                <FiAward className="text-blue-500 mr-2" />
+                <span className="font-medium">Teacher:</span>
+                <span className="ml-2">{teacherName}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Attendance Controls */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <h2 className="text-xl font-semibold mb-2 sm:mb-0">Attendance</h2>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => handleDefaultAttendanceChange("P")}
+                disabled={isAttendanceSubmitted}
+                className={`flex items-center px-4 py-2 rounded-lg ${
+                  defaultAttendance === "P"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-gray-100 hover:bg-gray-200"
+                } ${isAttendanceSubmitted ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <FiCheckCircle className="mr-2" />
+                Mark All Present
+              </button>
+              <button
+                onClick={() => handleDefaultAttendanceChange("A")}
+                disabled={isAttendanceSubmitted}
+                className={`flex items-center px-4 py-2 rounded-lg ${
+                  defaultAttendance === "A"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 hover:bg-gray-200"
+                } ${isAttendanceSubmitted ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <FiXCircle className="mr-2" />
+                Mark All Absent
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Students Table */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      <FiUser className="mr-2" /> Student
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Roll
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Performance
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Attendance
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {students?.map((student) => (
+                  <tr key={student._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">
+                        {student.name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      {student.roll}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <div className="flex space-x-2 mb-2">
+                          <button
+                            onClick={() =>
+                              updateStudentPerformance(student._id, "Bad")
+                            }
+                            className={`flex items-center px-3 py-1 rounded-full text-xs ${
+                              student.latestEvaluation === "Bad"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 hover:bg-gray-200"
+                            }`}
+                          >
+                            <FiTrendingDown className="mr-1" /> Bad
+                          </button>
+                          <button
+                            onClick={() =>
+                              updateStudentPerformance(student._id, "Good")
+                            }
+                            className={`flex items-center px-3 py-1 rounded-full text-xs ${
+                              student.latestEvaluation === "Good"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 hover:bg-gray-200"
+                            }`}
+                          >
+                            <FiTrendingUp className="mr-1" /> Good
+                          </button>
+                          <button
+                            onClick={() =>
+                              updateStudentPerformance(student._id, "Excellent")
+                            }
+                            className={`flex items-center px-3 py-1 rounded-full text-xs ${
+                              student.latestEvaluation === "Excellent"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 hover:bg-gray-200"
+                            }`}
+                          >
+                            <FiAward className="mr-1" /> Excellent
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Tasks: {student.totalTasks || 0}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex justify-center space-x-4">
+                        <button
+                          onClick={() =>
+                            updateSingleStudentAttendance(
+                              student._id,
+                              student.roll,
+                              "P"
+                            )
+                          }
+                          className={`flex items-center px-3 py-1 rounded-full text-xs ${
+                            student.attendance === "P"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 hover:bg-gray-200"
+                          }`}
+                        >
+                          <FiCheckCircle className="mr-1" /> Present
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateSingleStudentAttendance(
+                              student._id,
+                              student.roll,
+                              "A"
+                            )
+                          }
+                          className={`flex items-center px-3 py-1 rounded-full text-xs ${
+                            student.attendance === "A"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 hover:bg-gray-200"
+                          }`}
+                        >
+                          <FiXCircle className="mr-1" /> Absent
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleSaveClass}
+            className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-colors"
+          >
+            <FiSave className="mr-2" /> Save Class Data
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

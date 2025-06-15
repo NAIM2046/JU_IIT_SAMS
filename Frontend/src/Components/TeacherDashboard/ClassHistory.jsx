@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
+import {
+  FiCalendar,
+  FiUsers,
+  FiCheckCircle,
+  FiXCircle,
+  FiBook,
+  FiHome,
+  FiArrowRight,
+} from "react-icons/fi";
+import { FaChalkboardTeacher } from "react-icons/fa";
 
 const ClassHistory = () => {
   const { user } = useStroge();
@@ -29,7 +38,7 @@ const ClassHistory = () => {
     };
 
     fetchHistory();
-  }, [teacherName]);
+  }, [teacherName, AxiosSecure]);
 
   const handleEnterClass = (classData) => {
     const schedule = {
@@ -37,60 +46,228 @@ const ClassHistory = () => {
       subject: classData.subject,
     };
     const formattedDate = classData.date;
-    // You can navigate using class name, ID, or other info
     navigate(`/teacherDashboard/Class/${schedule.class}`, {
       state: { schedule, formattedDate, teacherName: user.name },
     });
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Class History</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : history.length === 0 ? (
-        <p>No class history found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="table-auto w-full border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-4 py-2">Class</th>
-                <th className="border px-4 py-2">Subject</th>
-                <th className="border px-4 py-2">Date</th>
-                <th className="border px-4 py-2">Status</th>
-                <th className="border px-4 py-2">Total</th>
-                <th className="border px-4 py-2">Present</th>
-                <th className="border px-4 py-2">Absent</th>
-                <th className="border px-4 py-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((item, index) => (
-                <tr key={index}>
-                  <td className="border px-4 py-2">{item.className}</td>
-                  <td className="border px-4 py-2">{item.subject}</td>
-                  <td className="border px-4 py-2">{item.date}</td>
-                  <td className="border px-4 py-2">{item.status}</td>
-                  <td className="border px-4 py-2">{item.totalStudents}</td>
-                  <td className="border px-4 py-2">{item.totalPresent}</td>
-                  <td className="border px-4 py-2">{item.totalAbsent}</td>
-                  <td className="border px-4 py-2 text-center">
-                    <button
-                      onClick={() => handleEnterClass(item)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                    >
-                      Enter Class
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+            <FaChalkboardTeacher className="mr-3 text-blue-600" />
+            Class History
+          </h1>
+          <p className="text-gray-600">
+            View your past classes and attendance records
+          </p>
         </div>
-      )}
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiXCircle className="h-5 w-5 text-red-500" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <FiBook className="text-gray-400 text-3xl" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">
+              No class history found
+            </h3>
+            <p className="text-gray-500">
+              You haven't conducted any classes yet.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-4 p-4">
+              {history.map((item, index) => (
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold text-lg text-gray-800">
+                      {item.className}
+                    </h3>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        item.status === "Completed"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center text-gray-600">
+                      <FiBook className="mr-2 text-blue-500" />
+                      <span>{item.subject}</span>
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <FiCalendar className="mr-2 text-blue-500" />
+                      <span>{item.date}</span>
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <FiUsers className="mr-2 text-blue-500" />
+                      <span>{item.totalStudents} students</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-gray-100">
+                      <div className="flex space-x-4">
+                        <div className="text-green-600 flex items-center">
+                          <FiCheckCircle className="mr-1" />
+                          <span>{item.totalPresent}</span>
+                        </div>
+                        <div className="text-red-600 flex items-center">
+                          <FiXCircle className="mr-1" />
+                          <span>{item.totalAbsent}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleEnterClass(item)}
+                        className="flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm"
+                      >
+                        Details <FiArrowRight className="ml-1" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <div className="flex items-center">
+                        <FiHome className="mr-2" /> Class
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <div className="flex items-center">
+                        <FiBook className="mr-2" /> Subject
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <div className="flex items-center">
+                        <FiCalendar className="mr-2" /> Date
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <div className="flex items-center">
+                        <FiUsers className="mr-2" /> Total
+                      </div>
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Present
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Absent
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {history.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">
+                          {item.className}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        {item.subject}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        {item.date}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            item.status === "Completed"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        {item.totalStudents}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-green-600">
+                        {item.totalPresent}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-red-600">
+                        {item.totalAbsent}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEnterClass(item)}
+                          className="text-blue-600 hover:text-blue-900 flex items-center justify-end w-full cursor-pointer"
+                        >
+                          View <FiArrowRight className="ml-1" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination would go here */}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

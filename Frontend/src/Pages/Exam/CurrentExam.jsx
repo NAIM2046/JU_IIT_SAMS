@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
+import {
+  FiUser,
+  FiHash,
+  FiAward,
+  FiPercent,
+  FiSave,
+  FiTrash2,
+  FiBook,
+  FiHome,
+} from "react-icons/fi";
+import { FaChalkboardTeacher } from "react-icons/fa";
+import { ImSpinner8 } from "react-icons/im";
 
 const CurrentExam = () => {
   const AxiosSecure = useAxiosPrivate();
@@ -8,147 +20,250 @@ const CurrentExam = () => {
 
   const [currentExam, setCurrentExam] = useState(null);
   const [updatedMarks, setUpdatedMarks] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    AxiosSecure.post("/api/exam/currentExam", { teacherId: user._id })
-      .then((res) => {
+    const fetchCurrentExam = async () => {
+      try {
+        const res = await AxiosSecure.post("/api/exam/currentExam", {
+          teacherId: user._id,
+        });
         console.log("Current Exam Info:", res.data);
         if (res.data) {
           setCurrentExam(res.data);
-          // Initialize updatedMarks state with existing marks
           const markData = {};
           res.data.studentsInfo.forEach((student) => {
             markData[student.studentId] = student.marks;
           });
           setUpdatedMarks(markData);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error fetching current exam info:", err);
-      });
-  }, []);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleMarkChange = (studentId, value) => {
+    fetchCurrentExam();
+  }, [user._id, AxiosSecure]);
+
+  const handleMarkChange = async (studentId, value) => {
+    const newValue = Math.min(Math.max(0, value), currentExam.totalMark);
     setUpdatedMarks((prev) => ({
       ...prev,
-      [studentId]: value,
+      [studentId]: newValue,
     }));
-    AxiosSecure.post("/api/exam/updateOneStudentMark", {
-      examId: currentExam._id,
-      studentId: studentId,
-      marks: value,
-    })
-      .then((res) => {
-        console.log("Marks updated successfully:", res.data);
-      })
-      .catch((err) => {
-        console.error("Error updating marks:", err);
+
+    try {
+      await AxiosSecure.post("/api/exam/updateOneStudentMark", {
+        examId: currentExam._id,
+        studentId: studentId,
+        marks: newValue,
       });
+    } catch (err) {
+      console.error("Error updating marks:", err);
+    }
   };
 
-  const handleSave = () => {
-    AxiosSecure.post("/api/exam/examSave", { examId: currentExam._id })
-      .then((res) => {
-        console.log("Marks saved successfully:", res.data);
-        // Optionally, you can show a success message or update the UI
-        window.location.reload(); // Reload the page to reflect changes
-      })
-      .catch((err) => {
-        console.error("Error saving marks:", err);
-      });
-  };
-  const handleDelete = () => {
-    AxiosSecure.delete(`/api/exam/deleteCurrentExam/${currentExam._id}`)
-      .then((res) => {
-        console.log("Exam deleted successfully:", res.data);
-        setCurrentExam(null); // Clear current exam data
-      })
-      .catch((err) => {
-        console.error("Error deleting exam:", err);
-      });
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await AxiosSecure.post("/api/exam/examSave", { examId: currentExam._id });
+      window.location.reload();
+    } catch (err) {
+      console.error("Error saving marks:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (currentExam === null) {
-    return <div>Loading exam data...</div>;
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this exam?")) return;
+
+    setDeleting(true);
+    try {
+      await AxiosSecure.delete(
+        `/api/exam/deleteCurrentExam/${currentExam._id}`
+      );
+      setCurrentExam(null);
+    } catch (err) {
+      console.error("Error deleting exam:", err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <ImSpinner8 className="animate-spin text-4xl text-blue-500" />
+      </div>
+    );
   }
 
   if (!currentExam || !currentExam.studentsInfo?.length) {
     return (
-      <div className="text-center text-xl text-red-500 mt-10">
-        No current exam found.
+      <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+        <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <FiBook className="text-gray-400 text-3xl" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-700 mb-2">
+          No Current Exam
+        </h3>
+        <p className="text-gray-500">There is no active exam to display.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-5">
-      <h2 className="text-xl font-bold mb-4">Current Exam Info</h2>
-      <div className="mb-4">
-        <p>
-          <strong>Class:</strong> {currentExam.class}
-        </p>
-        <p>
-          <strong>Subject:</strong> {currentExam.subject}
-        </p>
-        <p>
-          <strong>Exam Type:</strong> {currentExam.examType}
-        </p>
-        <p>
-          <strong>Total Mark:</strong> {currentExam.totalMark}
-        </p>
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      {/* Exam Header */}
+      <div className="bg-blue-50 p-6 border-b border-blue-100">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <FiAward className="mr-3 text-blue-600" />
+          Current Exam
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex items-center">
+            <FiHome className="text-blue-500 mr-2" />
+            <span className="font-medium">Class:</span>
+            <span className="ml-2">{currentExam.class}</span>
+          </div>
+          <div className="flex items-center">
+            <FiBook className="text-blue-500 mr-2" />
+            <span className="font-medium">Subject:</span>
+            <span className="ml-2">{currentExam.subject}</span>
+          </div>
+          <div className="flex items-center">
+            <FaChalkboardTeacher className="text-blue-500 mr-2" />
+            <span className="font-medium">Type:</span>
+            <span className="ml-2">{currentExam.examType}</span>
+          </div>
+          <div className="flex items-center">
+            <FiPercent className="text-blue-500 mr-2" />
+            <span className="font-medium">Total Marks:</span>
+            <span className="ml-2">{currentExam.totalMark}</span>
+          </div>
+        </div>
       </div>
 
-      <table className="table table-zebra w-full">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Roll</th>
-            <th>Marks</th>
-            <th>Percentage</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentExam.studentsInfo?.map((student) => {
-            const mark = updatedMarks[student.studentId];
-            const percent = (
-              (Number(mark) / Number(currentExam.totalMark)) *
-              100
-            ).toFixed(2);
+      {/* Students Table */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center">
+                  <FiUser className="mr-2" /> Student
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center">
+                  <FiHash className="mr-2" /> Roll
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Marks
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Percentage
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {currentExam.studentsInfo.map((student) => {
+              const mark = updatedMarks[student.studentId] || 0;
+              const percent = (
+                (Number(mark) / Number(currentExam.totalMark)) *
+                100
+              ).toFixed(2);
 
-            return (
-              <tr key={student.studentId}>
-                <td>{student.Name}</td>
-                <td>{student.roll}</td>
-                <td>
-                  <input
-                    type="number"
-                    value={mark}
-                    onChange={(e) =>
-                      handleMarkChange(student.studentId, e.target.value)
-                    }
-                    className="input input-bordered w-24"
-                    min="0"
-                    max={currentExam.totalMark}
-                  />
-                </td>
-                <td>{percent}%</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              return (
+                <tr key={student.studentId} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-medium text-gray-900">
+                      {student.Name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {student.roll}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="number"
+                      value={mark}
+                      onChange={(e) =>
+                        handleMarkChange(student.studentId, e.target.value)
+                      }
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="0"
+                      max={currentExam.totalMark}
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        percent >= 80
+                          ? "bg-green-100 text-green-800"
+                          : percent >= 50
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {percent}%
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-      <button onClick={handleSave} className="btn btn-primary mt-5">
-        publish Marks
-      </button>
-      <button
-        onClick={() => {
-          handleDelete();
-        }}
-        className="btn btn-secondary mt-5 ml-3"
-      >
-        Cancel
-      </button>
+      {/* Action Buttons */}
+      <div className="p-6 border-t border-gray-200 flex justify-end space-x-4">
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className={`flex items-center px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md transition-colors ${
+            deleting ? "opacity-75 cursor-not-allowed" : ""
+          }`}
+        >
+          {deleting ? (
+            <>
+              <ImSpinner8 className="animate-spin mr-2" />
+              Deleting...
+            </>
+          ) : (
+            <>
+              <FiTrash2 className="mr-2" />
+              Cancel Exam
+            </>
+          )}
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className={`flex items-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-colors ${
+            saving ? "opacity-75 cursor-not-allowed" : ""
+          }`}
+        >
+          {saving ? (
+            <>
+              <ImSpinner8 className="animate-spin mr-2" />
+              Publishing...
+            </>
+          ) : (
+            <>
+              <FiSave className="mr-2" />
+              Publish Marks
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

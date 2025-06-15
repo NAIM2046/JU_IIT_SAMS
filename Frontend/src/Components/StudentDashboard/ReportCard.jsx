@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   studentSection: {
     flexDirection: "row",
     marginBottom: 8, // Reduced
-    gap: 8, // Use gap instead of margins
+    //gap: 8, // Use gap instead of margins
   },
   studentImage: {
     width: 70, // Smaller image
@@ -75,8 +75,7 @@ const styles = StyleSheet.create({
   },
   subjectCard: {
     marginBottom: 6, // Reduced
-    borderLeftWidth: 2, // Thinner border
-    borderLeftColor: "#3498db",
+    borderLeft: "2px solid #3498db",
     paddingLeft: 8, // Less padding
   },
   subjectName: {
@@ -98,7 +97,7 @@ const styles = StyleSheet.create({
   },
   compactText: {
     fontSize: 10,
-    lineHeight: 1.1,
+    lineHeight: 12,
   },
 });
 const ReportPDF = ({ data }) => (

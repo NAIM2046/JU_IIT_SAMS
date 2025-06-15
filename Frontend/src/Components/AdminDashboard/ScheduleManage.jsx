@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import useStroge from "../../stroge/useStroge";
+import { toast } from "react-toastify";
+import { FiEdit2, FiTrash2, FiPlus, FiSave, FiClock } from "react-icons/fi";
+import { FaChalkboardTeacher, FaSchool, FaBook } from "react-icons/fa";
 
 const days = [
   "Monday",
@@ -13,31 +15,58 @@ const days = [
 ];
 
 const ScheduleManage = () => {
+  const axiosPrivate = useAxiosPrivate();
   const [scheduleData, setScheduleData] = useState({});
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { fetchClass, classlist, fetchTeacher, teacherList } = useStroge();
-  const [selectedClass, setSelectedClass] = useState("6");
+  const [teacherList, setTeacherList] = useState([]);
+  const [selectedClass, setSelectedClass] = useState("");
   const [subjectsList, setSubjectsList] = useState([]);
-  
+  const [classlist, setClassList] = useState([]);
+  const [isAddingTimeSlot, setIsAddingTimeSlot] = useState(false);
+  const [newTimeSlot, setNewTimeSlot] = useState("");
+
   useEffect(() => {
-    const currentClass = classlist.find((cls) => cls.class === selectedClass);
-    setSubjectsList(currentClass?.subjects || []);
+    fetchTeachers();
+    fetchClass();
+  }, []);
+
+  useEffect(() => {
+    if (selectedClass && classlist.length > 0) {
+      loadScheduleForClass(selectedClass);
+      const currentClass = classlist.find((cls) => cls.class === selectedClass);
+      setSubjectsList(currentClass?.subjects || []);
+    }
   }, [selectedClass, classlist]);
 
-  useEffect(() => {
-    fetchClass();
-    fetchTeacher();
-  }, []);
-  console.log("Teacher list:", teacherList); // ⬅️ Add this line
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosPrivate.get("/api/auth/getTeacher");
+      setTeacherList(res.data);
+    } catch (error) {
+      toast.error("Failed to fetch teachers");
+      console.error("Error fetching teachers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  console.log("Class list:", subjectsList); // ⬅️ Add this line
-
-  const AxoisSecure = useAxiosPrivate();
-
-  useEffect(() => {
-    loadScheduleForClass(selectedClass);
-  }, []);
+  const fetchClass = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosPrivate.get("/api/getclassandsub");
+      setClassList(response.data);
+      if (response.data.length > 0) {
+        setSelectedClass(response.data[0].class);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch classes");
+      console.error("Error fetching class data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCellChange = (day, time, field, value) => {
     setScheduleData((prev) => ({
@@ -52,37 +81,51 @@ const ScheduleManage = () => {
     }));
   };
 
-  const addTimeSlot = () => {
-    const newTime = prompt("Enter new time slot (e.g., 12:00-13:00):");
-    if (newTime) {
-      setTimeSlots((prevSlots) => [...prevSlots, newTime]);
-
-      setScheduleData((prev) => {
-        const updated = { ...prev };
-        days.forEach((day) => {
-          if (!updated[day]) updated[day] = {};
-          updated[day][newTime] = {
-            subject: "",
-            class: "",
-            room: "",
-            teacher: "",
-          };
-        });
-        return updated;
-      });
+  const handleAddTimeSlot = () => {
+    if (!newTimeSlot) {
+      toast.error("Please enter a time slot");
+      return;
     }
+
+    if (timeSlots.includes(newTimeSlot)) {
+      toast.error("This time slot already exists");
+      return;
+    }
+
+    setTimeSlots((prevSlots) => [...prevSlots, newTimeSlot].sort());
+
+    setScheduleData((prev) => {
+      const updated = { ...prev };
+      days.forEach((day) => {
+        if (!updated[day]) updated[day] = {};
+        updated[day][newTimeSlot] = {
+          subject: "",
+          class: selectedClass,
+          room: "",
+          teacher: "",
+        };
+      });
+      return updated;
+    });
+
+    setNewTimeSlot("");
+    setIsAddingTimeSlot(false);
+    toast.success("Time slot added successfully");
   };
 
   const editTimeSlot = (oldTime) => {
     const newTime = prompt("Edit time slot:", oldTime);
-    if (!newTime || newTime === oldTime || timeSlots.includes(newTime)) return;
+    if (!newTime || newTime === oldTime) return;
 
-    // Step 1: Update timeSlots
+    if (timeSlots.includes(newTime)) {
+      toast.error("This time slot already exists");
+      return;
+    }
+
     setTimeSlots((prev) =>
-      prev.map((slot) => (slot === oldTime ? newTime : slot))
+      prev.map((slot) => (slot === oldTime ? newTime : slot)).sort()
     );
 
-    // Step 2: Migrate data for all days
     setScheduleData((prev) => {
       const updated = { ...prev };
       days.forEach((day) => {
@@ -90,19 +133,21 @@ const ScheduleManage = () => {
         const cellData = dayData[oldTime];
 
         if (cellData) {
-          // Copy old data to new time
           dayData[newTime] = { ...cellData };
-          delete dayData[oldTime]; // Remove old time
+          delete dayData[oldTime];
         }
 
         updated[day] = { ...dayData };
       });
       return updated;
     });
+
+    toast.success("Time slot updated successfully");
   };
 
   const deleteTimeSlot = (time) => {
-    if (!confirm(`Delete time slot ${time}?`)) return;
+    if (!confirm(`Are you sure you want to delete the time slot ${time}?`))
+      return;
 
     setTimeSlots((prev) => prev.filter((slot) => slot !== time));
 
@@ -115,16 +160,30 @@ const ScheduleManage = () => {
       });
       return updated;
     });
+
+    toast.success("Time slot deleted successfully");
   };
 
   const saveSchedule = async () => {
-    console.log("class : " + selectedClass);
-    await AxoisSecure.post("/api/addschedule", {
-      classNumber: selectedClass,
-      timeSlots,
-      schedule: scheduleData,
-    });
-    alert("Schedule saved successfully!");
+    if (!selectedClass) {
+      toast.error("Please select a class first");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await axiosPrivate.post("/api/addschedule", {
+        classNumber: selectedClass,
+        timeSlots,
+        schedule: scheduleData,
+      });
+      toast.success("Schedule saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save schedule");
+      console.error("Error saving schedule:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadScheduleForClass = async (classNumber) => {
@@ -133,12 +192,11 @@ const ScheduleManage = () => {
     setLoading(true);
 
     try {
-      const res = await AxoisSecure.get(`/api/getschedule/${classNumber}`);
+      const res = await axiosPrivate.get(`/api/getschedule/${classNumber}`);
       const data = Array.isArray(res.data) ? res.data[0] : res.data;
 
       setTimeSlots(Array.isArray(data?.timeSlots) ? data.timeSlots : []);
       setScheduleData(data?.schedule || {});
-      // setSelectedClass(data?.classNumber); // track current class ID in state
     } catch (error) {
       console.error("Error fetching schedule for class:", error);
       setTimeSlots([]);
@@ -148,142 +206,229 @@ const ScheduleManage = () => {
     }
   };
 
-  if (loading) return <div className="p-4">Loading schedule...</div>;
-
   return (
-    <div className="p-4">
-      <select
-        className="mb-4 p-2 border rounded"
-        value={selectedClass}
-        onChange={(e) => {
-          const classNumber = e.target.value;
-          setSelectedClass(classNumber);
-          loadScheduleForClass(classNumber);
-        }}
-      >
-        <option value="">Select Class</option>
-        {classlist.map((cls) => (
-          <option key={cls._id} value={cls.class}>
-            {cls.class}
-          </option>
-        ))}
-      </select>
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">
+          Schedule Management
+        </h1>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1">Time</th>
-              {days.map((day) => (
-                <th key={day} className="border px-2 py-1">
-                  {day}
-                </th>
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="w-full md:w-64">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Class
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              disabled={loading}
+            >
+              {classlist.map((cls) => (
+                <option key={cls._id} value={cls.class}>
+                  Class {cls.class}
+                </option>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {timeSlots.map((slot) => (
-              <tr key={slot}>
-                <td className="border px-2 py-1 align-top">
-                  <div className="flex flex-col items-start gap-1">
-                    <span>{slot}</span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => editTimeSlot(slot)}
-                        className="text-xs bg-yellow-500 text-white px-2 py-0.5 rounded"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteTimeSlot(slot)}
-                        className="text-xs bg-red-500 text-white px-2 py-0.5 rounded"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </td>
-                {days.map((day) => {
-                  const cell = scheduleData[day]?.[slot] || {};
-                  console.log("Cell data:", cell); // ⬅️ Add this line
-                  return (
-                    <td key={day + slot} className="border px-2 py-1">
-                      <select
-                        className="w-full mb-1 text-xs p-1 border rounded"
-                        value={cell.subject || ""}
-                        onChange={(e) =>
-                          handleCellChange(day, slot, "subject", e.target.value)
-                        }
-                      >
-                        <option value="">Select Subject</option>
-                        {subjectsList.map((subject, idx) => (
-                          <option key={idx} value={subject}>
-                            {subject}
-                          </option>
-                        ))}
-                      </select>
+            </select>
+          </div>
 
-                      <select
-                        className="w-full mb-1 text-xs p-1 border rounded"
-                        value={cell.class || ""}
-                        onChange={(e) =>
-                          handleCellChange(day, slot, "class", e.target.value)
-                        }
-                      >
-                        <option value="">Select Class</option>
-                        {classlist.map((cls) => (
-                          <option key={cls._id} value={cls.class}>
-                            {cls.class}
-                          </option>
-                        ))}
-                      </select>
+          <div className="flex items-end gap-2">
+            {!isAddingTimeSlot ? (
+              <button
+                onClick={() => setIsAddingTimeSlot(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                disabled={loading || !selectedClass}
+              >
+                <FiPlus /> Add Time Slot
+              </button>
+            ) : (
+              <div className="flex items-end gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Time Slot
+                  </label>
+                  <input
+                    type="text"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., 09:00-10:00"
+                    value={newTimeSlot}
+                    onChange={(e) => setNewTimeSlot(e.target.value)}
+                  />
+                </div>
+                <button
+                  onClick={handleAddTimeSlot}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <FiPlus /> Add
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAddingTimeSlot(false);
+                    setNewTimeSlot("");
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
-                      <select
-                        className="w-full mb-1 text-xs p-1 border rounded"
-                        value={cell.teacher || ""}
-                        onChange={(e) =>
-                          handleCellChange(day, slot, "teacher", e.target.value)
-                        }
-                      >
-                        <option value="">Select Teacher</option>
-                        {teacherList.map((teacher) => (
-                          <option key={teacher._id} value={teacher.name}>
-                            {teacher.name}
-                          </option>
-                        ))}
-                      </select>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Time Slots
+                  </th>
+                  {days.map((day) => (
+                    <th
+                      key={day}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {timeSlots.length > 0 ? (
+                  timeSlots.map((slot) => (
+                    <tr key={slot} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <FiClock className="mr-2 text-blue-500" />
+                          <span className="font-medium">{slot}</span>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => editTimeSlot(slot)}
+                            className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200"
+                          >
+                            <FiEdit2 size={12} /> Edit
+                          </button>
+                          <button
+                            onClick={() => deleteTimeSlot(slot)}
+                            className="flex items-center gap-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200"
+                          >
+                            <FiTrash2 size={12} /> Delete
+                          </button>
+                        </div>
+                      </td>
+                      {days.map((day) => {
+                        const cell = scheduleData[day]?.[slot] || {};
+                        return (
+                          <td key={day + slot} className="px-6 py-4">
+                            <div className="space-y-2">
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1 flex items-center">
+                                  <FaBook className="mr-1" /> Subject
+                                </label>
+                                <select
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  value={cell.subject || ""}
+                                  onChange={(e) =>
+                                    handleCellChange(
+                                      day,
+                                      slot,
+                                      "subject",
+                                      e.target.value
+                                    )
+                                  }
+                                >
+                                  <option value="">Select Subject</option>
+                                  {subjectsList.map((subject, idx) => (
+                                    <option key={idx} value={subject}>
+                                      {subject}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
 
-                      <input
-                        type="text"
-                        className="w-full text-xs p-1 border rounded mt-1"
-                        placeholder="Room"
-                        value={cell.room || ""}
-                        onChange={(e) =>
-                          handleCellChange(day, slot, "room", e.target.value)
-                        }
-                      />
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1 flex items-center">
+                                  <FaChalkboardTeacher className="mr-1" />{" "}
+                                  Teacher
+                                </label>
+                                <select
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  value={cell.teacher || ""}
+                                  onChange={(e) =>
+                                    handleCellChange(
+                                      day,
+                                      slot,
+                                      "teacher",
+                                      e.target.value
+                                    )
+                                  }
+                                >
+                                  <option value="">Select Teacher</option>
+                                  {teacherList.map((teacher) => (
+                                    <option
+                                      key={teacher._id}
+                                      value={teacher.name}
+                                    >
+                                      {teacher.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="block text-xs text-gray-500 mb-1 flex items-center">
+                                  <FaSchool className="mr-1" /> Room
+                                </label>
+                                <input
+                                  type="text"
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  placeholder="Room number"
+                                  value={cell.room || ""}
+                                  onChange={(e) =>
+                                    handleCellChange(
+                                      day,
+                                      slot,
+                                      "room",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No time slots available. Add a time slot to get started.
                     </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={addTimeSlot}
-          className="bg-blue-500 text-white px-3 py-1 rounded"
-        >
-          Add Time Slot
-        </button>
-        <button
-          onClick={saveSchedule}
-          className="bg-green-600 text-white px-3 py-1 rounded"
-        >
-          Save Schedule
-        </button>
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={saveSchedule}
+            disabled={loading || timeSlots.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+          >
+            <FiSave /> Save Schedule
+          </button>
+        </div>
       </div>
     </div>
   );

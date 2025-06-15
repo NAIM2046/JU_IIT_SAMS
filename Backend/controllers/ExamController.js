@@ -145,9 +145,15 @@ const updataExam =async (req , res)=>{
 }
   const getAvergeMarkById =  async(req , res) =>{
     const db = getDB() ; 
-    const {id } = req.params ;
+    const {id , classNumber } = req.params ;
+    console.log(id , classNumber)
     const ExamCollection =  db.collection("examHistory") ;
      const result =  await ExamCollection.aggregate([
+      {
+        $match:{
+          class:classNumber
+        }
+      },
        {
         $unwind: "$studentsInfo"
        } ,
@@ -157,7 +163,7 @@ const updataExam =async (req , res)=>{
        {
         $project: {
           studentId: "$studentsInfo.studentId",
-          name: "$studentsInfo.Name" ,
+         
           subject: 1, 
           totalMark: {$toInt: "$totalMark"} , 
           getMark: {$toInt: "$studentsInfo.marks"}
@@ -167,7 +173,7 @@ const updataExam =async (req , res)=>{
         $group: {
           _id: {
             studentId : "$studentId",
-            name: "$name" , 
+            
             subject: "$subject"
           } , 
           sumofTotalMark: {$sum: "$totalMark"},
@@ -178,7 +184,7 @@ const updataExam =async (req , res)=>{
         $group: {
           _id: {
             studentId: "$_id.studentId",
-            name: "$_id.name"
+           
           } ,
           subjects: {
             $push: {
@@ -193,7 +199,7 @@ const updataExam =async (req , res)=>{
         $project: {
           _id: 0,
           studentId: "$_id.studentId",
-          name: "$_id.name",
+          
           subjects: 1,
           
         }

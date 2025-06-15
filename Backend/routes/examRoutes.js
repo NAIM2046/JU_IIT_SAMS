@@ -11,7 +11,7 @@ router.get(`/allExams/:teacherId`, getAllExams);
 router.delete('/deleteCurrentExam/:id' , deleteCurrentExamInfo) ;
 router.post('/examSave' , ExamSave) ;
 router.post("/updateExam" , updataExam) ;
-router.get('/getAvergeMarkById/:id'  , getAvergeMarkById) ;
+router.get('/getAvergeMarkById/:id/:classNumber'  , getAvergeMarkById) ;
 router.get('/rank_summary/:classNumber', rank_summary) ;
 router.get("/monthly_update" ,insertMonthlyUpdate) // Assuming this is the correct endpoint for rank summary
 router.get("/allmonth_update/:id" , monthly_update)

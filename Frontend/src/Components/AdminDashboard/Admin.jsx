@@ -1,82 +1,159 @@
-import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { IoMenuOutline } from "react-icons/io5";
+import React, { useState, useEffect } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
-  FaAd,
-  FaBook,
-  FaCalendar,
   FaHome,
-  FaList,
-  FaMinus,
-  FaNotesMedical,
-  FaShoppingCart,
-  FaUser,
+  FaChalkboardTeacher,
+  FaUserGraduate,
+  FaBook,
   FaUsers,
-  FaUtensils,
+  FaBell,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
 import Navbar from "../../Shared/Navbar";
-//import useAdmin from "../useMenu/useAdmin";
+
 const Admin = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Close sidebar when route changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location]);
+
+  const navItems = [
+    {
+      path: "/adminDashboard",
+      icon: <FaHome className="mr-3" />,
+      label: "Admin Home",
+      end: true, // This ensures exact matching
+    },
+    {
+      path: "/adminDashboard/addteacher",
+      icon: <FaChalkboardTeacher className="mr-3" />,
+      label: "Add Teacher",
+    },
+    {
+      path: "/adminDashboard/addstudent",
+      icon: <FaUserGraduate className="mr-3" />,
+      label: "Add Student",
+    },
+    {
+      path: "/adminDashboard/manageschedule",
+      icon: <FaBook className="mr-3" />,
+      label: "Manage Schedule",
+    },
+    {
+      path: "/adminDashboard/classManage",
+      icon: <FaUsers className="mr-3" />,
+      label: "Class Management",
+    },
+    {
+      path: "/adminDashboard/noticeManage",
+      icon: <FaBell className="mr-3" />,
+      label: "Notice Management",
+    },
+  ];
+
   return (
-    <div>
-      <Navbar></Navbar>
-      <div className="flex">
-        <div className="w-64 min-h-screen bg-orange-400">
-          <ul className="menu p-4">
-            <>
-              <li>
-                <NavLink to="/adminDashboard">
-                  <FaHome></FaHome> Admin Home
-                </NavLink>
-              </li>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Navbar />
 
-              <li>
-                <NavLink to="/adminDashboard/addteacher">
-                  <FaUtensils></FaUtensils> Add Teacher
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/adminDashboard/addstudent">
-                  <FaList></FaList> Add Student
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/adminDashboard/manageschedule">
-                  <FaBook></FaBook>Manage Schedule
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/adminDashboard/classManage">
-                  <FaUsers></FaUsers> Class and subject Manage
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/adminDashboard/noticeManage">
-                  <FaNotesMedical></FaNotesMedical> Notice Manage
-                </NavLink>
-              </li>
-            </>
-
-            <div className="divider"></div>
-            <li>
-              <NavLink to="/">
-                {" "}
-                <FaHome></FaHome> Home
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink to="/menu">
-                {" "}
-                <IoMenuOutline /> Menu
-              </NavLink>
-            </li>
-          </ul>
+      {/* Mobile Sidebar Toggle Button */}
+      <div className="md:hidden flex items-center justify-between bg-white shadow-sm p-4 border-b">
+        <button
+          onClick={toggleSidebar}
+          className="text-gray-600 hover:text-orange-500 transition-colors"
+          aria-label="Toggle menu"
+        >
+          {sidebarOpen ? (
+            <FaTimes className="text-2xl" />
+          ) : (
+            <FaBars className="text-2xl" />
+          )}
+        </button>
+        <div className="flex items-center">
+          <FaChalkboardTeacher className="text-orange-500 mr-2" />
+          <span className="font-medium text-gray-700">Admin Portal</span>
         </div>
-        <div className="flex-1">
-          <Outlet></Outlet>
-        </div>
+      </div>
+
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <aside
+          className={`transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          md:translate-x-0 transition-transform duration-300 ease-in-out fixed md:static 
+          inset-y-0 left-0 w-64 bg-[#00FFFF] text-white shadow-lg md:shadow-none z-40
+          overflow-y-auto`}
+        >
+          <div className="p-4 h-full flex flex-col">
+            <div className="mb-8 hidden md:block px-2 py-4">
+              <h2 className="text-xl font-semibold flex items-center">
+                <FaChalkboardTeacher className="mr-2" />
+                Admin Dashboard
+              </h2>
+            </div>
+
+            <nav className="flex-1">
+              <ul className="space-y-2">
+                {navItems.map((item) => (
+                  <li key={item.path}>
+                    <NavLink
+                      to={item.path}
+                      end={item.end} // Use the end prop for exact matching
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-3 rounded-lg transition-colors
+                        ${
+                          isActive
+                            ? "bg-orange-600 text-white font-medium"
+                            : "hover:bg-orange-400"
+                        }`
+                      }
+                    >
+                      {item.icon}
+                      {item.label}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            {/* Divider and Home Link */}
+            <div className="mt-auto">
+              <div className="border-t border-orange-400 my-4"></div>
+              <ul className="space-y-2">
+                <li>
+                  <NavLink
+                    to="/"
+                    className="flex items-center px-4 py-3 rounded-lg hover:bg-orange-400 transition-colors"
+                  >
+                    <FaHome className="mr-3" />
+                    Back to Home
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+
+        {/* Overlay for mobile menu */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+            onClick={toggleSidebar}
+          />
+        )}
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[calc(100vh-8rem)]">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );

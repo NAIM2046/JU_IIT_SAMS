@@ -13,62 +13,89 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  const links = (
-    <>
-      <li key="home">
-        <Link to="/">Home</Link>
-      </li>
-      {user && (
-        <li key="dashboard">
-          <Link to={`/${user.role}Dashboard`}>Dashboard</Link>
-        </li>
-      )}
-    </>
-  );
-
   return (
-    <div className="navbar bg-base-100 shadow-sm">
-      <div className="navbar-start">
-        <Link to="/" className="btn btn-ghost text-xl">
-          iEdu
-        </Link>
-      </div>
-
-      <div className="navbar-center  lg:flex">
-        <ul className="menu menu-horizontal px-1">{links}</ul>
-      </div>
-
-      <div className="navbar-end">
-        {user ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-2 py-1 shadow-sm hover:shadow-md transition">
-              <div className="avatar">
-                <div className="w-12 h-12 rounded-full overflow-hidden">
-                  <img
-                    className="w-full h-full object-cover"
-                    src={user.photoURL || "https://i.ibb.co/G9wkJbX/user.webp"}
-                    alt="user"
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-3">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                   />
-                </div>
+                </svg>
               </div>
-              <span className="hidden sm:block text-sm text-gray-700">
-                {user.name}
+              <span className="text-xl font-semibold text-gray-800">
+                EduPortal
               </span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="btn btn-sm btn-outline btn-error"
-            >
-              Logout
-            </button>
+            </Link>
           </div>
-        ) : (
-          <Link to="/login" className="btn btn-sm btn-primary">
-            Login
-          </Link>
-        )}
+
+          {/* Navigation Links - Desktop Only */}
+          <nav className=" flex items-center space-x-1 md:space-x-6">
+            <Link
+              to="/"
+              className="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium transition-colors"
+            >
+              Home
+            </Link>
+            {user && (
+              <Link
+                to={`/${user.role}Dashboard`}
+                className="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </Link>
+            )}
+          </nav>
+
+          {/* User Controls */}
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-blue-100">
+                    <img
+                      className="h-full w-full object-cover"
+                      src={
+                        user.photoURL || "https://i.ibb.co/G9wkJbX/user.webp"
+                      }
+                      alt={user.name}
+                    />
+                  </div>
+                  <span className="hidden lg:inline text-sm font-medium text-gray-700">
+                    {user.name}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 rounded-md border border-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+              >
+                Login
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </header>
   );
 };
 

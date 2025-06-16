@@ -303,16 +303,16 @@ const updataExam =async (req , res)=>{
     const result = await coll.aggregate([
       {
     $match: {
-      class: className, // 👈 Filter by class
-      subject: subject // 👈 Filter by subject
+      class: className, //  Filter by class
+      subject: subject //  Filter by subject
     }
   },
   {
-    $unwind: "$studentsInfo" // 👈 Flatten the studentsInfo array
+    $unwind: "$studentsInfo" //  Flatten the studentsInfo array
   },
   {
     $match: {
-      "studentsInfo.studentId": new ObjectId(studentId) // 👈 Match specific student
+      "studentsInfo.studentId": new ObjectId(studentId) //  Match specific student
     }
   },
   {
@@ -396,6 +396,60 @@ const updataExam =async (req , res)=>{
     res.status(500).json({ message: "Server Error" });
   }
 };
+  const getClass_subject_performace = async (req, res) => {
+  try {
+    const db = getDB();
+    const coll = db.collection("examHistory");
+
+    const {  classNumber, subject } = req.query;
+    //console.log(req.query)
+
+    if (!classNumber || !subject) {
+      return res.status(400).json({ error: "class and subject are required" });
+    }
+
+    const pipeline = [
+      {
+        $match: {
+          class: classNumber,
+          subject: subject
+        }
+      },
+      {
+        $unwind: "$studentsInfo"
+      },
+      {
+        $group: {
+          _id: "$studentsInfo.studentId",
+          name: { $first: "$studentsInfo.Name" },
+          roll: { $first: "$studentsInfo.roll" },
+          totalObtainedMark: {
+            $sum: { $toInt: "$studentsInfo.marks" }
+          },
+          totalFullMark: {
+            $sum: { $toInt: "$totalMark" }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          studentId: "$_id",
+          name: 1,
+          roll: 1,
+          totalFullMark: 1,
+          totalObtainedMark: 1
+        }
+      }
+    ];
+
+    const result = await coll.aggregate(pipeline).toArray();
+    res.json(result);
+  } catch (error) {
+    console.error("Performance Fetch Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 module.exports = {
     createNewExam,
@@ -411,6 +465,7 @@ module.exports = {
     rank_summary ,
     monthly_update,
     getAllExamMarkBy_C_S_Subj,
-    getAllSubjectMarkById
+    getAllSubjectMarkById ,
+    getClass_subject_performace
 
 }

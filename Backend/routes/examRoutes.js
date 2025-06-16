@@ -1,5 +1,5 @@
 const express = require('express');
-const { createNewExam, updateOneStudentMarks, getCurrentExamInfo, getAllExams, deleteCurrentExamInfo, ExamSave, updataExam, getAvergeMarkById, rank_summary, monthly_update, getAllExamMarkBy_C_S_Subj, getAllSubjectMarkById } = require('../controllers/ExamController');
+const { createNewExam, updateOneStudentMarks, getCurrentExamInfo, getAllExams, deleteCurrentExamInfo, ExamSave, updataExam, getAvergeMarkById, rank_summary, monthly_update, getAllExamMarkBy_C_S_Subj, getAllSubjectMarkById, getClass_subject_performace } = require('../controllers/ExamController');
 const { insertMonthlyUpdate } = require('../cron/Monthly_update');
 
 const router = express.Router();
@@ -17,5 +17,6 @@ router.get("/monthly_update" ,insertMonthlyUpdate) // Assuming this is the corre
 router.get("/allmonth_update/:id" , monthly_update)
 router.get("/getallexam_markby_id" ,getAllExamMarkBy_C_S_Subj)  
 router.get("/subject-marks" , getAllSubjectMarkById) ;
+router.get("/getclass_subject_performace" , getClass_subject_performace)
 
 module.exports = router;

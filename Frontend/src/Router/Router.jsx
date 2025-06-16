@@ -29,6 +29,7 @@ import ReportCard from "../Components/StudentDashboard/ReportCard";
 import StudentRoute from "./StudentRoute";
 import TeacherRoute from "./TeacherRoute";
 import AdminRoute from "./AdminRoute";
+import PerformanceSummary from "../Components/TeacherDashboard/PerformanceSummary";
 
 const router = createBrowserRouter([
   {
@@ -105,6 +106,10 @@ const router = createBrowserRouter([
       {
         path: "/teacherDashboard/classhistory",
         element: <ClassHistory></ClassHistory>,
+      },
+      {
+        path: "/teacherDashboard/performanceSummary",
+        element: <PerformanceSummary></PerformanceSummary>,
       },
     ],
   },

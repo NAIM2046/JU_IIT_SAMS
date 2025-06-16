@@ -11,7 +11,7 @@ import {
   FaChalkboardTeacher,
   FaUser,
 } from "react-icons/fa";
-import { PiExamFill } from "react-icons/pi";
+import { PiExamFill, PiPercent } from "react-icons/pi";
 import useStroge from "../../stroge/useStroge";
 
 const TeacherSection = () => {
@@ -60,6 +60,13 @@ const TeacherSection = () => {
       icon: <PiExamFill className="text-lg" />,
       label: "Exams",
       isActive: (currentPath) => currentPath === "/teacherDashboard/exam",
+    },
+    {
+      path: "/teacherDashboard/performanceSummary",
+      icon: <PiPercent className="text-lg" />,
+      label: "Performance Summary",
+      isActive: (currentPath) =>
+        currentPath === "/teacherDashboard/performanceSummary",
     },
   ];
 

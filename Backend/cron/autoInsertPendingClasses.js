@@ -8,7 +8,9 @@ const insertPendingClasses = async () => {
     const historyCol = db.collection("classHistory");
 
     const today = new Date();
-    const day = today.toLocaleDateString("en-US", { weekday: "long" }); // e.g., "Tuesday"
+   const day = today.toLocaleString("en-US", { weekday: "long" });
+
+ // e.g., "Tuesday"
     const formattedDate = `${String(today.getDate()).padStart(2, "0")}${String(
       today.getMonth() + 1
     ).padStart(2, "0")}${today.getFullYear()}`; // e.g., "21052025"
@@ -17,26 +19,24 @@ const insertPendingClasses = async () => {
     console.log(schedules) ;
 
     for (const schedule of schedules) {
-      const timeSlots = schedule.timeSlots || [];
-      const daySchedule = schedule.schedule?.[day];
-      if (!daySchedule) continue;
+      
+      if (schedule.day !== day) continue; // Only process today's schedule
 
-      for (const timeSlot of timeSlots) {
-        const slot = daySchedule[timeSlot];
-        if (!slot || !slot.teacher || !slot.subject || !slot.class) continue;
+      
+       
     
         const exists = await historyCol.findOne({
-          className: slot.class,
-          subject: slot.subject,
-          teacherName: slot.teacher,
+          className: schedule.classId,
+          subject: schedule.subject,
+          teacherName: schedule.teacherName,
           date: formattedDate,
         });
       
         if (!exists) {
           await historyCol.insertOne({
-            className: slot.class,
-            subject: slot.subject,
-            teacherName: slot.teacher,
+            className: schedule.classId,
+            subject: schedule.subject,
+            teacherName: schedule.teacherName,
             date: formattedDate,
             status: "pending",
             totalStudents: 0,
@@ -44,9 +44,9 @@ const insertPendingClasses = async () => {
             totalAbsent: 0,
           });
 
-          console.log(`📌 Pending saved for: ${slot.class} - ${slot.subject} - ${slot.teacher}`);
+          console.log(`📌 Pending saved for: ${schedule.classId} - ${schedule.subject} - ${schedule.teacherName}`);
         }
-      }
+      
     }
 
     console.log("✅ Cron job finished: Pending classes inserted.");
@@ -57,7 +57,7 @@ const insertPendingClasses = async () => {
 
 // Run daily at 11:59 PM
 const startCronJob = () => {
-  cron.schedule("15 21 * * *", insertPendingClasses);
+  cron.schedule("40 18 * * *", insertPendingClasses);
 };
 
 module.exports = startCronJob;

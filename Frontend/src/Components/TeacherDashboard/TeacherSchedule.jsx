@@ -1,16 +1,29 @@
 import React, { useEffect, useState } from "react";
 import useStroge from "../../stroge/useStroge";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import { FiClock, FiBook, FiHome, FiUser } from "react-icons/fi";
-import { FaChalkboardTeacher } from "react-icons/fa";
+import { FiClock, FiBook, FiMapPin, FiCalendar } from "react-icons/fi";
+
+const formatTime = (timeStr) => {
+  const [hourStr, minuteStr] = timeStr.split(":");
+  let hour = parseInt(hourStr, 10);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minuteStr} ${ampm}`;
+};
+
+const days = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 const TeacherSchedule = () => {
   const [allSchedules, setAllSchedules] = useState([]);
-  const [matrixData, setMatrixData] = useState({});
-  const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [uniqueClasses, setUniqueClasses] = useState([]);
-  const [uniqueSubjects, setUniqueSubjects] = useState([]);
   const { user } = useStroge();
   const AxiosSecure = useAxiosPrivate();
   const teacherName = user.name;
@@ -19,29 +32,10 @@ const TeacherSchedule = () => {
     const fetchData = async () => {
       try {
         const res = await AxiosSecure.get("/api/getallschedule");
-        setAllSchedules(res.data);
-
-        // Extract unique classes and subjects
-        const classes = new Set();
-        const subjects = new Set();
-
-        res.data.forEach((item) => {
-          const days = Object.keys(item.schedule);
-          const schedule = item.schedule;
-
-          days.forEach((day) => {
-            const timeSlots = Object.keys(schedule[day]);
-            timeSlots.forEach((time) => {
-              if (schedule[day][time].teacher === user.name) {
-                classes.add(schedule[day][time].class);
-                subjects.add(schedule[day][time].subject);
-              }
-            });
-          });
-        });
-
-        setUniqueClasses(Array.from(classes));
-        setUniqueSubjects(Array.from(subjects));
+        const filteredSchedules = res.data.filter(
+          (schedule) => schedule.teacherName === teacherName
+        );
+        setAllSchedules(filteredSchedules);
       } catch (error) {
         console.error("Error fetching schedules:", error);
       } finally {
@@ -51,48 +45,6 @@ const TeacherSchedule = () => {
 
     fetchData();
   }, [user.name, AxiosSecure]);
-
-  useEffect(() => {
-    if (allSchedules.length > 0) {
-      const days = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ];
-      const timeSlotSet = new Set();
-      const tempMatrix = {};
-
-      days.forEach((day) => {
-        tempMatrix[day] = {};
-        allSchedules.forEach((classItem) => {
-          const daySchedule = classItem.schedule[day];
-
-          if (daySchedule) {
-            Object.entries(daySchedule).forEach(([time, slot]) => {
-              timeSlotSet.add(time);
-              if (slot?.teacher === teacherName) {
-                tempMatrix[day][time] = {
-                  subject: slot.subject,
-                  classNumber: slot.class,
-                  room: slot.room,
-                };
-              }
-            });
-          }
-        });
-      });
-
-      const sortedTimeSlots = Array.from(timeSlotSet).sort((a, b) =>
-        a.localeCompare(b)
-      );
-      setTimeSlots(sortedTimeSlots);
-      setMatrixData(tempMatrix);
-    }
-  }, [allSchedules, teacherName]);
 
   if (loading) {
     return (
@@ -105,88 +57,70 @@ const TeacherSchedule = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-            <FaChalkboardTeacher className="mr-3 text-blue-600" />
-            Teaching Schedule
-          </h1>
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div className="bg-white p-3 rounded-lg shadow-sm flex items-center">
-              <FiUser className="text-blue-500 mr-2" />
-              <span className="font-medium">Teacher: </span>
-              <span className="ml-1">{teacherName}</span>
-            </div>
-            <div className="bg-white p-3 rounded-lg shadow-sm">
-              <span className="font-medium">Classes: </span>
-              {uniqueClasses.join(", ") || "None"}
-            </div>
-            <div className="bg-white p-3 rounded-lg shadow-sm">
-              <span className="font-medium">Subjects: </span>
-              {uniqueSubjects.join(", ") || "None"}
-            </div>
-          </div>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+          My Teaching Schedule
+        </h1>
+        <p className="text-gray-600 mb-8">
+          Welcome, {teacherName}. Here's your weekly schedule.
+        </p>
 
-        {/* Schedule Table */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-blue-600 text-white">
-                <tr>
-                  <th className="p-4 text-left min-w-[120px]">Day / Time</th>
-                  {timeSlots.map((time, idx) => (
-                    <th key={idx} className="p-4 text-center min-w-[150px]">
-                      <div className="flex items-center justify-center">
-                        <FiClock className="mr-2" />
-                        {time}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {Object.entries(matrixData).map(([day, times]) => (
-                  <tr key={day} className="hover:bg-gray-50">
-                    <td className="p-4 font-bold text-gray-700">{day}</td>
-                    {timeSlots.map((time) => (
-                      <td key={time} className="p-4">
-                        {times[time] ? (
-                          <div className="bg-blue-50 rounded-lg p-3 h-full">
-                            <div className="font-semibold text-blue-700 flex items-center">
-                              <FiBook className="mr-2" />
-                              {times[time].subject}
-                            </div>
-                            <div className="text-sm text-gray-600 mt-1 flex items-center">
-                              <FiHome className="mr-2" />
-                              Class {times[time].classNumber} • Room{" "}
-                              {times[time].room}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-gray-400 text-center font-bold">
-                            ------
-                          </div>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div className="space-y-8">
+          {days.map((day) => {
+            const schedulesForDay = allSchedules
+              .filter((schedule) => schedule.day === day)
+              .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-        {/* Legend */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <div className="flex items-center text-sm">
-            <div className="w-4 h-4 bg-blue-600 rounded mr-2"></div>
-            <span>Time Slot</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <div className="w-4 h-4 bg-blue-50 rounded mr-2"></div>
-            <span>Your Class</span>
-          </div>
+            return (
+              <div
+                key={day}
+                className="bg-white rounded-xl shadow-md overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+                  <h2 className="text-xl font-bold text-white">{day}</h2>
+                </div>
+                <div className="p-4 overflow-x-auto">
+                  {schedulesForDay.length > 0 ? (
+                    <div className="flex space-x-4 min-w-max">
+                      {schedulesForDay.map((schedule) => (
+                        <div
+                          key={schedule._id}
+                          className="border-1 border-blue-500 px-4 py-3 hover:bg-blue-50 transition-colors min-w-[250px]"
+                        >
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                            {schedule.subjectName}
+                          </h3>
+                          <div className="flex items-center text-gray-600 mb-1">
+                            <FiClock className="mr-2" />
+                            <span>
+                              {formatTime(schedule.startTime)} -{" "}
+                              {formatTime(schedule.endTime)}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-gray-600 mb-1">
+                            <FiMapPin className="mr-2" />
+                            <span>Room {schedule.room}</span>
+                          </div>
+                          <div className="flex items-center text-gray-600">
+                            <FiBook className="mr-2" />
+                            <span>{schedule.subject}</span>
+                          </div>
+                          <div className="flex items-center text-gray-600">
+                            <FiBook className="mr-2" />
+                            <span> class: {schedule.classId}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      <FiCalendar className="mx-auto text-3xl mb-2" />
+                      <p>No classes scheduled</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -25,15 +25,18 @@ const EveryClass = () => {
   const [error, setError] = useState(null);
 
   const AxiosSecure = useAxiosPrivate();
+  console.log("Schedule:", schedule);
+  console.log("Date:", DateFormate);
+  console.log("Teacher Name:", teacherName);
 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        if (!schedule?.class || !schedule?.subject) return;
+        if (!schedule?.classId || !schedule?.subject) return;
 
         // 1. Get student list
         const res = await AxiosSecure.get(
-          `/api/auth/getStudentByClassandSection/${schedule.class}`
+          `/api/auth/getStudentByClassandSection/${schedule.classId}`
         );
 
         let updatedStudents = res.data.map((student) => ({
@@ -46,7 +49,7 @@ const EveryClass = () => {
         // 2. Check attendance record
         try {
           const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.class}/${schedule.subject}/${DateFormate}`
+            `/api/attendance/check/${schedule.classId}/${schedule.subject}/${DateFormate}`
           );
 
           const existingAttendance = attendanceRes.data;
@@ -70,7 +73,7 @@ const EveryClass = () => {
         // 3. Get performance data
         try {
           const performanceRes = await AxiosSecure.get(
-            `/api/performance/byClassAndSubject/${schedule.class}/${schedule.subject}`
+            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject}`
           );
           const performanceData = performanceRes.data;
 
@@ -98,14 +101,14 @@ const EveryClass = () => {
     };
 
     fetchStudents();
-  }, [schedule?.class, schedule?.subject, DateFormate, AxiosSecure]);
+  }, [schedule?.classId, schedule?.subject, DateFormate, AxiosSecure]);
 
   const updateSingleStudentAttendance = async (studentId, roll, status) => {
-    if (!schedule?.class || !schedule?.subject) return;
+    if (!schedule?.classId || !schedule?.subject) return;
 
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
-        className: schedule.class,
+        className: schedule.classId,
         subject: schedule.subject,
         date: DateFormate,
         studentId,
@@ -127,11 +130,11 @@ const EveryClass = () => {
   };
 
   const handleDefaultAttendanceChange = async (status) => {
-    if (!schedule?.class || !schedule?.subject) return;
+    if (!schedule?.classId || !schedule?.subject) return;
 
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
-        className: schedule.class,
+        className: schedule.classId,
         subject: schedule.subject,
         date: DateFormate,
         students,
@@ -155,7 +158,7 @@ const EveryClass = () => {
       const res = await AxiosSecure.post("/api/performance/updata", {
         studentId,
         subject: schedule.subject,
-        className: schedule.class,
+        className: schedule.classId,
         evaluation,
       });
 
@@ -180,7 +183,7 @@ const EveryClass = () => {
   const handleSaveClass = async () => {
     try {
       const response = await AxiosSecure.post("/api/classHistory/save", {
-        className: schedule.class,
+        className: schedule.classId,
         subject: schedule.subject,
         date: DateFormate,
         teacherName: teacherName,
@@ -243,7 +246,7 @@ const EveryClass = () => {
               <div className="flex items-center">
                 <FiUser className="text-blue-500 mr-2" />
                 <span className="font-medium">Class:</span>
-                <span className="ml-2">{schedule?.class}</span>
+                <span className="ml-2">{schedule?.classId}</span>
               </div>
               <div className="flex items-center">
                 <FiAward className="text-blue-500 mr-2" />
@@ -327,11 +330,14 @@ const EveryClass = () => {
                             onClick={() =>
                               updateStudentPerformance(student._id, "Bad")
                             }
-                            className={`flex items-center px-3 py-1 rounded-full text-xs ${
-                              student.latestEvaluation === "Bad"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 hover:bg-gray-200"
-                            }`}
+                            className={`flex items-center 
+                              ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
+                              
+                              px-3 py-1 rounded-full text-xs ${
+                                student.latestEvaluation === "Bad"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-gray-100 hover:bg-gray-200"
+                              }  `}
                           >
                             <FiTrendingDown className="mr-1" /> Bad
                           </button>
@@ -339,11 +345,13 @@ const EveryClass = () => {
                             onClick={() =>
                               updateStudentPerformance(student._id, "Good")
                             }
-                            className={`flex items-center px-3 py-1 rounded-full text-xs ${
-                              student.latestEvaluation === "Good"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 hover:bg-gray-200"
-                            }`}
+                            className={`flex items-center px-3 py-1 
+                              ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
+                              rounded-full text-xs ${
+                                student.latestEvaluation === "Good"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 hover:bg-gray-200"
+                              }`}
                           >
                             <FiTrendingUp className="mr-1" /> Good
                           </button>
@@ -351,11 +359,13 @@ const EveryClass = () => {
                             onClick={() =>
                               updateStudentPerformance(student._id, "Excellent")
                             }
-                            className={`flex items-center px-3 py-1 rounded-full text-xs ${
-                              student.latestEvaluation === "Excellent"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 hover:bg-gray-200"
-                            }`}
+                            className={`flex items-center px-3 
+                              ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
+                              py-1 rounded-full text-xs ${
+                                student.latestEvaluation === "Excellent"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 hover:bg-gray-200"
+                              }`}
                           >
                             <FiAward className="mr-1" /> Excellent
                           </button>

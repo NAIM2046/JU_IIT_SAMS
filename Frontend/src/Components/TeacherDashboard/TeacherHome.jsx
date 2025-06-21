@@ -4,6 +4,14 @@ import useStroge from "../../stroge/useStroge";
 import { useNavigate } from "react-router-dom";
 import { FiClock, FiBook, FiUsers, FiHome, FiCalendar } from "react-icons/fi";
 
+const formatTime = (timeStr) => {
+  const [hourStr, minuteStr] = timeStr.split(":");
+  let hour = parseInt(hourStr, 10);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minuteStr} ${ampm}`;
+};
+
 const TeacherHome = () => {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,26 +39,17 @@ const TeacherHome = () => {
         const res = await AxiosSecure.get("/api/getallschedule");
 
         const todaySchedules = [];
-        res.data.forEach((item) => {
-          const daySchedule = item.schedule?.[todayName];
-          if (daySchedule) {
-            item.timeSlots.forEach((slot) => {
-              const slotData = daySchedule[slot];
-              if (
-                slotData &&
-                slotData.teacher?.toLowerCase() === teacherName.toLowerCase()
-              ) {
-                todaySchedules.push({
-                  id: item._id,
-                  subject: slotData.subject,
-                  class: slotData.class,
-                  room: slotData.room,
-                  time: slot,
-                });
-              }
-            });
+        console.log("Fetched schedules:", res.data);
+        console.log("user", user);
+        res.data.forEach((schedule) => {
+          if (
+            schedule.teacherName === teacherName &&
+            schedule.day === todayName
+          ) {
+            todaySchedules.push(schedule);
           }
         });
+        console.log("Today's schedules:", todaySchedules);
 
         setSchedules(todaySchedules);
       } catch (error) {
@@ -62,6 +61,7 @@ const TeacherHome = () => {
 
     fetchSchedules();
   }, [user.name, todayName, AxiosSecure]);
+  console.log("Schedules for today:", schedules);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -87,7 +87,7 @@ const TeacherHome = () => {
                 key={index}
                 className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-100"
                 onClick={() =>
-                  navigate(`/teacherDashboard/Class/${schedule.class}`, {
+                  navigate(`/teacherDashboard/Class/${schedule.classId}`, {
                     state: { schedule, formattedDate, teacherName: user.name },
                   })
                 }
@@ -98,14 +98,17 @@ const TeacherHome = () => {
                       {schedule.subject}
                     </h2>
                     <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                      {schedule.class}
+                      {schedule.classId}
                     </span>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center text-gray-600">
                       <FiClock className="mr-2 text-blue-500" />
-                      <span>{schedule.time}</span>
+                      <span className="font-semibold mb-1">
+                        {formatTime(schedule.startTime)} –{" "}
+                        {formatTime(schedule.endTime)}
+                      </span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <FiHome className="mr-2 text-blue-500" />

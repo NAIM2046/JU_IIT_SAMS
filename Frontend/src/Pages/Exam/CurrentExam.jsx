@@ -35,7 +35,7 @@ const CurrentExam = () => {
           setCurrentExam(res.data);
           const markData = {};
           res.data.studentsInfo.forEach((student) => {
-            markData[student.studentId] = student.marks;
+            markData[student.studentId] = student.marks ?? 0; // Default to 0 if marks is null/undefined
           });
           setUpdatedMarks(markData);
         }
@@ -194,9 +194,12 @@ const CurrentExam = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="number"
-                      value={mark}
+                      value={updatedMarks[student.studentId]}
                       onChange={(e) =>
-                        handleMarkChange(student.studentId, e.target.value)
+                        handleMarkChange(
+                          student.studentId,
+                          e.target.value === "" ? 0 : parseInt(e.target.value)
+                        )
                       }
                       className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       min="0"

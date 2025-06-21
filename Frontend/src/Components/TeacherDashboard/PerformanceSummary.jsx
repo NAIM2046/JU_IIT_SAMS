@@ -20,12 +20,14 @@ const PerformanceSummary = () => {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState("");
   const [stats, setStats] = useState(null);
-
+  const teacherName = user.name;
   // Fetch all teacher classes
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const res = await AxiosSecure.get("/api/getallschedule");
+        const res = await AxiosSecure.get(
+          `/api/getteacherschedule/${teacherName}`
+        );
         setTeacherClasses(res.data);
       } catch (error) {
         console.error("Failed to fetch classes:", error);
@@ -42,21 +44,14 @@ const PerformanceSummary = () => {
     setPerformaceList([]);
     setStats(null);
 
-    const selected = teacherClasses.find(
-      (cls) => cls.classNumber === classNumber
+    const selectedClassData = teacherClasses.find(
+      (cls) => cls.classId === classNumber
     );
-    if (!selected) return;
-
-    const subjectSet = new Set();
-    Object.values(selected.schedule).forEach((daySchedule) => {
-      Object.values(daySchedule).forEach((slot) => {
-        if (slot.subject && slot.subject.trim() !== "") {
-          subjectSet.add(slot.subject);
-        }
-      });
-    });
-
-    setSubjects([...subjectSet]);
+    if (selectedClassData) {
+      setSubjects(selectedClassData.subjects || []);
+    } else {
+      setSubjects([]);
+    }
   };
 
   // When subject is selected, fetch performance data
@@ -131,8 +126,8 @@ const PerformanceSummary = () => {
             >
               <option value="">Select Class</option>
               {teacherClasses.map((cls, idx) => (
-                <option key={idx} value={cls.classNumber}>
-                  Class {cls.classNumber}
+                <option key={idx} value={cls.classId}>
+                  Class {cls.classId}
                 </option>
               ))}
             </select>

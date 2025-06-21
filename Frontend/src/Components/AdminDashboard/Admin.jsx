@@ -87,7 +87,7 @@ const Admin = () => {
         <aside
           className={`transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
           md:translate-x-0 transition-transform duration-300 ease-in-out fixed md:static 
-          inset-y-0 left-0 w-64 bg-[#00FFFF] text-white shadow-lg md:shadow-none z-40
+          inset-y-0 left-0 w-64 bg-[#00FFFF] text-black shadow-lg md:shadow-none z-40
           overflow-y-auto`}
         >
           <div className="p-4 h-full flex flex-col">

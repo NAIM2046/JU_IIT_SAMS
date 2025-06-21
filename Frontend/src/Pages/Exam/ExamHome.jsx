@@ -20,39 +20,37 @@ const ExamHome = () => {
 
   const AxiosSecure = useAxiosPrivate();
   const { user } = useStroge();
+  const teacherName = user.name;
+  const [fetchingClasses, setFetchingClasses] = useState(false);
 
   useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await AxiosSecure.get("/api/getallschedule");
-        setTeacherClasses(res.data);
-      } catch (error) {
-        console.error("Failed to fetch classes:", error);
-      }
-    };
-    fetchClasses();
-  }, [AxiosSecure]);
+    const res = AxiosSecure.get(`/api/getteacherschedule/${teacherName}`)
+      .then((response) => {
+        setTeacherClasses(response.data);
+        setFetchingClasses(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching teacher classes:", error);
+        setFetchingClasses(false);
+      });
+    setFetchingClasses(true);
+  }, []);
+  console.log("Teacher Classes:", teacherClasses);
 
   const handleClassChange = (e) => {
     const classNumber = e.target.value;
     setSelectedClass(classNumber);
     setSelectedSubject("");
 
-    const selected = teacherClasses.find(
-      (cls) => cls.classNumber === classNumber
+    const selectedClassData = teacherClasses.find(
+      (cls) => cls.classId === classNumber
     );
-    if (!selected) return;
 
-    const subjectSet = new Set();
-    Object.values(selected.schedule).forEach((daySchedule) => {
-      Object.values(daySchedule).forEach((slot) => {
-        if (slot.subject && slot.subject.trim() !== "") {
-          subjectSet.add(slot.subject);
-        }
-      });
-    });
-
-    setSubjects([...subjectSet]);
+    if (selectedClassData) {
+      setSubjects(selectedClassData.subjects);
+    } else {
+      setSubjects([]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -101,8 +99,10 @@ const ExamHome = () => {
           <button
             onClick={() => setModalOpen(true)}
             className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-colors"
+            disabled={fetchingClasses}
           >
-            <FaPlus className="mr-2" /> Create New Exam
+            <FaPlus className="mr-2" />
+            {fetchingClasses ? "Loading Classes..." : "Create New Exam"}
           </button>
         </div>
 
@@ -177,13 +177,16 @@ const ExamHome = () => {
                         onChange={handleClassChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                         required
+                        disabled={fetchingClasses}
                       >
                         <option value="" disabled>
-                          Select Class
+                          {fetchingClasses
+                            ? "Loading classes..."
+                            : "Select Class"}
                         </option>
-                        {teacherClasses.map((cls) => (
-                          <option key={cls._id} value={cls.classNumber}>
-                            Class {cls.classNumber}
+                        {teacherClasses.map((cls, index) => (
+                          <option key={index} value={cls.classId}>
+                            Class {cls.classId}
                           </option>
                         ))}
                       </select>
@@ -201,10 +204,12 @@ const ExamHome = () => {
                         value={selectedSubject}
                         onChange={(e) => setSelectedSubject(e.target.value)}
                         required
-                        disabled={!selectedClass}
+                        disabled={!selectedClass || subjects.length === 0}
                       >
                         <option value="" disabled>
-                          Select Subject
+                          {subjects.length === 0
+                            ? "No subjects available"
+                            : "Select Subject"}
                         </option>
                         {subjects.map((subj, idx) => (
                           <option key={idx} value={subj}>

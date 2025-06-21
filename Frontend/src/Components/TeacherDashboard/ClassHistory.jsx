@@ -42,11 +42,11 @@ const ClassHistory = () => {
 
   const handleEnterClass = (classData) => {
     const schedule = {
-      class: classData.className,
+      classId: classData.className,
       subject: classData.subject,
     };
     const formattedDate = classData.date;
-    navigate(`/teacherDashboard/Class/${schedule.class}`, {
+    navigate(`/teacherDashboard/Class/${schedule.classId}`, {
       state: { schedule, formattedDate, teacherName: user.name },
     });
   };

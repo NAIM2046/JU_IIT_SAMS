@@ -15,7 +15,7 @@ const Home = () => {
                 <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
                   <span className="block">Welcome to</span>
                   <span className="block text-blue-200">
-                    Smart Education System
+                    SMART ACADEMIC MANAGEMENT SYSTEM
                   </span>
                 </h1>
                 <p className="mt-3 text-base text-blue-100 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">

@@ -10,6 +10,7 @@ const classHistoryRoutes = require('./routes/classHistoryRoutes') ; // Assuming 
 const startCronJob = require('./cron/autoInsertPendingClasses.js'); 
 const noticeRoutes = require('./routes/NoticeRoutes.js');
 const examRoutes = require('./routes/examRoutes.js');
+const messageRoute = require('./routes/messageRoutes.js');
 const{ startCronJobUpdata} = require("./cron/Monthly_update.js") ;
 require('dotenv').config();
 
@@ -34,6 +35,7 @@ app.use ('/api/classHistory' , classHistoryRoutes) ;
 app.use('/api', noticeRoutes); // Assuming you have classHistroyRoute defined
 app.use('/api/performance' , performanceRoutes);
 app.use('/api/exam', examRoutes);
+app.use('/api/message', messageRoute);
 
 
 connectDB().then(() => {

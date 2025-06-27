@@ -10,4 +10,5 @@ router.get('/getAttendanceBy_id/:id' , getAttendanceByStudentId) ;
 router.post("/getAttendancebystdId_subject" ,getAttendanceByStd_subject) ;
 router.get('/getAttendanceByStd_subject/:class/:subject' , getAttendanceByStd_subject) ;
 router.get('/getAttendanceHistory/:studentId/:className', getAttendanceHistory);
+
 module.exports =  router;

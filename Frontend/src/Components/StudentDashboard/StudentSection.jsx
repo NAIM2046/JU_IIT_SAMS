@@ -94,9 +94,9 @@ const StudentSection = () => {
                     label: "Rank List",
                   },
                   {
-                    to: "/studentDashboard/badges",
+                    to: "/studentDashboard/attendance",
                     icon: <FaListAlt />,
-                    label: "Achievements",
+                    label: "Attendance History",
                   },
                   {
                     to: "/studentDashboard/profile",

@@ -1,6 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useStroge from "../stroge/useStroge";
+import { FaRegCommentAlt } from "react-icons/fa";
+import { IoMdNotificationsOutline } from "react-icons/io"; // Optional: for notification icon
 
 const Navbar = () => {
   const { user, setUser } = useStroge();
@@ -12,6 +14,9 @@ const Navbar = () => {
     setUser(null);
     navigate("/login");
   };
+
+  // Mock data - replace with actual data from your backend
+  const unseenMessageCount = 3;
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -42,13 +47,7 @@ const Navbar = () => {
           </div>
 
           {/* Navigation Links - Desktop Only */}
-          <nav className=" flex items-center space-x-1 md:space-x-6">
-            <Link
-              to="/"
-              className="text-gray-600 hover:text-blue-600 px-2 py-1 text-sm font-medium transition-colors"
-            >
-              Home
-            </Link>
+          <nav className="flex items-center space-x-1 md:space-x-6">
             {user && (
               <Link
                 to={`/${user.role}Dashboard`}
@@ -63,6 +62,27 @@ const Navbar = () => {
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-3">
+                {/* Optional: Notification Icon */}
+                {/* <Link to="/notifications" className="relative p-2">
+                  <IoMdNotificationsOutline className="h-6 w-6 text-gray-600 hover:text-blue-600" />
+                  {unseenNotificationsCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                      {unseenNotificationsCount > 9 ? "9+" : unseenNotificationsCount}
+                    </span>
+                  )}
+                </Link> */}
+
+                {/* Messages Icon with Badge */}
+                <Link to="/messages" className="relative p-2">
+                  <FaRegCommentAlt className="h-6 w-6 text-gray-600 hover:text-blue-600" />
+                  {unseenMessageCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                      {unseenMessageCount > 9 ? "9+" : unseenMessageCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* User Profile */}
                 <div className="flex items-center gap-2">
                   <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-blue-100">
                     <img

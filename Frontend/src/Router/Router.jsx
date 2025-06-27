@@ -30,6 +30,8 @@ import StudentRoute from "./StudentRoute";
 import TeacherRoute from "./TeacherRoute";
 import AdminRoute from "./AdminRoute";
 import PerformanceSummary from "../Components/TeacherDashboard/PerformanceSummary";
+import StudentsAttendance from "../Components/StudentDashboard/StudentsAttendance";
+import Message from "../Pages/Message/Message";
 
 const router = createBrowserRouter([
   {
@@ -149,7 +151,15 @@ const router = createBrowserRouter([
         path: "/studentDashboard/reportCard",
         element: <ReportCard></ReportCard>,
       },
+      {
+        path: "/studentDashboard/attendance",
+        element: <StudentsAttendance></StudentsAttendance>,
+      },
     ],
+  },
+  {
+    path: "/messages",
+    element: <Message></Message>,
   },
 ]);
 

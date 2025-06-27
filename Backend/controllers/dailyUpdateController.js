@@ -226,11 +226,86 @@ const getAttendanceByStd_subject = async(req , res) =>{
  
 }
 
+const getAttendanceHistory= async (req , res) =>{
+  const db = getDB() ;
+  const AttendanceInfo = db.collection("attendanceInfo");
+  const { studentId , className } = req.params;
+  try {
+    const attendanceHistory = await AttendanceInfo.aggregate([
+  {
+    $match: {
+      class: className,
+    },
+  },
+  {
+    $unwind: "$records",
+  },
+  {
+    $match: {
+      "records.studentId": studentId,
+    },
+  },
+  {
+    $addFields: {
+      parsedDate: {
+        $dateFromString: {
+          dateString: {
+            $concat: [
+              { $substr: ["$date", 4, 4] }, // year
+              "-",
+              { $substr: ["$date", 2, 2] }, // month
+              "-",
+              { $substr: ["$date", 0, 2] }  // day
+            ],
+          },
+          format: "%Y-%m-%d",
+        },
+      },
+    },
+  },
+  {
+    $group: {
+      _id: "$date",
+      parsedDate: { $first: "$parsedDate" },
+      records: {
+        $push: {
+          subject: "$subject",
+          status: "$records.status",
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      date: "$_id",
+      records: 1,
+      parsedDate: 1,
+    },
+  },
+  {
+    $sort: { parsedDate: 1 },
+  }
+]).toArray();
+
+    if (attendanceHistory.length === 0) {
+      return res.status(404).json({ message: "No attendance records found for this student." });
+    }
+
+    res.json(attendanceHistory);
+  } catch (error) {
+    console.error("Error fetching attendance history:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+
 module.exports = {
   getAttendancebyClass_sub_data,
   setAttendanceDefault,
   updataAttendanceSingle ,
   getAttendanceByStudentId ,
   // Add other functions here as needed
-  getAttendanceByStd_subject
+  getAttendanceByStd_subject,
+  getAttendanceHistory
 }

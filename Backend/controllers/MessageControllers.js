@@ -4,8 +4,7 @@ const { getDB } = require("../config/db.js");
 const createConversation = async (req, res) => {
   const db = getDB();
   const body = req.body;
-  const check = await db.collection("conversation").findOne({roomId: body.roomId});
-
+  const check = await db.collection("conversations").findOne({roomId: body.roomId});
   if(check){
     res.json(check);
     return;
@@ -44,6 +43,7 @@ const getConversation = async (req, res) => {
     users,
   });
 };
+
 const extisingConversation = async (req, res) => {
   const db = getDB();
   const { Id } = req.params; // still string
@@ -124,8 +124,31 @@ const extisingConversation = async (req, res) => {
 };
 
 
+const sendMessage = async (req, res) => {
+  const db = getDB();
+  const {roomId, senderId, text, editTime} = req.body;
+  const message = {
+    "roomId": roomId,  // conversation id
+    "senderId": senderId,
+    "text": text,
+    "attachments": [],
+    "editedAt": editTime,   // null if never edited    // users who deleted locally
+    "deliveredTo": [
+      { "userId": "681797f2bcf2bae0a071ad53", "seen": true, "deliveredAt": ISODate("..."), "seenAt": ISODate("...") },
+      { "userId": "684fa78862c6c4d0e0ca9f1c", "seen": true, "deliveredAt": ISODate("..."), "seenAt": ISODate("...") }
+    ],
+    "createdAt": new Date()
+  }
+
+  const result = await db.collection("messages").insertOne(message);
+  res.status(201).json({
+    result
+  })
+}
+
 module.exports = {
   getConversation,
   createConversation ,
-  extisingConversation
+  extisingConversation,
+  sendMessage
 };

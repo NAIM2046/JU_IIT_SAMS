@@ -44,8 +44,88 @@ const getConversation = async (req, res) => {
     users,
   });
 };
+const extisingConversation = async (req, res) => {
+  const db = getDB();
+  const { Id } = req.params; // still string
+
+  try {
+    const conversations = await db.collection("conversations").aggregate([
+      {
+        $match: {
+          participants: Id // still string
+        }
+      },
+      {
+        $addFields: {
+          receiverId: {
+            $cond: [
+              "$isGroup",
+              null,
+              {
+                $toObjectId: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$participants",
+                        as: "p",
+                        cond: { $ne: ["$$p", Id] }
+                      }
+                    },
+                    0
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "receiverId",
+          foreignField: "_id",
+          as: "receiver"
+        }
+      },
+      {
+        $unwind: {
+          path: "$receiver",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          roomId: 1,
+          isGroup: 1,
+          groupName: 1,
+          participants: 1,
+          lastMessage: 1,
+          createdAt: 1,
+          receiver: {
+            _id: "$receiver._id",
+            name: "$receiver.name",
+            photoURL: "$receiver.photoURL"
+          }
+        }
+      }
+    ]).toArray();
+
+    if (conversations.length > 0) {
+      res.status(200).json(conversations);
+    } else {
+      res.status(404).json({ message: "No conversation found" });
+    }
+
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 module.exports = {
   getConversation,
-  createConversation
+  createConversation ,
+  extisingConversation
 };

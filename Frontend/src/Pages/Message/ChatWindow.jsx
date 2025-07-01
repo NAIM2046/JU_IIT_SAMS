@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiMoreVertical,
   FiSearch,
@@ -8,44 +8,16 @@ import {
 } from "react-icons/fi";
 import { IoIosArrowDown, IoMdSend } from "react-icons/io";
 
-const ChatWindow = ({ activeChat, chats, setActiveChat }) => {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Hey there! How are you doing?",
-      sender: "other",
-      time: "10:30 AM",
-    },
-    {
-      id: 2,
-      text: "I'm good, thanks! How about you?",
-      sender: "me",
-      time: "10:32 AM",
-    },
-    {
-      id: 3,
-      text: "Just working on some projects. Want to meet later?",
-      sender: "other",
-      time: "10:33 AM",
-    },
-  ]);
+const ChatWindow = ({ activeChat, setActiveChat }) => {
+  console.log("ChatWindow rendered with activeChat:", activeChat);
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        text: message,
-        sender: "me",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages([...messages, newMessage]);
-      setMessage("");
-    }
-  };
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  useEffect(() => {
+    const fetchMessages = async () => {};
+  }, []);
+
+  const handleSendMessage = () => {};
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -59,13 +31,16 @@ const ChatWindow = ({ activeChat, chats, setActiveChat }) => {
             <IoIosArrowDown size={20} />
           </button>
           <img
-            src={chats.find((c) => c.id === activeChat)?.avatar}
-            alt="Profile"
+            src={
+              activeChat?.receiver?.photoURL ||
+              "https://via.placeholder.com/150"
+            }
+            alt={activeChat?.receiver?.name || activeChat?.groupName}
             className="w-10 h-10 rounded-full"
           />
           <div className="ml-3">
             <h3 className="font-semibold">
-              {chats.find((c) => c.id === activeChat)?.name}
+              {activeChat?.receiver?.name || activeChat?.groupName}
             </h3>
             <p className="text-xs text-gray-600">Online</p>
           </div>

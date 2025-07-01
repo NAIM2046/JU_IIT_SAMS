@@ -4,7 +4,12 @@ import useStroge from "../../stroge/useStroge";
 import { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 
-const ChatList = ({ activeChat, setActiveChat }) => {
+const ChatList = ({
+  activeChat,
+  setActiveChat,
+  existingConversation,
+  setExistingConversation,
+}) => {
   const { user } = useStroge();
   const axiosSecure = useAxiosPrivate();
   const [currentUser, setCurrentUsers] = useState([]);
@@ -15,7 +20,6 @@ const ChatList = ({ activeChat, setActiveChat }) => {
   const [groupName, setGroupName] = useState("");
   const [searchcreateGroup, setSearchCreateGroup] = useState("");
   const [selectAll, setSelectAll] = useState(false);
-  const [existingConversation, setExistingConversation] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,7 +98,6 @@ const ChatList = ({ activeChat, setActiveChat }) => {
       setActiveChat(existingConv);
       return; // If it exists, just set it as active
     }
-
     const conversation = {
       roomId: newId,
       isGroup: false,
@@ -163,7 +166,7 @@ const ChatList = ({ activeChat, setActiveChat }) => {
       <div className="bg-gray-100 p-3 flex justify-between items-center">
         <div>
           <img
-            src="https://randomuser.me/api/portraits/men/2.jpg"
+            src={user.photoURL || "https://i.ibb.co/G9wkJbX/user.webp"}
             alt="Profile"
             className="w-10 h-10 rounded-full"
           />
@@ -182,7 +185,7 @@ const ChatList = ({ activeChat, setActiveChat }) => {
           </button>
         </div>
       </div>
-      // existingConversation list
+
       <div className="p-2 bg-gray-100 ">
         <h3 className="text-lg font-semibold mb-2">Existing Conversations</h3>
         <div className="overflow-y-auto h-[400px]">
@@ -211,7 +214,7 @@ const ChatList = ({ activeChat, setActiveChat }) => {
                 </p>
               </div>
               <span className="text-xs text-gray-400">
-                {new Date(chat.createdAt).toLocaleDateString("en-US", {
+                {new Date(chat.lastMessage.time).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",

@@ -108,6 +108,11 @@ const extisingConversation = async (req, res) => {
             photoURL: "$receiver.photoURL"
           }
         }
+      },
+      {
+        $sort: {
+          "lastMessage.time": -1  // latest message first
+        }
       }
     ]).toArray();
 
@@ -125,30 +130,91 @@ const extisingConversation = async (req, res) => {
 
 
 const sendMessage = async (req, res) => {
-  const db = getDB();
-  const {roomId, senderId, text, editTime} = req.body;
-  const message = {
-    "roomId": roomId,  // conversation id
-    "senderId": senderId,
-    "text": text,
-    "attachments": [],
-    "editedAt": editTime,   // null if never edited    // users who deleted locally
-    "deliveredTo": [
-      { "userId": "681797f2bcf2bae0a071ad53", "seen": true, "deliveredAt": ISODate("..."), "seenAt": ISODate("...") },
-      { "userId": "684fa78862c6c4d0e0ca9f1c", "seen": true, "deliveredAt": ISODate("..."), "seenAt": ISODate("...") }
-    ],
-    "createdAt": new Date()
-  }
+ const db = getDB();
+    const { roomId, senderId, text  , senderName , senderPhoto} = req.body;
 
-  const result = await db.collection("messages").insertOne(message);
-  res.status(201).json({
-    result
-  })
+    // find the conversation to get participants
+    const conversation = await db.collection("conversations").findOne({ roomId });
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // build deliveredTo array from participants
+    const deliveredTo = conversation.participants.map(userId => ({
+      userId,
+      seen: userId === senderId, // sender already seen
+      deliveredAt: new Date(),
+      seenAt: userId === senderId ? new Date() : null
+    }));
+
+    // build message
+    const message = {
+      roomId,
+      senderId,
+      senderName,
+      senderPhoto,  
+      text,
+      attachments: [],
+      editedAt: null,
+      deletedFor: [],
+      deliveredTo,
+      createdAt: new Date()
+    };
+
+    // insert into messages collection
+    const result = await db.collection("messages").insertOne(message);
+
+    // update conversation's lastMessage
+    await db.collection("conversations").updateOne(
+      { roomId },
+      {
+        $set: {
+          lastMessage: {
+            text,
+            sender: senderId,
+            time: new Date()
+          },
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    // return inserted message with _id
+    res.status(201).json({
+      message: {
+        _id: result.insertedId,
+        ...message
+      }
+    });
+ 
 }
+
+const getMessages = async (req, res) => {
+  const db = getDB();
+  const { roomId } = req.params;
+
+  try {
+    if (!roomId) {
+      return res.status(400).json({ message: "Room ID is required." });
+    }
+
+    const messages = await db
+      .collection("messages")
+      .find({ roomId })
+      .sort({ createdAt: 1 })  // latest message last
+      .toArray();
+
+    res.status(200).json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 module.exports = {
   getConversation,
   createConversation ,
   extisingConversation,
-  sendMessage
+  sendMessage ,
+  getMessages
 };

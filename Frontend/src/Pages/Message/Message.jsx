@@ -5,6 +5,7 @@ import { FiMessageSquare } from "react-icons/fi";
 
 const Message = () => {
   const [activeChat, setActiveChat] = useState(null);
+  const [existingConversation, setExistingConversation] = useState([]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -14,7 +15,12 @@ const Message = () => {
           activeChat ? "hidden md:block" : "block"
         } w-full md:w-1/3`}
       >
-        <ChatList activeChat={activeChat} setActiveChat={setActiveChat} />
+        <ChatList
+          activeChat={activeChat}
+          setActiveChat={setActiveChat}
+          existingConversation={existingConversation}
+          setExistingConversation={setExistingConversation}
+        />
       </div>
 
       {/* Right side - Chat area - Hidden on mobile when no chat is selected */}
@@ -24,7 +30,12 @@ const Message = () => {
             activeChat ? "block" : "hidden md:block"
           } w-full md:w-2/3`}
         >
-          <ChatWindow activeChat={activeChat} setActiveChat={setActiveChat} />
+          <ChatWindow
+            activeChat={activeChat}
+            setActiveChat={setActiveChat}
+            existingConversation={existingConversation}
+            setExistingConversation={setExistingConversation}
+          />
         </div>
       ) : (
         <div className="hidden md:flex md:w-2/3 items-center justify-center bg-gray-50">

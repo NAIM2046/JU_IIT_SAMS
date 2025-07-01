@@ -86,6 +86,14 @@ const ChatList = ({ activeChat, setActiveChat }) => {
 
   const createConversation = (receiverData) => {
     const newId = [receiverData._id, user._id].sort().join("_");
+    // Check if conversation already exists
+    const existingConv = existingConversation.find(
+      (conv) => conv.roomId === newId
+    );
+    if (existingConv) {
+      setActiveChat(existingConv);
+      return; // If it exists, just set it as active
+    }
 
     const conversation = {
       roomId: newId,
@@ -145,6 +153,8 @@ const ChatList = ({ activeChat, setActiveChat }) => {
     setActiveCreateGroup(false);
     setSelectedUsers([]);
     setGroupName("");
+    setExistingConversation((prev) => [...prev, conversation]);
+    setActiveChat(conversation);
   };
 
   return (

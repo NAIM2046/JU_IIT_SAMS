@@ -1,5 +1,5 @@
 const  express = require('express') ;
-const  {getConversation, createConversation, extisingConversation, sendMessage, getMessages, sendFileMessage, getTotalunseenMessage}  = require('../controllers/MessageControllers.js');
+const  {getConversation, createConversation, extisingConversation, sendMessage, getMessages, sendFileMessage, getTotalunseenMessage, getIndividualUnseenMessage, updateSeenInfo}  = require('../controllers/MessageControllers.js');
 const multer = require("multer");
 const path = require("path");
 
@@ -19,5 +19,7 @@ router.get('/extisingConversation/:Id', extisingConversation );
 router.post('/sendMessage', sendMessage);
 router.get("/getMessages/:roomId" , getMessages) ;
 router.get('/getTotalunseenMessage/:userId', getTotalunseenMessage) ; 
+router.get('/getIndividualUnseenMessage/:userId', getIndividualUnseenMessage) ; 
+router.post('/updateSeenInfo', updateSeenInfo);
 
 module.exports = router;

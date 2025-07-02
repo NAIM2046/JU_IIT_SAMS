@@ -20,6 +20,7 @@ const ChatList = ({
   const [groupName, setGroupName] = useState("");
   const [searchcreateGroup, setSearchCreateGroup] = useState("");
   const [selectAll, setSelectAll] = useState(false);
+  const [totalMessageCounts, setTotalMessageCounts] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +35,7 @@ const ChatList = ({
         setLoading(false);
       }
     };
+
     const existingConversation = async () => {
       try {
         const response = await axiosSecure.get(
@@ -50,7 +52,7 @@ const ChatList = ({
     existingConversation();
     fetchData();
   }, []);
-  console.log(existingConversation);
+
   const filteredUsers = currentUser.filter((u) =>
     u.name?.toLowerCase().includes(searchuser.toLowerCase())
   );
@@ -79,8 +81,6 @@ const ChatList = ({
       setSelectAll(false);
     }
   }, [selectedUsers, filterCreateGroup]);
-
-  if (loading) return <div>Loading...</div>;
 
   const toggleSelectUser = (id) => {
     setSelectedUsers((prev) =>
@@ -160,6 +160,48 @@ const ChatList = ({
     setActiveChat(conversation);
   };
 
+  useEffect(() => {
+    axiosSecure
+      .get(`/api/message/getIndividualUnseenMessage/${user._id}`)
+      .then((res) => {
+        setTotalMessageCounts(res.data.result);
+      });
+  }, []);
+
+  // 2. Then update existingConversation when counts or conversation changes
+  useEffect(() => {
+    if (totalMessageCounts.length > 0 && existingConversation.length > 0) {
+      const updatedConversations = existingConversation.map((conv) => {
+        const matchedCount = totalMessageCounts.find(
+          (count) => count._id === conv.roomId
+        );
+        return {
+          ...conv,
+          count: matchedCount ? matchedCount.unseenCount : 0,
+        };
+      });
+
+      setExistingConversation(updatedConversations); // 🔄 Update state
+    }
+  }, [totalMessageCounts]);
+
+  console.log(totalMessageCounts);
+  console.log(existingConversation);
+  console.log("activeChat", activeChat?._id);
+
+
+  useEffect(()=>{
+    const obj = {
+      id: activeChat?._id,
+      roomId: activeChat?.roomId
+    }
+    axiosSecure.post('/api/message/updateSeenInfo', obj).then(res => {
+      console.log(res.data);
+    })
+  },[activeChat]);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <div className="w-full h-full border-r border-gray-300 bg-white">
       {/* Header */}
@@ -206,9 +248,14 @@ const ChatList = ({
                 className="w-12 h-12 rounded-full"
               />
               <div className="ml-3 flex-1">
-                <h3 className="font-semibold">
-                  {chat.groupName || chat.receiver.name}
-                </h3>
+                <div className="flex gap-2">
+                  <h3 className="font-semibold">
+                    {chat.groupName || chat.receiver.name}
+                  </h3>
+                  <div className="bg-green-500 h-7 w-7 font-bold text-center rounded-full">
+                    {chat.count}
+                  </div>
+                </div>
                 <p className="text-sm text-gray-500">
                   {chat.lastMessage.text || "No messages yet"}
                 </p>

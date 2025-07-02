@@ -210,11 +210,113 @@ const getMessages = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const sendFileMessage = async (req, res) => {
+  const db = getDB();
+  const { roomId, senderId, senderName, senderPhoto } = req.body;
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ message: "No file uploaded." });
+  }
+
+  try {
+    // find the conversation to get participants
+    const conversation = await db.collection("conversations").findOne({ roomId });
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // build deliveredTo array
+    const deliveredTo = conversation.participants.map(userId => ({
+      userId,
+      seen: userId === senderId,
+      deliveredAt: new Date(),
+      seenAt: userId === senderId ? new Date() : null
+    }));
+
+    // build the message with attachments
+    const message = {
+      roomId,
+      senderId,
+      senderName,
+      senderPhoto,
+      text: "", // file messages don’t have text by default
+      attachments: [{
+        url: `/uploads/${file.filename}`,
+        type: file.mimetype,
+        name: file.originalname
+      }],
+      editedAt: null,
+      deletedFor: [],
+      deliveredTo,
+      createdAt: new Date()
+    };
+
+    // insert message
+    const result = await db.collection("messages").insertOne(message);
+
+    // update conversation's lastMessage
+    await db.collection("conversations").updateOne(
+      { roomId },
+      {
+        $set: {
+          lastMessage: {
+            text: "📎 File sent", // generic text
+            sender: senderId,
+            time: new Date()
+          },
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    res.status(201).json({
+      message: {
+        _id: result.insertedId,
+        ...message
+      }
+    });
+
+  } catch (error) {
+    console.error("Error sending file message:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getTotalunseenMessage =async (req , res)=>{
+  const db = getDB() ; 
+  const userId = req.params.userId ;
+  const result = await db.collection("messages").aggregate([
+    {
+      $match:{
+        deliveredTo:{
+          $elemMatch:{
+            userId:userId ,
+            seen: false 
+          }
+        }
+      }
+    },
+    {
+      $count: "totalUnseenMessages"
+    }
+  ]).toArray() ;
+  if(result.length > 0){
+    res.status(200).json({totalUnseenMessages: result[0].totalUnseenMessages});
+  }
+  else{
+    res.status(200).json({totalUnseenMessages: 0});
+  }
+  
+}
+
 
 module.exports = {
   getConversation,
   createConversation ,
   extisingConversation,
   sendMessage ,
-  getMessages
+  getMessages ,
+  sendFileMessage,
+  getTotalunseenMessage
 };

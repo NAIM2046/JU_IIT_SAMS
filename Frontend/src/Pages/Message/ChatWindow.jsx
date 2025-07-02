@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiMoreVertical,
   FiSearch,
@@ -9,6 +9,7 @@ import {
 import { IoIosArrowDown, IoMdSend } from "react-icons/io";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
+import io from "socket.io-client";
 
 const ChatWindow = ({
   activeChat,
@@ -21,6 +22,8 @@ const ChatWindow = ({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef();
 
   useEffect(() => {
     if (!activeChat) return;
@@ -41,8 +44,51 @@ const ChatWindow = ({
 
     fetchMessages();
   }, [activeChat]);
+
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() && !selectedFile) return;
+
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("roomId", activeChat.roomId);
+      formData.append("senderId", user._id);
+      formData.append("senderName", user.name);
+      formData.append(
+        "senderPhoto",
+        user?.photoURL || "https://via.placeholder.com/150"
+      );
+      console.log("Sending file:", formData);
+
+      try {
+        const res = await AxiosSecure.post(
+          "/api/message/sendFileMessage",
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+
+        setMessages((prev) => [...prev, { ...res.data.message }]);
+        setExistingConversation((prev) =>
+          prev.map((conv) =>
+            conv.roomId === activeChat.roomId
+              ? {
+                  ...conv,
+                  lastMessage: {
+                    text: "📎 File sent",
+                    sender: user._id,
+                    time: new Date().toISOString(),
+                  },
+                }
+              : conv
+          )
+        );
+
+        setSelectedFile(null);
+      } catch (err) {
+        console.error("Failed to upload file:", err);
+      }
+      return;
+    }
 
     const newMessage = {
       text: message,
@@ -53,23 +99,13 @@ const ChatWindow = ({
     };
 
     try {
-      const res = await AxiosSecure.post(
-        "/api/message/sendMessage",
-        newMessage
-      );
+      await AxiosSecure.post("/api/message/sendMessage", newMessage);
 
-      console.log("Message sent:", res.data);
-
-      // messages list এ push করো
       setMessages((prev) => [
         ...prev,
-        {
-          ...newMessage,
-          createdAt: new Date().toISOString(),
-        },
+        { ...newMessage, createdAt: new Date().toISOString() },
       ]);
 
-      // 🆕 conversation list update করো
       setExistingConversation((prev) =>
         prev.map((conv) =>
           conv.roomId === activeChat.roomId
@@ -91,6 +127,12 @@ const ChatWindow = ({
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedFile(file);
+  };
+  console.log(messages);
   return (
     <div className="w-full h-full flex flex-col">
       {/* Chat header */}
@@ -140,7 +182,6 @@ const ChatWindow = ({
                   msg.senderId === user._id ? "justify-end" : "justify-start"
                 }`}
               >
-                {/* Sender image for others */}
                 {msg.senderId !== user._id && (
                   <img
                     src={msg.senderPhoto || "https://via.placeholder.com/150"}
@@ -148,15 +189,12 @@ const ChatWindow = ({
                     className="w-8 h-8 rounded-full mr-2"
                   />
                 )}
-
                 <div>
-                  {/* Sender name only for group / others */}
                   {msg.senderId !== user._id && (
                     <p className="text-xs text-gray-600 font-semibold mb-1">
                       {msg.senderName}
                     </p>
                   )}
-
                   <div
                     className={`rounded-lg py-2 px-3 max-w-[100%] ${
                       msg.senderId === user._id
@@ -164,7 +202,28 @@ const ChatWindow = ({
                         : "bg-white rounded-tl-none"
                     }`}
                   >
-                    <p>{msg.text}</p>
+                    {msg.text && <p>{msg.text}</p>}
+                    {msg.attachments &&
+                      msg.attachments.map((filee, idx) => (
+                        <div key={idx} className="mt-2">
+                          {filee.type.startsWith("image/") ? (
+                            <img
+                              src={"http://localhost:5000" + filee.url}
+                              alt={filee.name}
+                              className="max-w-xs rounded"
+                            />
+                          ) : (
+                            <a
+                              href={"http://localhost:5000" + filee.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              📎 {filee.name}
+                            </a>
+                          )}
+                        </div>
+                      ))}
                     <p className="text-xs text-gray-500 text-right mt-1">
                       {new Date(msg.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -179,14 +238,39 @@ const ChatWindow = ({
         )}
       </div>
 
+      {/* Selected file preview */}
+      {selectedFile && (
+        <div className="px-4 py-2 bg-gray-50 border-t">
+          <p className="text-sm text-gray-700">
+            Selected file:{" "}
+            <span className="font-medium">{selectedFile.name}</span>
+          </p>
+          <button
+            onClick={() => setSelectedFile(null)}
+            className="text-red-500 text-xs mt-1"
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
       {/* Message input */}
       <div className="bg-gray-100 p-3 flex items-center">
         <button className="text-gray-600 mx-2 p-1 rounded-full hover:bg-gray-200">
           <FiSmile size={24} />
         </button>
-        <button className="text-gray-600 mx-2 p-1 rounded-full hover:bg-gray-200">
+        <button
+          className="text-gray-600 mx-2 p-1 rounded-full hover:bg-gray-200"
+          onClick={() => fileInputRef.current.click()}
+        >
           <FiPaperclip size={24} />
         </button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileChange}
+        />
         <input
           type="text"
           placeholder="Type a message"
@@ -195,7 +279,7 @@ const ChatWindow = ({
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
         />
-        {message ? (
+        {message || selectedFile ? (
           <button
             className="text-gray-600 mx-2 p-1 rounded-full hover:bg-gray-200"
             onClick={handleSendMessage}

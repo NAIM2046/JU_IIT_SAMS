@@ -42,7 +42,7 @@ const ChatList = ({
           `/api/message/extisingConversation/${user._id}`
         );
         if (response.data.length > 0) {
-          setActiveChat(response.data[0]);
+          // setActiveChat(response.data[0]);
           setExistingConversation(response.data);
         }
       } catch (error) {
@@ -189,16 +189,26 @@ const ChatList = ({
   console.log(existingConversation);
   console.log("activeChat", activeChat?._id);
 
-
-  useEffect(()=>{
+  useEffect(() => {
     const obj = {
-      id: activeChat?._id,
-      roomId: activeChat?.roomId
-    }
-    axiosSecure.post('/api/message/updateSeenInfo', obj).then(res => {
+      id: user?._id,
+      roomId: activeChat?.roomId,
+    };
+    axiosSecure.post("/api/message/updateSeenInfo", obj).then((res) => {
       console.log(res.data);
-    })
-  },[activeChat]);
+      if (res.data.modifiedCount > 0) {
+        console.log("✅ unseen messages marked as seen");
+        // এখানে conversation unseen count কমিয়ে UI refresh করো
+        setExistingConversation((prev) =>
+          prev.map((conv) =>
+            conv.roomId === activeChat.roomId ? { ...conv, count: 0 } : conv
+          )
+        );
+      } else {
+        console.log("ℹ️ No unseen messages to update");
+      }
+    });
+  }, [activeChat]);
 
   if (loading) return <div>Loading...</div>;
 
@@ -235,7 +245,7 @@ const ChatList = ({
             <div
               key={chat._id}
               className={`flex items-center  p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${
-                activeChat.roomId === chat.roomId ? "bg-green-100" : ""
+                activeChat?.roomId === chat.roomId ? "bg-green-100" : ""
               }`}
               onClick={() => setActiveChat(chat)}
             >
@@ -252,9 +262,11 @@ const ChatList = ({
                   <h3 className="font-semibold">
                     {chat.groupName || chat.receiver.name}
                   </h3>
-                  <div className="bg-green-500 h-7 w-7 font-bold text-center rounded-full">
-                    {chat.count}
-                  </div>
+                  {chat?.count && (
+                    <div className="bg-green-500 h-7 w-7 font-bold text-center rounded-full">
+                      {chat?.count}
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-gray-500">
                   {chat.lastMessage.text || "No messages yet"}

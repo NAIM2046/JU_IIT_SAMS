@@ -352,42 +352,32 @@ const updateSeenInfo = async (req, res) => {
   const { id, roomId } = req.body;
   const db = getDB();
   console.log("body", req.body);
-  /*
-  const result = await db.collection("messages").updateMany(
-    {
-      roomId: roomId,
-      "deliveredTo.userId": id,
-      "deliveredTo.seen": false,
+  
+ const result = await db.collection("messages").updateMany(
+  {
+    roomId: roomId,
+    "deliveredTo.userId": id,
+    "deliveredTo.seen": false,
+  },
+  {
+    $set: {
+      "deliveredTo.$[elem].seen": true,
+      "deliveredTo.$[elem].seenAt": new Date(),
     },
-    {
-      $set: {
-        "deliveredTo.$[userId].seen": true,
-        "deliveredTo.$[userId].seenAt": new Date(),
+  },
+  {
+    arrayFilters: [
+      {
+        "elem.userId": id,
+        "elem.seen": false,
       },
-    },
-    {
-      arrayFilters: [
-        {
-          "elem.userId": id,
-          "elem.seen": false,
-        },
-      ],
-    }
-  );
-  */
-  const match = await db
-    .collection("messages")
-    .find({
-      roomId: roomId,
-      "deliveredTo.userId": id,
-      // "deliveredTo.seen": false,
-    })
-    .toArray();
+    ],
+  }
+);
 
-  console.log("result", match);
-  res.json({
-    match,
-  });
+  console.log(result);
+  res.json({ modifiedCount: result.modifiedCount });
+ 
 };
 
 module.exports = {

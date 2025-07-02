@@ -9,7 +9,6 @@ import {
 import { IoIosArrowDown, IoMdSend } from "react-icons/io";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
-import io from "socket.io-client";
 
 const ChatWindow = ({
   activeChat,
@@ -58,7 +57,6 @@ const ChatWindow = ({
         "senderPhoto",
         user?.photoURL || "https://via.placeholder.com/150"
       );
-      console.log("Sending file:", formData);
 
       try {
         const res = await AxiosSecure.post(
@@ -82,7 +80,6 @@ const ChatWindow = ({
               : conv
           )
         );
-
         setSelectedFile(null);
       } catch (err) {
         console.error("Failed to upload file:", err);
@@ -100,12 +97,10 @@ const ChatWindow = ({
 
     try {
       await AxiosSecure.post("/api/message/sendMessage", newMessage);
-
       setMessages((prev) => [
         ...prev,
         { ...newMessage, createdAt: new Date().toISOString() },
       ]);
-
       setExistingConversation((prev) =>
         prev.map((conv) =>
           conv.roomId === activeChat.roomId
@@ -120,7 +115,6 @@ const ChatWindow = ({
             : conv
         )
       );
-
       setMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
@@ -132,7 +126,7 @@ const ChatWindow = ({
     if (!file) return;
     setSelectedFile(file);
   };
-  console.log(messages);
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Chat header */}
@@ -230,6 +224,18 @@ const ChatWindow = ({
                         minute: "2-digit",
                       })}
                     </p>
+                    {msg.senderId === user._id && (
+                      <p className="text-[10px] text-gray-500 text-right mt-0.5">
+                        {msg.deliveredTo?.length > 0 &&
+                        msg.deliveredTo.every((u) => u.seen) ? (
+                          <span>👀 Seen</span>
+                        ) : msg.deliveredTo?.length > 0 ? (
+                          <span>✅ Delivered</span>
+                        ) : (
+                          <span>⌛ Sending</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

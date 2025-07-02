@@ -178,6 +178,7 @@ const sendMessage = async (req, res) => {
         }
       }
     );
+    
 
     // return inserted message with _id
     res.status(201).json({

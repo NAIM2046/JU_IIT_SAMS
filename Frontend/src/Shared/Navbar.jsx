@@ -3,9 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import useStroge from "../stroge/useStroge";
 import { FaRegCommentAlt } from "react-icons/fa";
 import { IoMdNotificationsOutline } from "react-icons/io"; // Optional: for notification icon
+import { useEffect } from "react";
+import { useState } from "react";
+import useAxiosPrivate from "../TokenAdd/useAxiosPrivate";
 
 const Navbar = () => {
   const { user, setUser } = useStroge();
+  const [unseenMessageCount, setUnseenMessageCount] = useState(10);
+
+  const axiosSecure = useAxiosPrivate();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -15,9 +21,13 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  // Mock data - replace with actual data from your backend
-  const unseenMessageCount = 3;
+  useEffect(()=>{
+    axiosSecure.get(`/api/message/getTotalunseenMessage/${user._id}`).then(res => {
+      setUnseenMessageCount(res.data.totalUnseenMessages);
+    })
+  }, [])
 
+  // Mock data - replace with actual data from your backend
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-3">

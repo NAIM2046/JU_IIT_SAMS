@@ -3,6 +3,8 @@ import { BsThreeDotsVertical, BsFilter } from "react-icons/bs";
 import useStroge from "../../stroge/useStroge";
 import { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5000");
 
 const ChatList = ({
   activeChat,
@@ -20,7 +22,8 @@ const ChatList = ({
   const [groupName, setGroupName] = useState("");
   const [searchcreateGroup, setSearchCreateGroup] = useState("");
   const [selectAll, setSelectAll] = useState(false);
-  const [totalMessageCounts, setTotalMessageCounts] = useState(0);
+  const [totalMessageCounts, setTotalMessageCounts] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,6 +56,21 @@ const ChatList = ({
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (!user?._id) return;
+    socket.emit("user-connected", user._id);
+
+    socket.on("online-users", (users) => {
+      console.log("active users", users);
+      setOnlineUsers(users);
+    });
+
+    return () => {
+      socket.off("");
+    };
+  }, []);
+
+  console.log("onlineUsers", onlineUsers);
   const filteredUsers = currentUser.filter((u) =>
     u.name?.toLowerCase().includes(searchuser.toLowerCase())
   );
@@ -170,24 +188,38 @@ const ChatList = ({
 
   // 2. Then update existingConversation when counts or conversation changes
   useEffect(() => {
-    if (totalMessageCounts.length > 0 && existingConversation.length > 0) {
-      const updatedConversations = existingConversation.map((conv) => {
-        const matchedCount = totalMessageCounts.find(
-          (count) => count._id === conv.roomId
-        );
-        return {
-          ...conv,
-          count: matchedCount ? matchedCount.unseenCount : 0,
-        };
-      });
+    // if (totalMessageCounts.length > 0 && existingConversation.length > 0) {
+    console.log("inside useeffect");
+    const updatedConversations = existingConversation.map((conv) => {
+      const matchedCount = totalMessageCounts.find(
+        (count) => count._id === conv.roomId
+      );
+      return {
+        ...conv,
+        count: matchedCount ? matchedCount.unseenCount : 0,
+      };
+    });
 
-      setExistingConversation(updatedConversations); // 🔄 Update state
-    }
-  }, [totalMessageCounts]);
+    //setting active status for each existing conversations
+    const conversationWithActiveStatus = updatedConversations.map((conv) => {
+      const isActive =
+        conv.receiver && conv.receiver._id
+          ? onlineUsers.includes(conv.receiver._id)
+          : false;
+      return {
+        ...conv,
+        isActive,
+      };
+    });
 
-  console.log(totalMessageCounts);
-  console.log(existingConversation);
-  console.log("activeChat", activeChat?._id);
+    // console.log("inside func", conversationWithActiveStatus);
+    setExistingConversation(conversationWithActiveStatus); // 🔄 Update state
+    // }
+  }, [totalMessageCounts, onlineUsers]);
+
+  // console.log(totalMessageCounts);
+  console.log("exist", existingConversation);
+  // console.log("activeChat", activeChat?._id);
 
   useEffect(() => {
     const obj = {
@@ -209,6 +241,8 @@ const ChatList = ({
       }
     });
   }, [activeChat]);
+
+  console.log("existing conversations", existingConversation);
 
   if (loading) return <div>Loading...</div>;
 
@@ -244,7 +278,7 @@ const ChatList = ({
           {existingConversation.map((chat) => (
             <div
               key={chat._id}
-              className={`flex items-center  p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${
+              className={`flex relative items-center  p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${
                 activeChat?.roomId === chat.roomId ? "bg-green-100" : ""
               }`}
               onClick={() => setActiveChat(chat)}
@@ -272,6 +306,9 @@ const ChatList = ({
                   {chat.lastMessage.text || "No messages yet"}
                 </p>
               </div>
+              {chat.isActive && (
+                <div className="absolute left-12 bottom-10 bg-green-500 h-4 w-4 font-bold text-center border-2 border-base-100 rounded-full"></div>
+              )}
               <span className="text-xs text-gray-400">
                 {new Date(chat.lastMessage.time).toLocaleDateString("en-US", {
                   month: "short",

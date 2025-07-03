@@ -9,6 +9,8 @@ import {
 import { IoIosArrowDown, IoMdSend } from "react-icons/io";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5000");
 
 const ChatWindow = ({
   activeChat,
@@ -23,10 +25,10 @@ const ChatWindow = ({
   const [messages, setMessages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef();
+  const [currentMessages, setCurrentMessages] = useState([]);
 
   useEffect(() => {
     if (!activeChat) return;
-
     setLoading(true);
     const fetchMessages = async () => {
       try {
@@ -127,6 +129,19 @@ const ChatWindow = ({
     setSelectedFile(file);
   };
 
+  useEffect(() => {
+    socket.emit("join-room", activeChat.roomId);
+    socket.on("receive-message", (msg) => {
+      console.log("message from backend", msg);
+      setCurrentMessages((prev) => [...prev, msg]);
+    });
+  }, []);
+
+  const handleSocketMessage = () => {
+    socket.emit("send-message", { message, roomId: activeChat.roomId });
+  };
+
+  console.log("current message", currentMessages);
   return (
     <div className="w-full h-full flex flex-col">
       {/* Chat header */}
@@ -240,6 +255,13 @@ const ChatWindow = ({
                 </div>
               </div>
             ))}
+            {currentMessages.length > 0 && (
+              <div>
+                {currentMessages.map((message, key) => {
+                  return <div key={key}>{message}</div>;
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -288,7 +310,10 @@ const ChatWindow = ({
         {message || selectedFile ? (
           <button
             className="text-gray-600 mx-2 p-1 rounded-full hover:bg-gray-200"
-            onClick={handleSendMessage}
+            onClick={() => {
+              handleSendMessage();
+              handleSocketMessage();
+            }}
           >
             <IoMdSend size={24} className="text-green-600" />
           </button>

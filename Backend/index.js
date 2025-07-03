@@ -53,7 +53,7 @@ io.on("connection", (socket) => {
 
 
   socket.on("send-message", ({message, roomId})=>{
-    console.log("messaage from send message", message);
+   // console.log("messaage from send message", message);
     socket.to(roomId).emit("receive-message", message);
   })
 

@@ -67,7 +67,10 @@ const ChatWindow = ({
           { headers: { "Content-Type": "multipart/form-data" } }
         );
 
-        socket.emit("send-message", { message:res.data.message, roomId: activeChat.roomId });
+        socket.emit("send-message", {
+          message: res.data.message,
+          roomId: activeChat.roomId,
+        });
 
         setMessages((prev) => [...prev, { ...res.data.message }]);
         setExistingConversation((prev) =>
@@ -97,10 +100,8 @@ const ChatWindow = ({
       senderId: user._id,
       senderName: user.name,
       senderPhoto: user?.photoURL || "https://via.placeholder.com/150",
-      createdAt: new Date()
+      createdAt: new Date(),
     };
-
-    socket.emit("send-message", { message:newMessage, roomId: activeChat.roomId });
 
     try {
       await AxiosSecure.post("/api/message/sendMessage", newMessage);
@@ -122,6 +123,10 @@ const ChatWindow = ({
             : conv
         )
       );
+      socket.emit("send-message", {
+        message: newMessage,
+        roomId: activeChat.roomId,
+      });
       setMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
@@ -135,23 +140,29 @@ const ChatWindow = ({
   };
 
   useEffect(() => {
-    if(!activeChat.roomId) return;
+    if (!activeChat.roomId) return;
 
     socket.emit("join-room", activeChat.roomId);
 
     const handleMessage = (msg) => {
       console.log("message from backend", msg);
       setMessages((prev) => [...prev, msg]);
-    }
+
+      const obj = {
+        id: user?._id,
+        roomId: activeChat?.roomId,
+      };
+      AxiosSecure.post("/api/message/updateSeenInfo", obj).then((res) => {
+        console.log("calling ", res.data.modifiedCount);
+      });
+    };
     socket.off("receive-message", handleMessage);
     socket.on("receive-message", handleMessage);
 
     return () => {
       socket.off("receive-message", handleMessage);
-    }
+    };
   }, [activeChat.roomId]);
-
-
 
   return (
     <div className="w-full h-full flex flex-col">

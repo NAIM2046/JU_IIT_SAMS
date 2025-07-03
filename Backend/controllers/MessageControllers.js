@@ -351,7 +351,7 @@ const getIndividualUnseenMessage = async (req, res) => {
 const updateSeenInfo = async (req, res) => {
   const { id, roomId } = req.body;
   const db = getDB();
-  // console.log("body", req.body);
+  console.log("body", req.body);
   
  const result = await db.collection("messages").updateMany(
   {

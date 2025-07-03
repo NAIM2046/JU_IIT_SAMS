@@ -21,11 +21,13 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  useEffect(()=>{
-    axiosSecure.get(`/api/message/getTotalunseenMessage/${user._id}`).then(res => {
-      setUnseenMessageCount(res.data.totalUnseenMessages);
-    })
-  }, [])
+  useEffect(() => {
+    axiosSecure
+      .get(`/api/message/getTotalunseenMessage/${user?._id}`)
+      .then((res) => {
+        setUnseenMessageCount(res.data.totalUnseenMessages);
+      });
+  }, []);
 
   // Mock data - replace with actual data from your backend
   return (

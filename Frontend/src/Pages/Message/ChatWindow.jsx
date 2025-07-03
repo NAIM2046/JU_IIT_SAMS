@@ -10,6 +10,7 @@ import { IoIosArrowDown, IoMdSend } from "react-icons/io";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
 import { io } from "socket.io-client";
+
 const socket = io("http://localhost:5000");
 
 const ChatWindow = ({
@@ -25,7 +26,6 @@ const ChatWindow = ({
   const [messages, setMessages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef();
-  const [currentMessages, setCurrentMessages] = useState([]);
 
   useEffect(() => {
     if (!activeChat) return;
@@ -67,6 +67,8 @@ const ChatWindow = ({
           { headers: { "Content-Type": "multipart/form-data" } }
         );
 
+        socket.emit("send-message", { message:res.data.message, roomId: activeChat.roomId });
+
         setMessages((prev) => [...prev, { ...res.data.message }]);
         setExistingConversation((prev) =>
           prev.map((conv) =>
@@ -95,7 +97,10 @@ const ChatWindow = ({
       senderId: user._id,
       senderName: user.name,
       senderPhoto: user?.photoURL || "https://via.placeholder.com/150",
+      createdAt: new Date()
     };
+
+    socket.emit("send-message", { message:newMessage, roomId: activeChat.roomId });
 
     try {
       await AxiosSecure.post("/api/message/sendMessage", newMessage);
@@ -130,18 +135,24 @@ const ChatWindow = ({
   };
 
   useEffect(() => {
+    if(!activeChat.roomId) return;
+
     socket.emit("join-room", activeChat.roomId);
-    socket.on("receive-message", (msg) => {
+
+    const handleMessage = (msg) => {
       console.log("message from backend", msg);
-      setCurrentMessages((prev) => [...prev, msg]);
-    });
-  }, []);
+      setMessages((prev) => [...prev, msg]);
+    }
+    socket.off("receive-message", handleMessage);
+    socket.on("receive-message", handleMessage);
 
-  const handleSocketMessage = () => {
-    socket.emit("send-message", { message, roomId: activeChat.roomId });
-  };
+    return () => {
+      socket.off("receive-message", handleMessage);
+    }
+  }, [activeChat.roomId]);
 
-  console.log("current message", currentMessages);
+
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Chat header */}
@@ -255,13 +266,6 @@ const ChatWindow = ({
                 </div>
               </div>
             ))}
-            {currentMessages.length > 0 && (
-              <div>
-                {currentMessages.map((message, key) => {
-                  return <div key={key}>{message}</div>;
-                })}
-              </div>
-            )}
           </div>
         )}
       </div>

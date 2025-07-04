@@ -2,8 +2,8 @@ import React from "react";
 import axios from "axios";
 
 const axiosPrivate = axios.create({
-  baseURL: "http://localhost:5000",
-  //baseURL: "https://projecteducation-91f3.onrender.com",
+  //baseURL: "http://localhost:5000",
+  baseURL: "https://juiitsams-production.up.railway.app",
 });
 
 const useAxiosPrivate = () => {

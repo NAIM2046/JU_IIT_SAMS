@@ -28,9 +28,9 @@ const getClassAndSub = async (req, res) => {
 
 const addSubjectToClass = async (req, res) => {
   const db = getDB();
-    const { classNumber } = req.params; // Assuming classNumber is passed as a URL parameter
-  const {  subject } = req.body;
-    console.log("Adding subject:", classNumber, subject); // Debugging line
+  const { classNumber } = req.params; // Assuming classNumber is passed as a URL parameter
+  const { subject } = req.body;
+  console.log("Adding subject:", classNumber, subject); // Debugging line
   try {
     await db.collection('classes').updateOne(
       { class: classNumber },
@@ -61,33 +61,33 @@ const deleteClass = async (req, res) => {
 
 
 const removeSubjectFromClass = async (req, res) => {
-    const db = getDB();
-    const { classNumber } = req.params;
-    const { subject } = req.body;
-    try {
-      await db.collection('classes').updateOne(
-        { class: classNumber },
-        { $pull: { subjects: subject } }
-      );
-      res.status(200).json({ message: 'Subject removed successfully' });
-    } catch (error) {
-      console.error('Error removing subject from class:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  };
-  const getSubjectbyClass = async(req , res) =>{
-    const db = getDB() ; 
-    const classNumber =  req.params.class ; 
-    const result =  await db.collection("classes").findOne({class: classNumber}) ;
-    res.status(200).json(result) ;
+  const db = getDB();
+  const { classNumber } = req.params;
+  const { subject } = req.body;
+  try {
+    await db.collection('classes').updateOne(
+      { class: classNumber },
+      { $pull: { subjects: subject } }
+    );
+    res.status(200).json({ message: 'Subject removed successfully' });
+  } catch (error) {
+    console.error('Error removing subject from class:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
+};
+const getSubjectbyClass = async (req, res) => {
+  const db = getDB();
+  const classNumber = req.params.class;
+  const result = await db.collection("classes").findOne({ class: classNumber });
+  res.status(200).json(result);
+}
 
 module.exports = {
   addClassAndSub,
   getClassAndSub,
   addSubjectToClass,
   deleteClass,
-    removeSubjectFromClass,
-    getSubjectbyClass
-    
+  removeSubjectFromClass,
+  getSubjectbyClass
+
 }

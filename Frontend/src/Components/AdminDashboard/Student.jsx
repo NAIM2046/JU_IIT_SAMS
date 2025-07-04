@@ -46,6 +46,7 @@ const Student = () => {
     fetchStudent();
   }, []);
 
+  console.log(classlist);
   // Handle form submission
   const handleFormSubmission = async (e) => {
     e.preventDefault();
@@ -57,8 +58,10 @@ const Student = () => {
       name: formData.get("name"),
       age: formData.get("age"),
       class: formData.get("class"),
-      section: formData.get("section"),
-      roll: formData.get("roll"),
+
+      class_roll: formData.get("class_roll"),
+      exam_roll: formData.get("exam_roll"),
+      hall_name: formData.get("hallname"),
       password: "123456",
       gender: formData.get("gender"),
       guardians: {
@@ -67,6 +70,7 @@ const Student = () => {
         phoneNumber: formData.get("phonenumber"),
       },
       email: formData.get("email"),
+      photoURL: "https://i.ibb.co/G9wkJbX/user.webp",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -86,13 +90,9 @@ const Student = () => {
           "/api/auth/adduser",
           studentInfo
         );
-        const userid = response.data.userId;
-        if (userid) {
-          await axiosPrivate.post(
-            `/api/attendance/initialAttendanceInfo/${userid}`
-          );
+        if (response.data) {
+          toast.success("Student added successfully");
         }
-        toast.success("Student added successfully");
       }
       form.reset();
       setIsEditMode(false);
@@ -176,7 +176,7 @@ const Student = () => {
                 name="name"
                 placeholder="Student Name"
                 required
-                defaultValue={currentStudent?.name || ""}
+                value={currentStudent?.name || ""}
               />
             </div>
             <div>
@@ -190,7 +190,7 @@ const Student = () => {
                 placeholder="Age"
                 required
                 min="5"
-                max="25"
+                max="50"
                 defaultValue={currentStudent?.age || ""}
               />
             </div>
@@ -198,15 +198,15 @@ const Student = () => {
             {/* Class and Section */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Class *
+                Semester *
               </label>
               <select
                 name="class"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                defaultValue={currentStudent?.class || ""}
+                value={currentStudent?.class || ""}
               >
-                <option value="">Select Class</option>
+                <option value="">Select Semester</option>
                 {classlist.map((cls, index) => (
                   <option key={index} value={cls.class}>
                     {cls.class}
@@ -214,32 +214,45 @@ const Student = () => {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Section *
-              </label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                name="section"
-                placeholder="Section"
-                required
-                defaultValue={currentStudent?.section || ""}
-              />
-            </div>
 
             {/* Roll and Gender */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Roll Number *
+                Class Roll *
               </label>
               <input
                 type="text"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                name="roll"
-                placeholder="Roll Number"
+                name="class_roll"
+                placeholder="Class Roll"
                 required
-                defaultValue={currentStudent?.roll || ""}
+                defaultValue={currentStudent?.class_roll || ""}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Exam Roll *
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                name="exam_roll"
+                placeholder="Exam Roll"
+                required
+                defaultValue={currentStudent?.exam_roll || ""}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hall Name *
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                name="hallname"
+                placeholder="Hall Name"
+                required
+                defaultValue={currentStudent?.hall_name || ""}
               />
             </div>
             <div>
@@ -250,7 +263,7 @@ const Student = () => {
                 name="gender"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                defaultValue={currentStudent?.gender || "choose gender"}
+                value={currentStudent?.gender || "choose gender"}
               >
                 <option value="choose gender" disabled>
                   Choose Gender
@@ -384,9 +397,7 @@ const Student = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Roll
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Section
-                  </th>
+
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Gender
                   </th>
@@ -413,11 +424,9 @@ const Student = () => {
                       {s.class}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {s.roll}
+                      {s.class_roll}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {s.section}
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {s.gender}
                     </td>

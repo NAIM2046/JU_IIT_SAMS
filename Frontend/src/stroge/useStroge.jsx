@@ -2,7 +2,7 @@ import { create } from "zustand";
 import axios from "axios";
 
 const Base_url = "http://localhost:5000";
-//const Base_url = "https://projecteducation-91f3.onrender.com";
+//const Base_url = "https://juiitsams-production.up.railway.app";
 
 const getUserFromLocalStorage = () => {
   try {

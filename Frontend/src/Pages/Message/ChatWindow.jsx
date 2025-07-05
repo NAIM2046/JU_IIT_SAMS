@@ -11,7 +11,7 @@ import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("juiitsams-production.up.railway.app");
 
 const ChatWindow = ({
   activeChat,

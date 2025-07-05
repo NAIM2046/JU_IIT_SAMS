@@ -32,14 +32,16 @@ const Teacher = () => {
     e.preventDefault();
     const form = e.target;
     const formData = {
+      fullname: form.fullname.value,
       name: form.name.value,
       age: form.age.value,
       fathername: form.fathername.value,
       mothername: form.mothername.value,
       description: form.description.value,
       email: form.email.value,
-      password: form.password.value,
+      password: "123456",
       role: "teacher",
+      photoURL: "https://i.ibb.co/G9wkJbX/user.webp",
     };
 
     // Validate form
@@ -63,7 +65,10 @@ const Teacher = () => {
     try {
       setLoading(true);
       const response = await axiosPrivate.post("/api/auth/adduser", formData);
-      toast.success("Teacher added successfully!");
+      if (response.data) {
+        toast.success("Teacher added successfully!");
+      }
+
       form.reset();
       fetchTeachers(); // Refresh the teacher list
     } catch (error) {
@@ -109,9 +114,23 @@ const Teacher = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="fullname"
                   className={`w-full px-3 py-2 border rounded-md ${formErrors.name ? "border-red-500" : "border-gray-300"}`}
                   placeholder="Teacher's full name"
+                />
+                {formErrors.name && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Short Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  className={`w-full px-3 py-2 border rounded-md ${formErrors.name ? "border-red-500" : "border-gray-300"}`}
+                  placeholder="Teacher's short name"
                 />
                 {formErrors.name && (
                   <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
@@ -170,23 +189,6 @@ const Teacher = () => {
                 {formErrors.email && (
                   <p className="text-red-500 text-xs mt-1">
                     {formErrors.email}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  className={`w-full px-3 py-2 border rounded-md ${formErrors.password ? "border-red-500" : "border-gray-300"}`}
-                  placeholder="Create password"
-                />
-                {formErrors.password && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {formErrors.password}
                   </p>
                 )}
               </div>

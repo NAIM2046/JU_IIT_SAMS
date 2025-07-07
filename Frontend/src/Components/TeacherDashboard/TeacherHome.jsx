@@ -62,6 +62,7 @@ const TeacherHome = () => {
     fetchSchedules();
   }, [user.name, todayName, AxiosSecure]);
   console.log("Schedules for today:", schedules);
+  console.log(user);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -95,8 +96,9 @@ const TeacherHome = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-semibold text-gray-800 truncate">
-                      {schedule.subject}
+                      {schedule.subject.title}
                     </h2>
+                    <p className="">{schedule.subject.code}</p>
                     <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                       {schedule.classId}
                     </span>

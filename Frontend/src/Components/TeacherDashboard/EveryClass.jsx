@@ -49,7 +49,7 @@ const EveryClass = () => {
         // 2. Check attendance record
         try {
           const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.classId}/${schedule.subject}/${DateFormate}`
+            `/api/attendance/check/${schedule.classId}/${schedule.subject.code}/${DateFormate}`
           );
 
           const existingAttendance = attendanceRes.data;
@@ -73,7 +73,7 @@ const EveryClass = () => {
         // 3. Get performance data
         try {
           const performanceRes = await AxiosSecure.get(
-            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject}`
+            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject.code}`
           );
           const performanceData = performanceRes.data;
 
@@ -109,7 +109,7 @@ const EveryClass = () => {
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
         className: schedule.classId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         date: DateFormate,
         studentId,
         roll,
@@ -135,7 +135,7 @@ const EveryClass = () => {
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
         className: schedule.classId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         date: DateFormate,
         students,
         defaultStatus: status,
@@ -157,7 +157,7 @@ const EveryClass = () => {
     try {
       const res = await AxiosSecure.post("/api/performance/updata", {
         studentId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         className: schedule.classId,
         evaluation,
       });
@@ -184,7 +184,7 @@ const EveryClass = () => {
     try {
       const response = await AxiosSecure.post("/api/classHistory/save", {
         className: schedule.classId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         date: DateFormate,
         teacherName: teacherName,
         status: "Completed",
@@ -241,7 +241,7 @@ const EveryClass = () => {
               <div className="flex items-center">
                 <FiBook className="text-blue-500 mr-2" />
                 <span className="font-medium">Subject:</span>
-                <span className="ml-2">{schedule?.subject}</span>
+                <span className="ml-2">{schedule?.subject.title}</span>
               </div>
               <div className="flex items-center">
                 <FiUser className="text-blue-500 mr-2" />
@@ -381,7 +381,7 @@ const EveryClass = () => {
                           onClick={() =>
                             updateSingleStudentAttendance(
                               student._id,
-                              student.roll,
+                              student.class_roll,
                               "P"
                             )
                           }
@@ -397,7 +397,7 @@ const EveryClass = () => {
                           onClick={() =>
                             updateSingleStudentAttendance(
                               student._id,
-                              student.roll,
+                              student.class_roll,
                               "A"
                             )
                           }

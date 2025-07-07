@@ -32,6 +32,7 @@ import AdminRoute from "./AdminRoute";
 import PerformanceSummary from "../Components/TeacherDashboard/PerformanceSummary";
 import StudentsAttendance from "../Components/StudentDashboard/StudentsAttendance";
 import Message from "../Pages/Message/Message";
+import EnCourseMarkHome from "../Components/TeacherDashboard/EnCourseMarkManage/EnCourseMarkHome";
 
 const router = createBrowserRouter([
   {
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
       {
         path: "/teacherDashboard/performanceSummary",
         element: <PerformanceSummary></PerformanceSummary>,
+      },
+      {
+        path: "/teacherDashboard/manage40mark",
+        element: <EnCourseMarkHome></EnCourseMarkHome>,
       },
     ],
   },

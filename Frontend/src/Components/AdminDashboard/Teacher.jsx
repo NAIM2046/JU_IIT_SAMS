@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import { FaTrash, FaEdit, FaUserTie } from "react-icons/fa";
+import { FaTrash, FaEdit, FaUserTie, FaTimes, FaCheck } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -9,6 +9,8 @@ const Teacher = () => {
   const [teacherList, setTeacherList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [currentTeacher, setCurrentTeacher] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch teachers on component mount
   useEffect(() => {
@@ -96,17 +98,76 @@ const Teacher = () => {
     }
   };
 
+  const handleEditTeacher = (teacher) => {
+    setCurrentTeacher(teacher);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setCurrentTeacher(null);
+  };
+
+  const handleUpdateTeacher = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = {
+      fullname: form.fullname.value,
+      name: form.name.value,
+      age: form.age.value,
+      fathername: form.fathername.value,
+      mothername: form.mothername.value,
+      description: form.description.value,
+      email: form.email.value,
+    };
+
+    // Validate form
+    const errors = {};
+    if (!formData.name) errors.name = "Name is required";
+    if (!formData.age || isNaN(formData.age))
+      errors.age = "Valid age is required";
+    if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      errors.email = "Valid email is required";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+
+    try {
+      setLoading(true);
+      const response = await axiosPrivate.put(
+        `/api/auth/updateuser/${currentTeacher._id}`,
+        formData
+      );
+      if (response.data) {
+        toast.success("Teacher updated successfully!");
+        setIsEditing(false);
+        setCurrentTeacher(null);
+        fetchTeachers(); // Refresh the teacher list
+         form.reset();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update teacher");
+      console.error("Error updating teacher:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Add Teacher Form */}
+      {/* Add/Edit Teacher Form */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
             <FaUserTie className="mr-2 text-blue-600" />
-            Add New Teacher
+            {isEditing ? "Edit Teacher" : "Add New Teacher"}
           </h2>
 
-          <form onSubmit={handleAddTeacher} className="space-y-4">
+          <form onSubmit={isEditing ? handleUpdateTeacher : handleAddTeacher} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -115,6 +176,7 @@ const Teacher = () => {
                 <input
                   type="text"
                   name="fullname"
+                  defaultValue={isEditing ? currentTeacher.fullname : ""}
                   className={`w-full px-3 py-2 border rounded-md ${formErrors.name ? "border-red-500" : "border-gray-300"}`}
                   placeholder="Teacher's full name"
                 />
@@ -129,6 +191,7 @@ const Teacher = () => {
                 <input
                   type="text"
                   name="name"
+                  defaultValue={isEditing ? currentTeacher.name : ""}
                   className={`w-full px-3 py-2 border rounded-md ${formErrors.name ? "border-red-500" : "border-gray-300"}`}
                   placeholder="Teacher's short name"
                 />
@@ -144,6 +207,7 @@ const Teacher = () => {
                 <input
                   type="number"
                   name="age"
+                  defaultValue={isEditing ? currentTeacher.age : ""}
                   className={`w-full px-3 py-2 border rounded-md ${formErrors.age ? "border-red-500" : "border-gray-300"}`}
                   placeholder="Age"
                 />
@@ -159,6 +223,7 @@ const Teacher = () => {
                 <input
                   type="text"
                   name="fathername"
+                  defaultValue={isEditing ? currentTeacher.fathername : ""}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Father's name"
                 />
@@ -171,6 +236,7 @@ const Teacher = () => {
                 <input
                   type="text"
                   name="mothername"
+                  defaultValue={isEditing ? currentTeacher.mothername : ""}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Mother's name"
                 />
@@ -183,6 +249,7 @@ const Teacher = () => {
                 <input
                   type="email"
                   name="email"
+                  defaultValue={isEditing ? currentTeacher.email : ""}
                   className={`w-full px-3 py-2 border rounded-md ${formErrors.email ? "border-red-500" : "border-gray-300"}`}
                   placeholder="Email address"
                 />
@@ -200,19 +267,37 @@ const Teacher = () => {
               </label>
               <textarea
                 name="description"
+                defaultValue={isEditing ? currentTeacher.description : ""}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 rows="4"
                 placeholder="Teacher's bio or description"
               ></textarea>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-3">
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  <FaTimes className="inline mr-1" /> Cancel
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={loading}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                {loading ? "Processing..." : "Add Teacher"}
+                {loading ? (
+                  "Processing..."
+                ) : isEditing ? (
+                  <>
+                    <FaCheck className="inline mr-1" /> Update Teacher
+                  </>
+                ) : (
+                  "Add Teacher"
+                )}
               </button>
             </div>
           </form>
@@ -279,9 +364,17 @@ const Teacher = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
+                          onClick={() => handleEditTeacher(teacher)}
+                          disabled={loading}
+                          className="text-blue-600 hover:text-blue-900 mr-4 disabled:opacity-50"
+                          title="Edit teacher"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
                           onClick={() => handleDeleteTeacher(teacher._id)}
                           disabled={loading}
-                          className="text-red-600 hover:text-red-900 mr-4 disabled:opacity-50"
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
                           title="Delete teacher"
                         >
                           <FaTrash />

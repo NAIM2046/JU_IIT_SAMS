@@ -63,11 +63,11 @@ const deleteClass = async (req, res) => {
 const removeSubjectFromClass = async (req, res) => {
   const db = getDB();
   const { classNumber } = req.params;
-  const { subject } = req.body;
+  const { subjectCode } = req.body;
   try {
     await db.collection('classes').updateOne(
       { class: classNumber },
-      { $pull: { subjects: subject } }
+      { $pull: { subjects:{code: subjectCode} } }
     );
     res.status(200).json({ message: 'Subject removed successfully' });
   } catch (error) {

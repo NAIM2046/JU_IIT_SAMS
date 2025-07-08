@@ -18,6 +18,8 @@ const EnCourseMarkHome = () => {
       .catch((err) => console.error(err));
   }, []);
 
+  console.log(teacherCourse);
+
   const handleNavigate = (classId, subjectCode, taskType) => {
     navigate(
       `/teacherDashboard/manageMark/${classId}/${subjectCode}/${taskType}`
@@ -82,11 +84,7 @@ const EnCourseMarkHome = () => {
                   <button
                     className="bg-yellow-500 text-white px-3 py-1 rounded"
                     onClick={() =>
-                      handleNavigate(
-                        course.classId,
-                        subject.code,
-                        "performance"
-                      )
+                      navigate("/teacherDashboard/performanceMarks", {state: {courseId:course.classId, courseCode:subject.code}})
                     }
                   >
                     Performance

@@ -79,14 +79,16 @@ const UpdatePerformance = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
 const getPerformanceByClassAndSubject = async (req, res) => {
   const db = getDB();
-  const { className, subject } = req.params;
+  const { courseId, courseCode } = req.params;
 
   try {
     const performanceRecords = await db
       .collection("performanceInfo")
-      .find({ class: className, subject: subject })
+      .find({ class: courseId, subject: courseCode })
       .toArray();
 
     if (!performanceRecords || performanceRecords.length === 0) {
@@ -99,6 +101,8 @@ const getPerformanceByClassAndSubject = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
 const performanceSummaryByStudentId = async (req , res)=>{
   const db = getDB() ; 
   const {studentid} = req.params ; 

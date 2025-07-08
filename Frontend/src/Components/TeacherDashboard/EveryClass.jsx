@@ -184,7 +184,7 @@ const EveryClass = () => {
     try {
       const response = await AxiosSecure.post("/api/classHistory/save", {
         className: schedule.classId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         date: DateFormate,
         teacherName: teacherName,
         status: "Completed",

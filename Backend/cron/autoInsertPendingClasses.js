@@ -27,7 +27,7 @@ const insertPendingClasses = async () => {
     
         const exists = await historyCol.findOne({
           className: schedule.classId,
-          subject: schedule.subject,
+          subject: schedule.subject.code,
           teacherName: schedule.teacherName,
           date: formattedDate,
         });
@@ -35,7 +35,7 @@ const insertPendingClasses = async () => {
         if (!exists) {
           await historyCol.insertOne({
             className: schedule.classId,
-            subject: schedule.subject,
+            subject: schedule.subject.code,
             teacherName: schedule.teacherName,
             date: formattedDate,
             status: "pending",

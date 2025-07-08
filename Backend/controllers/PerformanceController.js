@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const UpdatePerformance = async (req, res) => {
   const db = getDB();
-  const { className, subject, studentId, studentName, evaluation } = req.body;
+  const { className, subject, studentId,  evaluation } = req.body;
   const performanceInfo = db.collection("performanceInfo");
 
   const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
@@ -60,7 +60,7 @@ const UpdatePerformance = async (req, res) => {
       // Create new performance document
       const newDoc = {
         studentId,
-        studentName,
+        
         class: className,
         subject,
         latestEvaluation: evaluation,

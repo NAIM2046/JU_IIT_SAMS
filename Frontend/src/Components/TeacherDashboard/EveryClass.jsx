@@ -49,7 +49,7 @@ const EveryClass = () => {
         // 2. Check attendance record
         try {
           const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.classId}/${schedule.subject.code}/${DateFormate}`
+            `/api/attendance/check/${schedule.classId}/${schedule.subject}/${DateFormate}`
           );
 
           const existingAttendance = attendanceRes.data;
@@ -73,7 +73,7 @@ const EveryClass = () => {
         // 3. Get performance data
         try {
           const performanceRes = await AxiosSecure.get(
-            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject.code}`
+            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject}`
           );
           const performanceData = performanceRes.data;
 
@@ -109,7 +109,7 @@ const EveryClass = () => {
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
         className: schedule.classId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         date: DateFormate,
         studentId,
         roll,
@@ -135,7 +135,7 @@ const EveryClass = () => {
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
         className: schedule.classId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         date: DateFormate,
         students,
         defaultStatus: status,
@@ -153,11 +153,15 @@ const EveryClass = () => {
     }
   };
 
-  const updateStudentPerformance = async (studentId, evaluation) => {
+  const updateStudentPerformance = async (
+    studentId,
+
+    evaluation
+  ) => {
     try {
       const res = await AxiosSecure.post("/api/performance/updata", {
         studentId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         className: schedule.classId,
         evaluation,
       });
@@ -184,7 +188,7 @@ const EveryClass = () => {
     try {
       const response = await AxiosSecure.post("/api/classHistory/save", {
         className: schedule.classId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         date: DateFormate,
         teacherName: teacherName,
         status: "Completed",
@@ -321,14 +325,18 @@ const EveryClass = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                      {student.roll}
+                      {student.class_roll}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <div className="flex space-x-2 mb-2">
                           <button
                             onClick={() =>
-                              updateStudentPerformance(student._id, "Bad")
+                              updateStudentPerformance(
+                                student._id,
+
+                                "Bad"
+                              )
                             }
                             className={`flex items-center 
                               ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
@@ -343,7 +351,11 @@ const EveryClass = () => {
                           </button>
                           <button
                             onClick={() =>
-                              updateStudentPerformance(student._id, "Good")
+                              updateStudentPerformance(
+                                student._id,
+
+                                "Good"
+                              )
                             }
                             className={`flex items-center px-3 py-1 
                               ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
@@ -357,7 +369,11 @@ const EveryClass = () => {
                           </button>
                           <button
                             onClick={() =>
-                              updateStudentPerformance(student._id, "Excellent")
+                              updateStudentPerformance(
+                                student._id,
+
+                                "Excellent"
+                              )
                             }
                             className={`flex items-center px-3 
                               ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}

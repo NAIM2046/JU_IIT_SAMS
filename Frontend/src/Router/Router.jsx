@@ -33,6 +33,7 @@ import PerformanceSummary from "../Components/TeacherDashboard/PerformanceSummar
 import StudentsAttendance from "../Components/StudentDashboard/StudentsAttendance";
 import Message from "../Pages/Message/Message";
 import EnCourseMarkHome from "../Components/TeacherDashboard/EnCourseMarkManage/EnCourseMarkHome";
+import AttendanceMark from "../Components/TeacherDashboard/EnCourseMarkManage/AttendanceMark";
 
 const router = createBrowserRouter([
   {
@@ -117,6 +118,10 @@ const router = createBrowserRouter([
       {
         path: "/teacherDashboard/manage40mark",
         element: <EnCourseMarkHome></EnCourseMarkHome>,
+      },
+      {
+        path: "/teacherDashboard/attendancemark",
+        element: <AttendanceMark></AttendanceMark>,
       },
     ],
   },

@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAttendancebyClass_sub_data, setAttendanceDefault, updataAttendanceSingle, getAttendanceByStudentId, getAttendanceByStd_subject, getAttendanceHistory,  } = require('../controllers/dailyUpdateController');
+const { getAttendancebyClass_sub_data, setAttendanceDefault, updataAttendanceSingle, getAttendanceByStudentId, getAttendanceByStd_subject, getAttendanceHistory, getAttendanceAsubject,  } = require('../controllers/dailyUpdateController');
 
 const router = express.Router();
 
@@ -10,5 +10,6 @@ router.get('/getAttendanceBy_id/:id' , getAttendanceByStudentId) ;
 router.post("/getAttendancebystdId_subject" ,getAttendanceByStd_subject) ;
 router.get('/getAttendanceByStd_subject/:class/:subject' , getAttendanceByStd_subject) ;
 router.get('/getAttendanceHistory/:studentId/:className', getAttendanceHistory);
+router.get("/getAttendanceAsubject/:classId/:subject" , getAttendanceAsubject) ;
 
 module.exports =  router;

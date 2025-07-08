@@ -56,7 +56,7 @@ const getAttendancebyClass_sub_data = async (req, res) => {
       date,
       records: students.map((student) => ({
         studentId: student._id,
-        roll: student.roll,
+        roll: student.class_roll,
         status: defaultStatus,
       })),
     };
@@ -112,7 +112,7 @@ const getAttendancebyClass_sub_data = async (req, res) => {
     // If attendance doc doesn't exist, create new one
     const newRecords = students.map((student) => ({
       studentId: student._id,
-      roll: student.roll,
+      roll: student.class_roll,
       status: student._id === studentId ? status : "",
     }));
 
@@ -298,7 +298,60 @@ const getAttendanceHistory= async (req , res) =>{
     res.status(500).json({ message: "Server error" });
   }
 }
+ const getAttendanceAsubject = async (req, res) => {
+  try {
+    const db = getDB();
+    const { classId, subject } = req.params;
+   // console.log(req.params)
+    const collAttendance = db.collection("attendanceInfo");
 
+    const result = await collAttendance.aggregate([
+      { $match: { class: classId, subject: subject } },
+      { $unwind: "$records" },
+      {
+        $group: {
+          _id: "$records.studentId",
+          presentCount: {
+            $sum: { $cond: [{ $eq: ["$records.status", "P"] }, 1, 0] }
+          },
+          absentCount: {
+            $sum: { $cond: [{ $eq: ["$records.status", "A"] }, 1, 0] }
+          }
+        }
+      },
+      {
+    $addFields: {
+      studentObjectId: { $toObjectId: "$_id" }
+    }
+  },
+      {
+        $lookup: {
+          from: "users",
+          localField: "studentObjectId",
+          foreignField: "_id",
+          as: "studentInfo"
+        }
+      },
+      { $unwind: "$studentInfo" },
+      {
+        $project: {
+          _id: 0,
+          studentId: "$_id",
+          name: "$studentInfo.name",
+          classRoll: "$studentInfo.class_roll",
+          presentCount: 1,
+          absentCount: 1
+        }
+      },
+      { $sort: { classRoll: 1 } }
+    ]).toArray();
+ // console.log(result) ;
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
 
 module.exports = {
   getAttendancebyClass_sub_data,
@@ -307,5 +360,6 @@ module.exports = {
   getAttendanceByStudentId ,
   // Add other functions here as needed
   getAttendanceByStd_subject,
-  getAttendanceHistory
+  getAttendanceHistory ,
+  getAttendanceAsubject
 }

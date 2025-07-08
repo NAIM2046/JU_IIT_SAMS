@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 const LabPerformance = () => {
   const location = useLocation();
   const [allPerformance, setAllPerformance] = useState([]);
-  
+  console.log(location.state);
   return <div>This is performance dashboard</div>;
 };
 

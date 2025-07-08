@@ -54,7 +54,7 @@ const AttendanceMark = () => {
     });
 
     setSaving(true);
-    AxiosSecure.post("/api/attendance/saveAttendanceMarks", {
+    AxiosSecure.post("/api/incoursemark/addAttendanceMark", {
       classId,
       subjectCode: subject.code,
       type: "attendance",
@@ -62,7 +62,7 @@ const AttendanceMark = () => {
       marks: marksData,
     })
       .then(() => {
-        toast.success("Attendance marks saved successfully!");
+        alert("save succesfully ");
       })
       .catch((err) => {
         console.error(err);

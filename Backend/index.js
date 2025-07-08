@@ -11,6 +11,7 @@ const startCronJob = require('./cron/autoInsertPendingClasses.js');
 const noticeRoutes = require('./routes/NoticeRoutes.js');
 const examRoutes = require('./routes/examRoutes.js');
 const messageRoute = require('./routes/messageRoutes.js');
+const InCourseMarkRoutes = require('./routes/InCourseMarkRoutes.js')
 const { startCronJobUpdata } = require("./cron/Monthly_update.js");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -86,6 +87,7 @@ app.use('/api', scheduleRoutes);
 app.use('/api', classAndSubRoutes); // Assuming you have classAndSubRoutes defined
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/performance', performanceRoutes);
+app.use('/api/incoursemark' ,InCourseMarkRoutes ) ;
 app.use('/api/classHistory', classHistoryRoutes);
 app.use('/api', noticeRoutes); // Assuming you have classHistroyRoute defined
 app.use('/api/performance', performanceRoutes);

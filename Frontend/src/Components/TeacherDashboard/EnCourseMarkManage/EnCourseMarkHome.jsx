@@ -74,7 +74,9 @@ const EnCourseMarkHome = () => {
                   <button
                     className="bg-blue-500 text-white px-3 py-1 rounded"
                     onClick={() =>
-                      handleNavigate(course.classId, subject.code, "attendance")
+                      navigate("/teacherDashboard/attendancemark", {
+                        state: { subject, classId: course.classId },
+                      })
                     }
                   >
                     Attendance

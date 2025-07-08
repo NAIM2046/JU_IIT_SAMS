@@ -49,7 +49,7 @@ const EveryClass = () => {
         // 2. Check attendance record
         try {
           const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.classId}/${schedule.subject}/${DateFormate}`
+            `/api/attendance/check/${schedule.classId}/${schedule.subject.code}/${DateFormate}`
           );
 
           const existingAttendance = attendanceRes.data;
@@ -73,7 +73,7 @@ const EveryClass = () => {
         // 3. Get performance data
         try {
           const performanceRes = await AxiosSecure.get(
-            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject}`
+            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject.code}`
           );
           const performanceData = performanceRes.data;
 
@@ -109,7 +109,7 @@ const EveryClass = () => {
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
         className: schedule.classId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         date: DateFormate,
         studentId,
         roll,
@@ -135,7 +135,7 @@ const EveryClass = () => {
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
         className: schedule.classId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         date: DateFormate,
         students,
         defaultStatus: status,
@@ -153,15 +153,11 @@ const EveryClass = () => {
     }
   };
 
-  const updateStudentPerformance = async (
-    studentId,
-
-    evaluation
-  ) => {
+  const updateStudentPerformance = async (studentId, evaluation) => {
     try {
       const res = await AxiosSecure.post("/api/performance/updata", {
         studentId,
-        subject: schedule.subject,
+        subject: schedule.subject.code,
         className: schedule.classId,
         evaluation,
       });

@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const UpdatePerformance = async (req, res) => {
   const db = getDB();
-  const { className, subject, studentId,  evaluation } = req.body;
+  const { className, subject, studentId, evaluation } = req.body;
   const performanceInfo = db.collection("performanceInfo");
 
   const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
@@ -18,7 +18,7 @@ const UpdatePerformance = async (req, res) => {
     if (existing) {
       const lastUpdated = existing.lastUpdated || "";
       const prevEvaluation = existing.latestEvaluation;
-      const totalTasks = existing.totalTasks||0 ;
+      const totalTasks = existing.totalTasks || 0;
 
       const updateQuery = {};
       const updateOps = {};
@@ -36,7 +36,9 @@ const UpdatePerformance = async (req, res) => {
           };
         } else {
           // Same evaluation, same day: no changes
-          return res.status(200).json({ message: "No update needed" , totalTasks });
+          return res
+            .status(200)
+            .json({ message: "No update needed", totalTasks });
         }
       } else {
         // New day — increment totalTasks and new evaluation count
@@ -50,17 +52,20 @@ const UpdatePerformance = async (req, res) => {
         };
       }
 
-      await performanceInfo.updateOne(
-        { _id: existing._id },
-        updateOps
-      );
+      await performanceInfo.updateOne({ _id: existing._id }, updateOps);
 
-      res.status(200).json({ message: "Performance updated" , totalTasks :today==existing.lastUpdated ? totalTasks : totalTasks + 1 ,  });
+      res
+        .status(200)
+        .json({
+          message: "Performance updated",
+          totalTasks:
+            today == existing.lastUpdated ? totalTasks : totalTasks + 1,
+        });
     } else {
       // Create new performance document
       const newDoc = {
         studentId,
-        
+
         class: className,
         subject,
         latestEvaluation: evaluation,
@@ -72,7 +77,9 @@ const UpdatePerformance = async (req, res) => {
       };
 
       await performanceInfo.insertOne(newDoc);
-      res.status(201).json({ message: "Performance record created"  , totalTasks: 1 });
+      res
+        .status(201)
+        .json({ message: "Performance record created", totalTasks: 1 });
     }
   } catch (err) {
     console.error("Error updating performance:", err);
@@ -80,101 +87,144 @@ const UpdatePerformance = async (req, res) => {
   }
 };
 
-
 const getPerformanceByClassAndSubject = async (req, res) => {
   const db = getDB();
-  const { courseId, courseCode } = req.params;
+  // const { courseId, courseCode } = req.body;
+
+  const obj = {
+    courseId: "Bsc_3.1",
+    courseCode: "ICT 3105",
+  };
 
   try {
-    const performanceRecords = await db
+    const performanceInfo = await db
       .collection("performanceInfo")
-      .find({ class: courseId, subject: courseCode })
+      .aggregate([
+        {
+          $match: { class: obj.courseId, subject: obj.courseCode },
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { studentIdStr: "$studentId" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$_id", { $toObjectId: "$$studentIdStr" }],
+                  },
+                },
+              },
+            ],
+            as: "students",
+          },
+        },
+        {
+          $unwind:"$students"
+        },
+        {
+          $project: {
+            badCount: 1,
+            goodCount: 1,
+            excellentCount: 1,
+            studentId:1,
+            classRoll:"$students.class_roll",
+            name:"$students.name",
+          }
+        }
+      ])
       .toArray();
 
-    if (!performanceRecords || performanceRecords.length === 0) {
-      return res.status(404).json({ message: "No performance records found" });
-    }
+    const countsInfo = await db.collection("performanceInfo").aggregate([
+      {
+        $group: {
+          _id: null,
+          totalGood: {$sum: "$goodCount"},
+          totalBad: {$sum: "$badCount"},
+          totalExcellent: {$sum: "$excellentCount"},
+        }
+      }
+    ]).toArray();
 
-    res.json(performanceRecords);
+    res.json({countsInfo, performanceInfo});
   } catch (err) {
     console.error("Error fetching performance records:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-
-const performanceSummaryByStudentId = async (req , res)=>{
-  const db = getDB() ; 
-  const {studentid} = req.params ; 
+const performanceSummaryByStudentId = async (req, res) => {
+  const db = getDB();
+  const { studentid } = req.params;
   //console.log("Fetching performance summary for studentId:", studentid);
-  const collection = db.collection("performanceInfo")  ; 
-  try{
-   const data = await collection.aggregate([
-    {
-      $match: {studentId: studentid}
-    } ,
-    {
-      $group:{
-        _id: "$studentId",
-        totalTasks: {$sum: "$totalTasks"},
-        excellent: {$sum: "$excellentCount"},
-        good: {$sum: "$goodCount"}, 
-        bad: {$sum: "$badCount"}
-      }
-    },
-    {
-      $project: {
-        _id: 0 ,
-        studentId: "$_id",
-        totalTasks: 1, 
-        excellent: 1,
-        good: 1,
-        bad: 1,
-        excellentPercentage: {
-          $multiply: [{$divide: ["$excellent" , "$totalTasks"]} , 100]
+  const collection = db.collection("performanceInfo");
+  try {
+    const data = await collection
+      .aggregate([
+        {
+          $match: { studentId: studentid },
         },
-        goodPercentage: {
-          $multiply: [{$divide: ["$good" , "$totalTasks"]} , 100]
+        {
+          $group: {
+            _id: "$studentId",
+            totalTasks: { $sum: "$totalTasks" },
+            excellent: { $sum: "$excellentCount" },
+            good: { $sum: "$goodCount" },
+            bad: { $sum: "$badCount" },
+          },
         },
-        badPercentage: {
-          $multiply: [{$divide: ["$bad" , "$totalTasks"]} , 100]
-        }
-        
-
+        {
+          $project: {
+            _id: 0,
+            studentId: "$_id",
+            totalTasks: 1,
+            excellent: 1,
+            good: 1,
+            bad: 1,
+            excellentPercentage: {
+              $multiply: [{ $divide: ["$excellent", "$totalTasks"] }, 100],
+            },
+            goodPercentage: {
+              $multiply: [{ $divide: ["$good", "$totalTasks"] }, 100],
+            },
+            badPercentage: {
+              $multiply: [{ $divide: ["$bad", "$totalTasks"] }, 100],
+            },
+          },
+        },
+      ])
+      .toArray();
+    res.json(
+      data[0] || {
+        studentId: studentid,
+        totalTasks: 0,
+        excellent: 0,
+        good: 0,
+        bad: 0,
+        excellentPercentage: 0,
+        goodPercentage: 0,
+        badPercentage: 0,
       }
-    }
-   ]).toArray() ;
-   res.json(data[0] || {
-    studentId: studentid,
-    totalTasks: 0,
-    excellent: 0,
-    good: 0,
-    bad: 0,
-    excellentPercentage: 0,
-    goodPercentage: 0,
-    badPercentage: 0
-   }) ;
-  }
-  catch(err){
+    );
+  } catch (err) {
     console.error("Error fetching performance summary:", err);
     res.status(500).json({ error: "Internal server error" });
   }
-
-}
-const getPerformanceById_subeject = async (req , res) =>{
-  const db = getDB() ;
-  const info = req.body ;  
+};
+const getPerformanceById_subeject = async (req, res) => {
+  const db = getDB();
+  const info = req.body;
   const quary = {
-    studentId: info.id ,
-    subject: info.subject
-  } 
-  const result = await db.collection("performanceInfo").find(quary).toArray()
-  res.json(result[0]) ;
-}
+    studentId: info.id,
+    subject: info.subject,
+  };
+  const result = await db.collection("performanceInfo").find(quary).toArray();
+  res.json(result[0]);
+};
 
 module.exports = {
   UpdatePerformance,
-    getPerformanceByClassAndSubject,
-  performanceSummaryByStudentId ,
-  getPerformanceById_subeject
+  getPerformanceByClassAndSubject,
+  performanceSummaryByStudentId,
+  getPerformanceById_subeject,
 };

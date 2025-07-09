@@ -37,6 +37,26 @@ const LabPerformance = () => {
   const percentageCalculator = (currMark, fullMark, c) =>
     (parseInt(fullMark) * parseInt(currMark)) / parseInt(c);
 
+  const totalMarkGenerator = (student) => {
+    const ans =
+      percentageCalculator(
+        student.goodCount,
+        fullMarks.fullGood,
+        student.totalTasks
+      ) +
+      percentageCalculator(
+        student.badCount,
+        fullMarks.fullBad,
+        student.totalTasks
+      ) +
+      percentageCalculator(
+        student.excellentCount,
+        fullMarks.fullExcellent,
+        student.totalTasks
+      );
+    return ans;
+  };
+
   useEffect(() => {
     if (!obj) return;
     axiosSecure.post(`/api/performance/ByClassandSubject`, obj).then((res) => {
@@ -60,6 +80,28 @@ const LabPerformance = () => {
     });
   }, [obj]);
 
+  const handleSaveMarks = () => {
+    const marksInfo = performanceInfo.map((info) => {
+      return {
+        studentId: info.studentId,
+        performanceMark: totalMarkGenerator(info),
+      };
+    });
+
+    const fullInfo = {
+      classId:obj.courseId,
+      subjectCode:obj.courseCode,
+      marks:marksInfo,
+      Number:"final",
+      type:"performance",
+      fullMarks
+    };
+
+    axiosSecure.post("/api/performance/savePerformanceInfo", fullInfo).then(res => {
+      console.log(res.data);
+    })
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -74,10 +116,15 @@ const LabPerformance = () => {
         {/* statistics showing */}
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-              <FaChalkboardTeacher className="mr-3 text-blue-600" />
-              Evaluation Marks
-            </h1>
+            <div className="flex gap-3 justify-between">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                <FaChalkboardTeacher className="mr-3 text-blue-600" />
+                Evaluation Marks
+              </h1>
+              <button onClick={handleSaveMarks} className="btn btn-primary">
+                Save Marks
+              </button>
+            </div>
             <div className="bg-white rounded-lg mt-5 shadow-sm p-4 mb-4">
               <div className="flex justify-center gap-10 items-center">
                 <div className="flex items-center gap-3">
@@ -190,21 +237,7 @@ const LabPerformance = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                      {percentageCalculator(
-                        student.goodCount,
-                        fullMarks.fullGood,
-                        student.totalTasks
-                      ) +
-                        percentageCalculator(
-                          student.badCount,
-                          fullMarks.fullBad,
-                          student.totalTasks
-                        ) +
-                        percentageCalculator(
-                          student.excellentCount,
-                          fullMarks.fullExcellent,
-                          student.totalTasks
-                        )}
+                      {totalMarkGenerator(student)}
                     </td>
                   </tr>
                 ))}

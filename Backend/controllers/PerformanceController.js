@@ -154,6 +154,31 @@ const getPerformanceByClassAndSubject = async (req, res) => {
   }
 };
 
+
+const savePerformanceInfo = async (req, res) => {
+  const {classId, subjectCode, marks, fullMarks, type, Number} = req.body;
+  const db = getDB();
+
+  const filter = {classId, subjectCode, type, Number};
+
+  const updatedDoc = {
+    $set:{
+      marks, 
+      fullMarks,
+      updatedAt: new Date()
+    },
+    $setOnInsert:{
+      createdAt: new Date()
+    }
+  }
+
+  const result = await db.collection("incourse_marks").updateOne(filter, updatedDoc, {upsert:true});
+
+  res.status(201).json(result);
+  console.log("marks", result);
+};
+
+
 const performanceSummaryByStudentId = async (req, res) => {
   const db = getDB();
   const { studentid } = req.params;
@@ -228,4 +253,5 @@ module.exports = {
   getPerformanceByClassAndSubject,
   performanceSummaryByStudentId,
   getPerformanceById_subeject,
+  savePerformanceInfo,
 };

@@ -56,6 +56,25 @@ const LabPerformance = () => {
       );
     return ans;
   };
+  
+  useEffect(()=>{
+    if(!obj) return;
+
+    const info = {
+      classId: obj.courseId,
+      subjectCode: obj.courseCode,
+      type:"performance",
+      Number: "final",
+    }
+
+    axiosSecure.post('/api/performance/getFullMarksInfo', info).then(res => {
+      const info = res.data[0].fullMarks;
+      if(info){
+        setFullMarks(info);
+      }
+    });
+
+  }, [])
 
   useEffect(() => {
     if (!obj) return;

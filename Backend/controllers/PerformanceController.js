@@ -54,13 +54,10 @@ const UpdatePerformance = async (req, res) => {
 
       await performanceInfo.updateOne({ _id: existing._id }, updateOps);
 
-      res
-        .status(200)
-        .json({
-          message: "Performance updated",
-          totalTasks:
-            today == existing.lastUpdated ? totalTasks : totalTasks + 1,
-        });
+      res.status(200).json({
+        message: "Performance updated",
+        totalTasks: today == existing.lastUpdated ? totalTasks : totalTasks + 1,
+      });
     } else {
       // Create new performance document
       const newDoc = {
@@ -120,64 +117,91 @@ const getPerformanceByClassAndSubject = async (req, res) => {
           },
         },
         {
-          $unwind:"$students"
+          $unwind: "$students",
         },
         {
           $project: {
             badCount: 1,
             goodCount: 1,
             excellentCount: 1,
-            studentId:1,
-            classRoll:"$students.class_roll",
-            name:"$students.name",
-            totalTasks:1
-          }
-        }
+            studentId: 1,
+            classRoll: "$students.class_roll",
+            name: "$students.name",
+            totalTasks: 1,
+          },
+        },
       ])
       .toArray();
 
-    const countsInfo = await db.collection("performanceInfo").aggregate([
-      {
-        $group: {
-          _id: null,
-          totalGood: {$sum: "$goodCount"},
-          totalBad: {$sum: "$badCount"},
-          totalExcellent: {$sum: "$excellentCount"},
-        }
-      }
-    ]).toArray();
+    const countsInfo = await db
+      .collection("performanceInfo")
+      .aggregate([
+        {
+          $group: {
+            _id: null,
+            totalGood: { $sum: "$goodCount" },
+            totalBad: { $sum: "$badCount" },
+            totalExcellent: { $sum: "$excellentCount" },
+          },
+        },
+      ])
+      .toArray();
 
-    res.json({countsInfo, performanceInfo});
+    res.json({ countsInfo, performanceInfo });
   } catch (err) {
     console.error("Error fetching performance records:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-
 const savePerformanceInfo = async (req, res) => {
-  const {classId, subjectCode, marks, fullMarks, type, Number} = req.body;
+  const { classId, subjectCode, marks, fullMarks, type, Number } = req.body;
   const db = getDB();
 
-  const filter = {classId, subjectCode, type, Number};
+  const filter = { classId, subjectCode, type, Number };
 
   const updatedDoc = {
-    $set:{
-      marks, 
+    $set: {
+      marks,
       fullMarks,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     },
-    $setOnInsert:{
-      createdAt: new Date()
-    }
-  }
+    $setOnInsert: {
+      createdAt: new Date(),
+    },
+  };
 
-  const result = await db.collection("incourse_marks").updateOne(filter, updatedDoc, {upsert:true});
+  const result = await db
+    .collection("incourse_marks")
+    .updateOne(filter, updatedDoc, { upsert: true });
 
   res.status(201).json(result);
   console.log("marks", result);
 };
 
+const getFullMarksInfo = async (req, res) => {
+  const db = getDB();
+  const { classId, subjectCode, Number, type } = req.body;
+  console.log(req.body);
+  const result = await db.collection("incourse_marks").aggregate([
+    {
+      $match: {
+        classId,
+        subjectCode,
+        Number,
+        type,
+      },
+    },
+    {
+      $project: {
+        _id:0,
+        fullMarks:1
+      }
+    }
+  ]).toArray();
+  console.log(result);
+  res.json(result);
+};
 
 const performanceSummaryByStudentId = async (req, res) => {
   const db = getDB();
@@ -254,4 +278,5 @@ module.exports = {
   performanceSummaryByStudentId,
   getPerformanceById_subeject,
   savePerformanceInfo,
+  getFullMarksInfo,
 };

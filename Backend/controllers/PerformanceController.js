@@ -130,6 +130,7 @@ const getPerformanceByClassAndSubject = async (req, res) => {
             studentId:1,
             classRoll:"$students.class_roll",
             name:"$students.name",
+            totalTasks:1
           }
         }
       ])

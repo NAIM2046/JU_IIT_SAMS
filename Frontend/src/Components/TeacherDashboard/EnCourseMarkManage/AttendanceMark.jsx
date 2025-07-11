@@ -15,26 +15,21 @@ const AttendanceMark = () => {
   const [error, setError] = useState(null);
   const [totalAttendanceMark, setTotalAttendanceMark] = useState(10);
   const [saving, setSaving] = useState(false);
+  console.log(subject);
 
   useEffect(() => {
     if (!classId || !subject?.code) return;
-
+    const fatchAttendanceSummary = async () => {
+      const res = await AxiosSecure.get(
+        `api/attendance/getAttendanceSummary/${classId}/${subject.code}`
+      );
+      console.log(res.data);
+      setAttendanceList(res.data);
+    };
     setLoading(true);
+    fatchAttendanceSummary();
+    setLoading(false);
     setError(null);
-
-    AxiosSecure.get(
-      `/api/attendance/getAttendanceAsubject/${classId}/${subject.code}`
-    )
-      .then((res) => {
-        setAttendanceList(res.data);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Failed to fetch attendance data. Please try again.");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
   }, [classId, subject?.code, AxiosSecure]);
 
   const handleSaveMarks = () => {
@@ -60,6 +55,7 @@ const AttendanceMark = () => {
       type: "attendance",
       Number: "final",
       marks: marksData,
+      fullMark: totalAttendanceMark,
     })
       .then(() => {
         alert("save succesfully ");

@@ -298,60 +298,64 @@ const getAttendanceHistory= async (req , res) =>{
     res.status(500).json({ message: "Server error" });
   }
 }
- const getAttendanceAsubject = async (req, res) => {
-  try {
-    const db = getDB();
-    const { classId, subject } = req.params;
-   // console.log(req.params)
-    const collAttendance = db.collection("attendanceInfo");
-
-    const result = await collAttendance.aggregate([
-      { $match: { class: classId, subject: subject } },
-      { $unwind: "$records" },
-      {
-        $group: {
-          _id: "$records.studentId",
-          presentCount: {
-            $sum: { $cond: [{ $eq: ["$records.status", "P"] }, 1, 0] }
-          },
-          absentCount: {
-            $sum: { $cond: [{ $eq: ["$records.status", "A"] }, 1, 0] }
-          }
-        }
-      },
-      {
-    $addFields: {
-      studentObjectId: { $toObjectId: "$_id" }
+const getAttendanceSummary =  async (req , res )=>{
+  
+  const {classId , subject} = req.params ; 
+     //console.log(classId, subject) ;
+  const db = getDB() ; 
+  try{
+    if(!classId || !subject){
+      return res.status(400).json({message: "class and subject are required"})
     }
-  },
-      {
-        $lookup: {
-          from: "users",
-          localField: "studentObjectId",
-          foreignField: "_id",
-          as: "studentInfo"
-        }
-      },
-      { $unwind: "$studentInfo" },
-      {
-        $project: {
-          _id: 0,
-          studentId: "$_id",
-          name: "$studentInfo.name",
-          classRoll: "$studentInfo.class_roll",
-          presentCount: 1,
-          absentCount: 1
-        }
-      },
-      { $sort: { classRoll: 1 } }
-    ]).toArray();
- // console.log(result) ;
-    res.status(200).json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Something went wrong" });
+    const students =  await db.collection("users").find({role: "student" , class: classId}, {projection: {name: 1 , class_roll: 1 , photoURL: 1 }}).toArray() ;
+    //console.log(students) ;
+    const studentIds =  students.map(s => s._id.toString()) ;
+   // console.log(studentIds)
+   const summary = await db.collection("attendanceInfo").aggregate([
+    {
+      $match: {class: classId , subject: subject}
+    } ,
+    {
+      $unwind: "$records"
+    },{
+      $match: {"records.studentId": {$in: studentIds}}
+    }, 
+    {
+      $group: {
+         _id : "$records.studentId" , 
+         presentCount: {
+          $sum: {$cond: [{$eq: ["$records.status" , "P"]} , 1 ,0]}
+         },
+         absentCount: {
+            $sum : {$cond : [{$eq : ["$records.status" , "A"]} , 1 ,0]}
+         }
+      }
+    }
+   ]).toArray() ;
+  // console.log(summary) ;
+
+  const summaryMap = {} 
+  summary.forEach(s=>{
+    summaryMap[s._id.toString()] = s ; 
+  })
+  const finalList = students.map(student =>{
+    const att = summaryMap[student._id.toString()] ; 
+    return {
+      studentId: student._id , 
+      name: student.name , 
+      class_roll : student.class_roll , 
+      photoURL: student.photoURL , 
+      presentCount: att?att.presentCount:0 ,
+      absentCount: att ? att.absentCount:0
+    }
+  })
+  return res.json(finalList) ;
+
+  }catch(err){
+    console.error("Error in getAttendanceSummary:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
-};
+}
 
 module.exports = {
   getAttendancebyClass_sub_data,
@@ -361,5 +365,6 @@ module.exports = {
   // Add other functions here as needed
   getAttendanceByStd_subject,
   getAttendanceHistory ,
-  getAttendanceAsubject
+  getAttendanceSummary
+  
 }

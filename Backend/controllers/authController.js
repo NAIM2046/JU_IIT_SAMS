@@ -107,7 +107,12 @@ const DeleteUser = async (req, res) => {
 
     const students = await db
       .collection('users')
-      .find({ role: "student", class: className }, { projection: { password: 0} })
+      .find({ role: "student", class: className }, { projection:  { 
+            name: 1,
+            photoURL: 1,
+            class_roll: 1 ,
+            class:1
+        } })
       .toArray();
 
     if (!students || students.length === 0) {

@@ -56,20 +56,21 @@ const Student = () => {
 
     const studentInfo = {
       role: "student",
-      name: formData.get("name"),
-      age: formData.get("age"),
-      class: formData.get("class"),
-      class_roll: formData.get("class_roll"),
-      exam_roll: formData.get("exam_roll"),
-      hall_name: formData.get("hallname"),
+      name: formData.get("name") || "",
+      age: formData.get("age") || "",
+      class: formData.get("class") || "",
+      class_roll: formData.get("class_roll") || "",
+      exam_roll: formData.get("exam_roll") || "",
+      reg_on: formData.get("reg_no") || "",
+      hall_name: formData.get("hallname") || "",
       password: "123456",
-      gender: formData.get("gender"),
+      gender: formData.get("gender") || "",
       guardians: {
-        fatherName: formData.get("fathername"),
-        motherName: formData.get("mothername"),
-        phoneNumber: formData.get("phonenumber"),
+        fatherName: formData.get("fathername") || "",
+        motherName: formData.get("mothername") || "",
+        phoneNumber: formData.get("phonenumber") || "",
       },
-      email: formData.get("email"),
+      email: formData.get("email") || "",
       photoURL: "https://i.ibb.co/G9wkJbX/user.webp",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -222,14 +223,13 @@ const Student = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Age <span className="text-red-500">*</span>
+                    Age
                   </label>
                   <input
                     type="number"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="age"
                     placeholder="Age"
-                    required
                     min="5"
                     max="50"
                     defaultValue={currentStudent?.age || ""}
@@ -238,17 +238,14 @@ const Student = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Gender <span className="text-red-500">*</span>
+                    Gender
                   </label>
                   <select
                     name="gender"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
                     defaultValue={currentStudent?.gender || ""}
                   >
-                    <option value="" disabled>
-                      Choose Gender
-                    </option>
+                    <option value="">Choose Gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="others">Others</option>
@@ -260,23 +257,33 @@ const Student = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Semester <span className="text-red-500">*</span>
+                    Semester
                   </label>
                   <select
                     name="class"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
                     defaultValue={currentStudent?.class || ""}
                   >
-                    <option value="" disabled>
-                      Select Semester
-                    </option>
+                    <option value="">Select Semester</option>
                     {classlist.map((cls, index) => (
                       <option key={index} value={cls.class}>
                         {cls.class}
                       </option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Reg: Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    name="reg_no"
+                    placeholder="Reg Number "
+                    required
+                    defaultValue={currentStudent?.reg_on || ""}
+                  />
                 </div>
 
                 <div>
@@ -295,14 +302,13 @@ const Student = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Exam Roll <span className="text-red-500">*</span>
+                    Exam Roll
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="exam_roll"
                     placeholder="Exam Roll"
-                    required
                     defaultValue={currentStudent?.exam_roll || ""}
                   />
                 </div>
@@ -312,14 +318,13 @@ const Student = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hall Name <span className="text-red-500">*</span>
+                    Hall Name
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="hallname"
                     placeholder="Hall Name"
-                    required
                     defaultValue={currentStudent?.hall_name || ""}
                   />
                 </div>
@@ -343,42 +348,39 @@ const Student = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Father's Name <span className="text-red-500">*</span>
+                    Father's Name
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="fathername"
                     placeholder="Father's Name"
-                    required
                     defaultValue={currentStudent?.guardians?.fatherName || ""}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mother's Name <span className="text-red-500">*</span>
+                    Mother's Name
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="mothername"
                     placeholder="Mother's Name"
-                    required
                     defaultValue={currentStudent?.guardians?.motherName || ""}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
+                    Phone Number
                   </label>
                   <input
                     type="tel"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="phonenumber"
                     placeholder="Phone Number"
-                    required
                     defaultValue={currentStudent?.guardians?.phoneNumber || ""}
                   />
                 </div>

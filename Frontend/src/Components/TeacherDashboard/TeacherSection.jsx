@@ -69,11 +69,11 @@ const TeacherSection = () => {
         currentPath === "/teacherDashboard/performanceSummary",
     },
     {
-      path: "/teacherDashboard/manage40mark",
+      path: "/teacherDashboard/manageIncoursemark",
       icon: <PiPercent className="text-lg" />,
-      label: "Manage40%Mark",
+      label: "Manage-Incourse-Mark",
       isActive: (currentPath) =>
-        currentPath === "/teacherDashboard/manage40mark",
+        currentPath === "/teacherDashboard/manageIncoursemark",
     },
   ];
 

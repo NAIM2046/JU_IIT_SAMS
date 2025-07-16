@@ -44,7 +44,7 @@ const AttendanceMark = () => {
 
       return {
         studentId: record.studentId,
-        attendanceMark: parseFloat(attendanceMark),
+        mark: parseFloat(attendanceMark),
       };
     });
 

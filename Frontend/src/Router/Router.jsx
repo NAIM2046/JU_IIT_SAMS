@@ -36,6 +36,7 @@ import EnCourseMarkHome from "../Components/TeacherDashboard/EnCourseMarkManage/
 import AttendanceMark from "../Components/TeacherDashboard/EnCourseMarkManage/AttendanceMark";
 import LabPerformance from "../Components/TeacherDashboard/EnCourseMarkManage/LabPerformance";
 import OtherTasks from "../Components/TeacherDashboard/EnCourseMarkManage/OtherTasks";
+import IncoureFinalMark from "../Components/TeacherDashboard/EnCourseMarkManage/IncoureFinalMark";
 
 const router = createBrowserRouter([
   {
@@ -118,7 +119,7 @@ const router = createBrowserRouter([
         element: <PerformanceSummary></PerformanceSummary>,
       },
       {
-        path: "/teacherDashboard/manage40mark",
+        path: "/teacherDashboard/manageIncoursemark",
         element: <EnCourseMarkHome></EnCourseMarkHome>,
       },
       {
@@ -132,6 +133,10 @@ const router = createBrowserRouter([
       {
         path: "/teacherDashboard/incoursemark/:taskType",
         element: <OtherTasks></OtherTasks>,
+      },
+      {
+        path: "/teacherDashboard/incoursefinalmark/:subjectCode",
+        element: <IncoureFinalMark></IncoureFinalMark>,
       },
     ],
   },

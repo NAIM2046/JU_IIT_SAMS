@@ -275,11 +275,32 @@ const finalMarkSummary = async(req , res) =>{
   }
 
 }
+const deleteTask = async(req , res)=>{
+ try {
+    const id = req.params.id;
+    const db = getDB();
+
+    const result = await db
+      .collection("incourse_marks")
+      .deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 1) {
+      res.status(200).json({ success: true, message: "Task deleted successfully." });
+    } else {
+      res.status(404).json({ success: false, message: "Task not found." });
+    }
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+  
+}
 module.exports = {
     addAttendanceMark, 
     otherTaskMarkSummary ,
     otherTaskList ,
     backEidteFromate,
-    finalMarkSummary
+    finalMarkSummary ,
+    deleteTask
    
 }

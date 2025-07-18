@@ -86,73 +86,67 @@ const UpdatePerformance = async (req, res) => {
 
 const getPerformanceByClassAndSubject = async (req, res) => {
   const db = getDB();
-  // const { courseId, courseCode } = req.body;
-
-  const obj = {
-    courseId: "Bsc_3.1",
-    courseCode: "ICT 3105",
-  };
+  const { classId, subjectCode } = req.params;
 
   try {
     const performanceInfo = await db
-      .collection("performanceInfo")
+      .collection("users")
       .aggregate([
         {
-          $match: { class: obj.courseId, subject: obj.courseCode },
+          $match: {
+            class: classId,
+            role: "student", // ✅ ensure only students
+          },
         },
         {
           $lookup: {
-            from: "users",
-            let: { studentIdStr: "$studentId" },
+            from: "performanceInfo",
+            let: {
+              studentId: { $toString: "$_id" },
+            },
             pipeline: [
               {
                 $match: {
                   $expr: {
-                    $eq: ["$_id", { $toObjectId: "$$studentIdStr" }],
+                    $and: [
+                      { $eq: ["$studentId", "$$studentId"] },
+                      { $eq: ["$subject", subjectCode] }, // ✅ dynamic subject match
+                    ],
                   },
                 },
               },
             ],
-            as: "students",
+            as: "performanceRecords", // ✅ must match in next stage
           },
         },
         {
-          $unwind: "$students",
+          $addFields: {
+            performance: { $arrayElemAt: ["$performanceRecords", 0] }, // ✅ fixed this name
+          },
         },
         {
           $project: {
-            badCount: 1,
-            goodCount: 1,
-            excellentCount: 1,
-            studentId: 1,
-            classRoll: "$students.class_roll",
-            name: "$students.name",
-            totalTasks: 1,
+            _id: 1,
+            name: 1,
+            class: 1,
+            subject: subjectCode,
+            totalTasks: { $ifNull: ["$performance.totalTasks", 0] },
+            excellentCount: { $ifNull: ["$performance.excellentCount", 0] },
+            goodCount: { $ifNull: ["$performance.goodCount", 0] },
+            badCount: { $ifNull: ["$performance.badCount", 0] },
+            latestEvaluation: { $ifNull: ["$performance.latestEvaluation", "N/A"] },
           },
         },
       ])
       .toArray();
 
-    const countsInfo = await db
-      .collection("performanceInfo")
-      .aggregate([
-        {
-          $group: {
-            _id: null,
-            totalGood: { $sum: "$goodCount" },
-            totalBad: { $sum: "$badCount" },
-            totalExcellent: { $sum: "$excellentCount" },
-          },
-        },
-      ])
-      .toArray();
-
-    res.json({ countsInfo, performanceInfo });
+    res.json(performanceInfo);
   } catch (err) {
     console.error("Error fetching performance records:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 const savePerformanceInfo = async (req, res) => {
   const { classId, subjectCode, marks, fullMarks, type, Number } = req.body;

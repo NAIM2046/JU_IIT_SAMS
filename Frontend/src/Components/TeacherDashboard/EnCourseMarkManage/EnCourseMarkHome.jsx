@@ -144,8 +144,8 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               navigate("/teacherDashboard/performanceMarks", {
                                 state: {
-                                  courseId: course.classId,
-                                  courseCode: subject.code,
+                                  classId: course.classId,
+                                  subjectCode: subject.code,
                                 },
                               })
                             }

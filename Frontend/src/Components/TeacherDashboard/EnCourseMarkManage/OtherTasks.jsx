@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
 import InputInCourseMark from "./InputInCourseMark";
-import OtherTaskList from "./otherTaskList";
+import OtherTaskList from "./OtherTaskList";
 
 const OtherTasks = () => {
   const location = useLocation();

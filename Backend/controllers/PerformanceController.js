@@ -4,6 +4,7 @@ require("dotenv").config();
 const UpdatePerformance = async (req, res) => {
   const db = getDB();
   const { className, subject, studentId, evaluation } = req.body;
+  console.log(req.body);
   const performanceInfo = db.collection("performanceInfo");
 
   const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
@@ -88,6 +89,9 @@ const UpdatePerformance = async (req, res) => {
 const getPerformanceByClassAndSubject = async (req, res) => {
   const db = getDB();
   const { classId, subjectCode } = req.params;
+  //console.log("Fetching performance for class:", classId, "subject:", subjectCode);
+
+  console.log(req.params)
 
   try {
     const performanceInfo = await db
@@ -140,6 +144,8 @@ const getPerformanceByClassAndSubject = async (req, res) => {
         },
       ])
       .toArray();
+
+   // console.log("Performance records:", performanceInfo);
      const studentIds = performanceInfo.map(student => student._id.toString());
 
 const markWeights = await db.collection("incourse_marks").aggregate([

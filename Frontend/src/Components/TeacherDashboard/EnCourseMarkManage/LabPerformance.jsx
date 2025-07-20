@@ -35,10 +35,16 @@ const LabPerformance = () => {
         const response = await axiosSecure.get(
           `/api/performance/ByClassandSubject/${obj.classId}/${obj.subjectCode}`
         );
+        console.log("Performance data fetched:", response.data);
         const data = response.data.performanceInfo;
-        const markWeight = response.data?.markWeights[0].markWeights;
-        console.log("Mark Weights:", markWeight);
         console.log("Performance Data:", data);
+        const markWeight = response.data?.markWeights[0]?.markWeights || {
+          excellentMark: 0,
+          goodMark: 0,
+          badMark: 0,
+        };
+        // console.log("Mark Weights:", markWeight);
+        // console.log("Performance Data:", data);
         setPerformanceData(data);
         setMarkWeights(markWeight);
 
@@ -166,7 +172,7 @@ const LabPerformance = () => {
       {/* Mark Weights Input */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-1">
-          <FiPercent /> Performance Mark Weights
+          {obj.classId} - {obj.title}- {obj.subjectCode}
         </h3>
       </div>
 
@@ -290,7 +296,10 @@ const LabPerformance = () => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {performanceData.map((student, index) => (
-              <tr key={student._id} className="hover:bg-gray-50">
+              <tr
+                key={student._id}
+                className="hover:bg-green-300 border-b border-gray-200"
+              >
                 <td className="px-4 py-2">{index + 1}</td>
                 <td className="px-4 py-2">{student.name}</td>
                 <td className="px-4 py-2">{student.totalTasks}</td>

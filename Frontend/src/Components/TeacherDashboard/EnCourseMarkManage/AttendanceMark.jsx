@@ -8,6 +8,7 @@ const AttendanceMark = () => {
   const location = useLocation();
   const classId = location.state?.classId;
   const subject = location.state?.subject;
+  const subjecttitle = location.state?.subjecttitle;
   const AxiosSecure = useAxiosPrivate();
 
   const [attendanceList, setAttendanceList] = useState([]);

@@ -13,6 +13,7 @@ const InputInCourseMark = ({
 }) => {
   const AxiosSecure = useAxiosPrivate();
   const [markinputlist, setmarkinputlist] = useState([]);
+  const [searchRoll, setSearchRoll] = useState("");
 
   useEffect(() => {
     const storageKey = `mark_${classId}_${subjectCode}_${taskType}`;
@@ -47,7 +48,7 @@ const InputInCourseMark = ({
     }
   }, [classId, subjectCode, taskType, number]);
 
-  const handleMarkChange = (index, value) => {
+  const handleMarkChange = (id, value) => {
     // Allow only numbers or empty string
     if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
       const num = parseFloat(value);
@@ -60,8 +61,13 @@ const InputInCourseMark = ({
         return;
       }
 
-      const updatedList = [...markinputlist];
-      updatedList[index].mark = value; // Keep it as string for input
+      const updatedList = markinputlist.map((student) => {
+        if (student.studentId === id) {
+          return { ...student, mark: value };
+        }
+        return student;
+      });
+
       setmarkinputlist(updatedList);
       localStorage.setItem(
         `mark_${classId}_${subjectCode}_${taskType}`,
@@ -88,7 +94,7 @@ const InputInCourseMark = ({
       fullMark: parseInt(markinputlist[0].fullMark),
       marks: markinputlist.map((s) => ({
         studentId: s.studentId,
-        mark: parseFloat(s.mark),
+        mark: parseFloat(s.mark) || 0,
       })),
     };
 
@@ -109,12 +115,16 @@ const InputInCourseMark = ({
       alert("❌ Failed to save marks.");
     }
   };
+  // console.log(searchRoll);
+  const filteredList = markinputlist.filter((student) =>
+    student.class_roll.includes(searchRoll.trim())
+  );
 
   return (
     <div className="relative min-h-screen p-4 md:p-10 bg-gray-100">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-white to-purple-100 opacity-50 blur-sm z-0 rounded-xl" />
       <div className="relative z-10 max-w-6xl mx-auto bg-white/80 backdrop-blur-md p-6 md:p-10 rounded-2xl shadow-xl">
-        <div className="mb-6 text-center">
+        <div className="mb-2 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-blue-800">
             Input Marks for {taskType} - {subjectCode}
           </h2>
@@ -123,6 +133,15 @@ const InputInCourseMark = ({
             <strong>{number}</strong> &nbsp;|&nbsp; 🎯 Full Mark:{" "}
             <strong>{fullMark}</strong>
           </p>
+        </div>
+        <div className="mb-4 text-right">
+          <input
+            type="text"
+            placeholder="🔍 Search by Roll..."
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={searchRoll}
+            onChange={(e) => setSearchRoll(e.target.value)}
+          />
         </div>
 
         <div className="overflow-x-auto rounded-xl shadow">
@@ -136,7 +155,7 @@ const InputInCourseMark = ({
               </tr>
             </thead>
             <tbody>
-              {markinputlist.map((student, idx) => (
+              {filteredList.map((student) => (
                 <tr
                   key={student.studentId}
                   className="hover:bg-gray-50 transition border-b"
@@ -156,7 +175,9 @@ const InputInCourseMark = ({
                     <input
                       type="text"
                       value={student.mark}
-                      onChange={(e) => handleMarkChange(idx, e.target.value)}
+                      onChange={(e) =>
+                        handleMarkChange(student.studentId, e.target.value)
+                      }
                       className="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder={`0 - ${fullMark}`}
                     />

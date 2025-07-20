@@ -102,7 +102,7 @@ const TeacherHome = () => {
                 }
               >
                 <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+                  <div className=" justify-between items-start mb-4">
                     <h2 className="text-xl font-semibold text-gray-800 truncate">
                       {schedule.subject.title}
                     </h2>

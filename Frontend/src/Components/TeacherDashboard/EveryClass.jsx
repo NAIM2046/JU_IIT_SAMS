@@ -247,7 +247,7 @@ const EveryClass = () => {
               <div className="flex items-center">
                 <FiBook className="text-blue-500 mr-2" />
                 <span className="font-medium">Subject:</span>
-                <span className="ml-2">{schedule?.subject.title}</span>
+                <span className="ml-2">{schedule?.subject}</span>
               </div>
               <div className="flex items-center">
                 <FiUser className="text-blue-500 mr-2" />

@@ -23,15 +23,35 @@ const EnCourseMarkHome = () => {
   useEffect(() => {
     AxiosSecurse.get(`api/getteacherschedule/${user.name}`)
       .then((res) => {
-        setTeacherCourse(res.data);
+        const dedupedData = res.data.map((item) => {
+          // Deduplicate
+          const subjectMap = item.subjects.reduce((map, subject) => {
+            if (!map.has(subject.code.trim())) {
+              map.set(subject.code.trim(), subject);
+            }
+            return map;
+          }, new Map());
+
+          // Convert to array and sort by code
+          const sortedSubjects = Array.from(subjectMap.values()).sort((a, b) =>
+            a.code.localeCompare(b.code)
+          );
+
+          return {
+            ...item,
+            subjects: sortedSubjects,
+          };
+        });
+
+        setTeacherCourse(dedupedData);
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [user.name, AxiosSecurse]);
 
-  const handleNavigate = (classId, subjectCode, taskType) => {
+  const handleNavigate = (classId, subjecttitle, subjectCode, taskType) => {
     navigate(`/teacherDashboard/incoursemark/${taskType}`, {
-      state: { classId, subjectCode, taskType },
+      state: { classId, subjectCode, taskType, subjecttitle },
     });
   };
 
@@ -71,7 +91,7 @@ const EnCourseMarkHome = () => {
             >
               <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-4">
                 <h2 className="text-xl font-semibold text-white">
-                  Class: {course.classId}
+                  Semester: {course.classId}
                 </h2>
               </div>
 
@@ -100,7 +120,10 @@ const EnCourseMarkHome = () => {
                       <button
                         onClick={() =>
                           navigate("/teacherDashboard/attendancemark", {
-                            state: { subject, classId: course.classId },
+                            state: {
+                              subject,
+                              classId: course.classId,
+                            },
                           })
                         }
                         className="flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-3 rounded-lg transition-colors"
@@ -115,6 +138,7 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               handleNavigate(
                                 course.classId,
+                                subject.title,
                                 subject.code,
                                 "assignment"
                               )
@@ -128,6 +152,7 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               handleNavigate(
                                 course.classId,
+                                subject.title,
                                 subject.code,
                                 "classtest"
                               )
@@ -145,6 +170,7 @@ const EnCourseMarkHome = () => {
                               navigate("/teacherDashboard/performanceMarks", {
                                 state: {
                                   classId: course.classId,
+                                  title: subject.title,
                                   subjectCode: subject.code,
                                 },
                               })
@@ -158,6 +184,7 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               handleNavigate(
                                 course.classId,
+                                subject.title,
                                 subject.code,
                                 "labtest"
                               )
@@ -171,6 +198,7 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               handleNavigate(
                                 course.classId,
+                                subject.title,
                                 subject.code,
                                 "project"
                               )
@@ -184,6 +212,7 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               handleNavigate(
                                 course.classId,
+                                subject.title,
                                 subject.code,
                                 "viva"
                               )
@@ -197,6 +226,7 @@ const EnCourseMarkHome = () => {
                             onClick={() =>
                               handleNavigate(
                                 course.classId,
+                                subject.title,
                                 subject.code,
                                 "report"
                               )
@@ -217,6 +247,7 @@ const EnCourseMarkHome = () => {
                             {
                               state: {
                                 subjectCode: subject,
+                                title: subject.title,
                                 classId: course.classId,
                               },
                             }

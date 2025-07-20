@@ -9,6 +9,7 @@ const OtherTasks = () => {
   const classId = location.state?.classId;
   const subjectCode = location.state?.subjectCode;
   const taskType = location.state?.taskType;
+  const subjecttitle = location.state?.subjecttitle;
 
   const AxiosSecure = useAxiosPrivate();
   const [studentMarkList, setStudentMarkList] = useState([]);
@@ -19,7 +20,7 @@ const OtherTasks = () => {
   const [fullMark, setFullMark] = useState("");
   const [isActive, setActive] = useState(false);
 
-  const [bestCount, setBestCount] = useState(2);
+  const [bestCount, setBestCount] = useState(1);
   const [finalfullmark, setFinalmark] = useState(20);
 
   // extract all type columns like quiz-1, quiz-2
@@ -130,8 +131,8 @@ const OtherTasks = () => {
     <div className="container mx-auto px-4 py-6 max-w-8xl">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">
-          {classId} - {subjectCode} - {taskType} Summary
+        <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">
+          {classId} - {subjecttitle}-{subjectCode} - {taskType} Summary
         </h1>
 
         {error && (

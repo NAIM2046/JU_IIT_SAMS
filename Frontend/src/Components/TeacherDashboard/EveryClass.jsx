@@ -45,12 +45,14 @@ const EveryClass = () => {
           totalTasks: 0,
           latestEvaluation: "",
         }));
+        // console.log("Fetched students:", updatedStudents);
 
         // 2. Check attendance record
         try {
           const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.classId}/${schedule.subject.code}/${DateFormate}`
+            `/api/attendance/check/${schedule.classId}/${schedule.subject}/${DateFormate}`
           );
+          // console.log("Attendance response:", attendanceRes);
 
           const existingAttendance = attendanceRes.data;
           if (existingAttendance && existingAttendance.records) {
@@ -73,13 +75,14 @@ const EveryClass = () => {
         // 3. Get performance data
         try {
           const performanceRes = await AxiosSecure.get(
-            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject.code}`
+            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject}`
           );
-          const performanceData = performanceRes.data;
+          const performanceData = performanceRes.data.performanceInfo;
+          console.log("Performance data:", performanceData);
 
           updatedStudents = updatedStudents.map((student) => {
             const performance = performanceData.find(
-              (perf) => perf.studentId === student._id
+              (perf) => perf._id === student._id
             );
             return {
               ...student,
@@ -90,7 +93,7 @@ const EveryClass = () => {
         } catch (err) {
           console.error("Failed to fetch performance:", err);
         }
-
+        console.log("Updated students:", updatedStudents);
         setStudents(updatedStudents);
       } catch (err) {
         console.error("Failed to fetch students:", err);
@@ -109,7 +112,7 @@ const EveryClass = () => {
     try {
       const res = await AxiosSecure.post("/api/attendance/update-single", {
         className: schedule.classId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         date: DateFormate,
         studentId,
         roll,
@@ -135,7 +138,7 @@ const EveryClass = () => {
     try {
       await AxiosSecure.post("/api/attendance/set-default", {
         className: schedule.classId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         date: DateFormate,
         students,
         defaultStatus: status,
@@ -157,7 +160,7 @@ const EveryClass = () => {
     try {
       const res = await AxiosSecure.post("/api/performance/updata", {
         studentId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
         className: schedule.classId,
         evaluation,
       });
@@ -182,16 +185,19 @@ const EveryClass = () => {
 
   const handleSaveClass = async () => {
     try {
-      const response = await AxiosSecure.post("/api/classHistory/save", {
+      const info = {
         className: schedule.classId,
-        subject: schedule.subject.code,
+        subject: schedule.subject,
+        type: schedule.type,
         date: DateFormate,
         teacherName: teacherName,
         status: "Completed",
         totalStudents: students.length,
         totalPresent: students.filter((s) => s.attendance === "P").length,
         totalAbsent: students.filter((s) => s.attendance === "A").length,
-      });
+      };
+      console.log("Saving class info:", info);
+      const response = await AxiosSecure.post("/api/classHistory/save", info);
 
       if (response.data) {
         alert("Class saved successfully!");

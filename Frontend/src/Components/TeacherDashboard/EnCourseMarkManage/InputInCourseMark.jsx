@@ -26,7 +26,7 @@ const InputInCourseMark = ({
           class_roll: s.class_roll,
           name: s.name,
           photoURL: s.photoURL || "https://via.placeholder.com/40",
-          fullMark,
+          fullMark: fullMark,
           Number: number,
           mark: "",
         }));
@@ -48,53 +48,51 @@ const InputInCourseMark = ({
   }, [classId, subjectCode, taskType, number]);
 
   const handleMarkChange = (index, value) => {
-    let mark = parseFloat(value);
-
-    if (isNaN(mark)) {
-      mark = "";
-    } else {
-      if (mark > fullMark) {
+    // Allow only numbers or empty string
+    if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+      const num = parseFloat(value);
+      if (num > fullMark) {
         alert(`❌ Mark cannot exceed full mark (${fullMark})`);
         return;
       }
-      if (mark < 0) {
+      if (num < 0) {
         alert("❌ Mark cannot be negative");
         return;
       }
-    }
 
-    const newList = [...markinputlist];
-    newList[index].mark = mark;
-    setmarkinputlist(newList);
-    localStorage.setItem(
-      `mark_${classId}_${subjectCode}_${taskType}`,
-      JSON.stringify(newList)
-    );
+      const updatedList = [...markinputlist];
+      updatedList[index].mark = value; // Keep it as string for input
+      setmarkinputlist(updatedList);
+      localStorage.setItem(
+        `mark_${classId}_${subjectCode}_${taskType}`,
+        JSON.stringify(updatedList)
+      );
+    }
   };
 
   const handleSave = async () => {
-    const hasEmptyMark = markinputlist.some(
-      (s) => s.mark === "" || isNaN(s.mark)
+    const hasEmpty = markinputlist.some(
+      (s) => s.mark === "" || isNaN(Number(s.mark))
     );
 
-    if (hasEmptyMark) {
-      alert("❌ Please fill in all marks before saving.");
+    if (hasEmpty) {
+      alert("❌ Please fill in all marks with valid numbers before saving.");
       return;
     }
 
-    try {
-      const payload = {
-        classId,
-        subjectCode,
-        Number: markinputlist[0].Number,
-        type: taskType,
-        fullMark: parseInt(markinputlist[0].fullMark),
-        marks: markinputlist.map((s) => ({
-          studentId: s.studentId,
-          mark: parseFloat(s.mark),
-        })),
-      };
+    const payload = {
+      classId,
+      subjectCode,
+      Number: markinputlist[0].Number,
+      type: taskType,
+      fullMark: parseInt(markinputlist[0].fullMark),
+      marks: markinputlist.map((s) => ({
+        studentId: s.studentId,
+        mark: parseFloat(s.mark),
+      })),
+    };
 
+    try {
       const res = await AxiosSecure.post(
         "/api/incoursemark/addAttendanceMark",
         payload
@@ -114,11 +112,8 @@ const InputInCourseMark = ({
 
   return (
     <div className="relative min-h-screen p-4 md:p-10 bg-gray-100">
-      {/* Gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-white to-purple-100 opacity-50 blur-sm z-0 rounded-xl" />
-
-      {/* Foreground Content */}
-      <div className="relative z-10 max-w-5xl mx-auto bg-white/80 backdrop-blur-md p-6 md:p-10 rounded-2xl shadow-xl">
+      <div className="relative z-10 max-w-6xl mx-auto bg-white/80 backdrop-blur-md p-6 md:p-10 rounded-2xl shadow-xl">
         <div className="mb-6 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-blue-800">
             Input Marks for {taskType} - {subjectCode}
@@ -159,13 +154,11 @@ const InputInCourseMark = ({
                   </td>
                   <td className="py-2 px-4 border text-center">
                     <input
-                      type="number"
+                      type="text"
                       value={student.mark}
                       onChange={(e) => handleMarkChange(idx, e.target.value)}
                       className="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder={`0 - ${fullMark}`}
-                      min={0}
-                      max={fullMark}
                     />
                   </td>
                 </tr>
@@ -174,7 +167,6 @@ const InputInCourseMark = ({
           </table>
         </div>
 
-        {/* Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={handleSave}

@@ -11,62 +11,73 @@ const AttendanceMark = () => {
   const AxiosSecure = useAxiosPrivate();
 
   const [attendanceList, setAttendanceList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Initialize as true
   const [error, setError] = useState(null);
   const [totalAttendanceMark, setTotalAttendanceMark] = useState(10);
   const [saving, setSaving] = useState(false);
-  console.log(subject);
 
   useEffect(() => {
-    if (!classId || !subject?.code) return;
-    const fatchAttendanceSummary = async () => {
-      const res = await AxiosSecure.get(
-        `api/attendance/getAttendanceSummary/${classId}/${subject.code}`
-      );
-      console.log(res.data);
-      setAttendanceList(res.data);
+    if (!classId || !subject?.code) {
+      setLoading(false);
+      setError("Class ID or Subject Code is missing");
+      return;
+    }
+
+    const fetchAttendanceSummary = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await AxiosSecure.get(
+          `api/attendance/getAttendanceSummary/${classId}/${subject.code}`
+        );
+        setAttendanceList(res.data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load attendance data");
+        toast.error("Failed to load attendance data");
+      } finally {
+        setLoading(false);
+      }
     };
-    setLoading(true);
-    fatchAttendanceSummary();
-    setLoading(false);
-    setError(null);
+
+    fetchAttendanceSummary();
   }, [classId, subject?.code, AxiosSecure]);
 
-  const handleSaveMarks = () => {
+  const handleSaveMarks = async () => {
+    if (!classId || !subject?.code) {
+      toast.error("Class ID or Subject Code is missing");
+      return;
+    }
+
     const marksData = attendanceList.map((record) => {
       const total = record.presentCount + record.absentCount;
       const presentPercent =
         total > 0 ? (record.presentCount / total) * 100 : 0;
-      const attendanceMark = (
-        (presentPercent / 100) *
-        totalAttendanceMark
-      ).toFixed(2);
-
       return {
         studentId: record.studentId,
-        mark: parseFloat(attendanceMark),
+        mark: parseFloat(
+          ((presentPercent / 100) * totalAttendanceMark).toFixed(2)
+        ),
       };
     });
 
-    setSaving(true);
-    AxiosSecure.post("/api/incoursemark/addAttendanceMark", {
-      classId,
-      subjectCode: subject.code,
-      type: "attendance",
-      Number: "final",
-      marks: marksData,
-      fullMark: totalAttendanceMark,
-    })
-      .then(() => {
-        alert("save succesfully ");
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error("Failed to save attendance marks. Please try again.");
-      })
-      .finally(() => {
-        setSaving(false);
+    try {
+      setSaving(true);
+      await AxiosSecure.post("/api/incoursemark/addAttendanceMark", {
+        classId,
+        subjectCode: subject.code,
+        type: "attendance",
+        Number: "final",
+        marks: marksData,
+        fullMark: totalAttendanceMark,
       });
+      alert("Attendance marks saved successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save attendance marks");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getProgressBarColor = (percentage) => {
@@ -75,9 +86,20 @@ const AttendanceMark = () => {
     return "bg-red-500";
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading attendance data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="max-w-8xl mx-auto bg-white rounded-lg shadow-md p-6">
         {/* Header Section */}
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -97,9 +119,15 @@ const AttendanceMark = () => {
             <input
               type="number"
               min="1"
+              max="100"
               className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={totalAttendanceMark}
-              onChange={(e) => setTotalAttendanceMark(Number(e.target.value))}
+              onChange={(e) => {
+                const value = Math.min(
+                  Math.max(parseInt(e.target.value || 0, 1), 100)
+                );
+                setTotalAttendanceMark(value);
+              }}
             />
           </div>
           <button
@@ -141,15 +169,8 @@ const AttendanceMark = () => {
           </button>
         </div>
 
-        {/* Status Indicators */}
-        {loading && (
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-            <div className="bg-blue-600 h-2.5 rounded-full animate-pulse"></div>
-          </div>
-        )}
-
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
+          <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
             <p>{error}</p>
           </div>
         )}
@@ -195,17 +216,17 @@ const AttendanceMark = () => {
 
                   return (
                     <tr
-                      key={idx}
+                      key={record.studentId}
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {idx + 1}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-gray-900">
                         {record.name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {record.classRoll}
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">
+                        {record.class_roll}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {record.presentCount}
@@ -220,9 +241,7 @@ const AttendanceMark = () => {
                           </span>
                           <div className="ml-2 w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${getProgressBarColor(
-                                presentPercent
-                              )}`}
+                              className={`h-full ${getProgressBarColor(presentPercent)}`}
                               style={{ width: `${presentPercent}%` }}
                             ></div>
                           </div>
@@ -238,30 +257,28 @@ const AttendanceMark = () => {
             </table>
           </div>
         ) : (
-          !loading && (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <h3 className="mt-2 text-lg font-medium text-gray-900">
-                No attendance records found
-              </h3>
-              <p className="mt-1 text-gray-500">
-                There are no attendance records available for this class and
-                subject.
-              </p>
-            </div>
-          )
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">
+              No attendance records found
+            </h3>
+            <p className="mt-1 text-gray-500">
+              There are no attendance records available for this class and
+              subject.
+            </p>
+          </div>
         )}
       </div>
     </div>

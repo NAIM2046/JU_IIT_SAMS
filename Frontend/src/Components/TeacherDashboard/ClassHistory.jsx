@@ -28,6 +28,7 @@ const ClassHistory = () => {
         const res = await AxiosSecure.get(
           `/api/classHistory/byTeacher?teacherName=${teacherName}`
         );
+        console.log("Fetched class history:", res.data);
         setHistory(res.data);
       } catch (err) {
         setError("Failed to load class history");
@@ -44,6 +45,8 @@ const ClassHistory = () => {
     const schedule = {
       classId: classData.className,
       subject: classData.subject,
+      type: classData.type, // Assuming type is part of classData
+      teacherName: classData.teacherName,
     };
     const formattedDate = classData.date;
     navigate(`/teacherDashboard/Class/${schedule.classId}`, {

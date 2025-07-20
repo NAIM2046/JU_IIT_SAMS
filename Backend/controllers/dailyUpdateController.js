@@ -6,6 +6,7 @@ const getAttendancebyClass_sub_data = async (req, res) => {
   const db = getDB();
   const Attendance = db.collection("attendanceInfo");
   const { class: className, subject, date } = req.params;
+  console.log(req.params);
 
   try {
     const record = await Attendance.findOne({

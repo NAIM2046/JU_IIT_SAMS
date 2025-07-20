@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
 import InputInCourseMark from "./InputInCourseMark";
-import OtherTaskList from "./OtherTaskList";
+import OtherTaskList from "./otherTaskList";
 
 const OtherTasks = () => {
   const location = useLocation();
@@ -86,12 +86,18 @@ const OtherTasks = () => {
         })),
       };
 
+      const confirmAdd = window.confirm(
+        `✅ Are you sure you want to add the task  "${taskType}" final mark , best count ${bestCount} with full mark ${finalfullmark}?`
+      );
+      if (!confirmAdd) return;
+
       const res = await AxiosSecure.post(
         "/api/incoursemark/addAttendanceMark",
         payload
       );
       if (res.data) {
         alert("Final marks saved successfully!");
+        window.location.reload();
       }
     } catch (err) {
       console.error("Failed to save final marks", err.message);
@@ -111,12 +117,17 @@ const OtherTasks = () => {
         `Task ${taskKey} already exists. Please choose a different number.`
       );
     } else {
-      setActive(true);
+      const confirmAdd = window.confirm(
+        `✅ Are you sure you want to add the task "${taskKey}" with full mark ${fullMark}?`
+      );
+      if (confirmAdd) {
+        setActive(true);
+      }
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 max-w-8xl">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">
@@ -133,41 +144,6 @@ const OtherTasks = () => {
       {/* Control Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Final Calculation Panel */}
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Final Calculation
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Final Full Mark
-              </label>
-              <input
-                type="number"
-                value={finalfullmark}
-                onChange={(e) => setFinalmark(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                min="1"
-                step="1"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Best Count
-              </label>
-              <select
-                value={bestCount}
-                onChange={(e) => setBestCount(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value={1}>Best 1</option>
-                <option value={2}>Best 2</option>
-                <option value={3}>Best 3</option>
-                <option value={4}>Best 4</option>
-              </select>
-            </div>
-          </div>
-        </div>
 
         {/* Add Task Panel */}
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
@@ -223,6 +199,66 @@ const OtherTasks = () => {
               </svg>
               Add Task
             </button>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Final Calculation
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Final Full Mark
+              </label>
+              <input
+                type="number"
+                value={finalfullmark}
+                onChange={(e) => setFinalmark(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="1"
+                step="1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Best Count
+              </label>
+              <select
+                value={bestCount}
+                onChange={(e) => setBestCount(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {typeColumns.map((type, idx) => (
+                  <option key={idx} value={idx + 1}>
+                    {idx + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleSaveFinalMarks}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Save Final Marks
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -364,28 +400,6 @@ const OtherTasks = () => {
           </div>
 
           {/* Save Button */}
-          <div className="flex justify-end">
-            <button
-              onClick={handleSaveFinalMarks}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Save Final Marks
-            </button>
-          </div>
         </>
       )}
 

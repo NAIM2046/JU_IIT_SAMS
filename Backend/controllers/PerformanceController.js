@@ -84,6 +84,7 @@ const UpdatePerformance = async (req, res) => {
   }
 };
 
+
 const getPerformanceByClassAndSubject = async (req, res) => {
   const db = getDB();
   const { classId, subjectCode } = req.params;
@@ -139,8 +140,28 @@ const getPerformanceByClassAndSubject = async (req, res) => {
         },
       ])
       .toArray();
+     const studentIds = performanceInfo.map(student => student._id.toString());
 
-    res.json(performanceInfo);
+const markWeights = await db.collection("incourse_marks").aggregate([
+  {
+    $match: {
+      classId,
+      subjectCode,
+      type: "performance",
+      "marks.studentId": { $in: studentIds }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      markWeights: 1,
+     
+    }
+  }
+]).toArray();
+
+
+res.json({performanceInfo , markWeights });
   } catch (err) {
     console.error("Error fetching performance records:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -149,15 +170,22 @@ const getPerformanceByClassAndSubject = async (req, res) => {
 
 
 const savePerformanceInfo = async (req, res) => {
-  const { classId, subjectCode, marks, fullMarks, type, Number } = req.body;
+  const { classId, subjectCode, marks, fullMark, type, Number , markWeights} = req.body;
   const db = getDB();
 
-  const filter = { classId, subjectCode, type, Number };
+const users = await db.collection("users").find({ class: classId, role: "student" }).toArray();
+ const studentIds = users.map(user => user._id.toString());
+  const filter = { classId, subjectCode, type, Number, $or: [
+      { marks: { $elemMatch: { studentId: { $in: studentIds } } } },
+      { marks: { $exists: false } } ]}
+
+   
 
   const updatedDoc = {
     $set: {
+      markWeights,
       marks,
-      fullMarks,
+      fullMark,
       updatedAt: new Date(),
     },
     $setOnInsert: {

@@ -12,8 +12,14 @@ const addAttendanceMark = async (req, res) => {
     }
 
     console.log("Updating attendance marks...");
+  const users = await db.collection("users").find({ class: classId, role: "student" }).toArray();
+  const studentIds = users.map(user => user._id.toString());
 
-    const filter = { classId, subjectCode, type , Number };
+    const filter = { classId, subjectCode, type , Number  ,
+      $or: [
+      { marks: { $elemMatch: { studentId: { $in: studentIds } } } },
+      { marks: { $exists: false } },]
+    };
     console.log(filter) ;
     const updateDoc = {
       $set: {

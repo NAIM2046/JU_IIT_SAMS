@@ -89,7 +89,15 @@ const TeacherHome = () => {
                 className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-100"
                 onClick={() =>
                   navigate(`/teacherDashboard/Class/${schedule.classId}`, {
-                    state: { schedule, formattedDate, teacherName: user.name },
+                    state: {
+                      schedule: {
+                        classId: schedule.classId,
+                        subject: schedule.subject.code,
+                        type: schedule.subject.type,
+                      },
+                      formattedDate,
+                      teacherName: user.name,
+                    },
                   })
                 }
               >

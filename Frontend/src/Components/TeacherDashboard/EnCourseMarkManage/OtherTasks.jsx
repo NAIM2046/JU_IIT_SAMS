@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
 import InputInCourseMark from "./InputInCourseMark";
 import OtherTaskList from "./OtherTaskList";
+import useStroge from "../../../stroge/useStroge";
 
 const OtherTasks = () => {
   const location = useLocation();
@@ -10,6 +11,9 @@ const OtherTasks = () => {
   const subjectCode = location.state?.subjectCode;
   const taskType = location.state?.taskType;
   const subjecttitle = location.state?.subjecttitle;
+  const batchNumber = location.state?.batchNumber;
+  const { user } = useStroge();
+  // console.log(batchNumber);
 
   const AxiosSecure = useAxiosPrivate();
   const [studentMarkList, setStudentMarkList] = useState([]);
@@ -39,7 +43,7 @@ const OtherTasks = () => {
         setLoading(true);
         setError(null);
         const result = await AxiosSecure.get(
-          `/api/incoursemark/otherTaskMarkSummary/${classId}/${taskType}/${subjectCode}`
+          `/api/incoursemark/otherTaskMarkSummary/${classId}/${taskType}/${subjectCode}/${batchNumber}`
         );
         setStudentMarkList(result.data);
       } catch (error) {
@@ -50,11 +54,11 @@ const OtherTasks = () => {
       }
     };
     fetchOtherTaskSummary();
-  }, [classId, subjectCode, taskType, AxiosSecure]);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem(
-      `mark_${classId}_${subjectCode}_${taskType}`
+      `mark_${classId}_${subjectCode.trim()}_${taskType}`
     );
     if (saved) {
       setActive(true);
@@ -80,6 +84,8 @@ const OtherTasks = () => {
         subjectCode,
         Number: "final",
         type: taskType,
+        batchNumber,
+        teacherId: user._id,
         fullMark: parseInt(finalfullmark),
         marks: studentMarkList.map((student) => ({
           studentId: student.studentId,
@@ -93,7 +99,7 @@ const OtherTasks = () => {
       if (!confirmAdd) return;
 
       const res = await AxiosSecure.post(
-        "/api/incoursemark/addAttendanceMark",
+        "/api/incoursemark/add_update_incourse_Mark",
         payload
       );
       if (res.data) {
@@ -275,6 +281,7 @@ const OtherTasks = () => {
           setFullMark={setFullMark}
           setActive={setActive}
           setNumber={setNumber}
+          batchNumber={batchNumber}
         />
       )}
 

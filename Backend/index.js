@@ -12,6 +12,8 @@ const noticeRoutes = require('./routes/NoticeRoutes.js');
 const examRoutes = require('./routes/examRoutes.js');
 const messageRoute = require('./routes/messageRoutes.js');
 const InCourseMarkRoutes = require('./routes/InCourseMarkRoutes.js')
+const add_update_exam_committee = require('./routes/ExamCommitteeRoutes.js'); // Importing Exam Committee routes
+const FinalMarkRoutes =  require('./routes/FinalMarkRoutes.js')
 const { startCronJobUpdata } = require("./cron/Monthly_update.js");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -93,7 +95,8 @@ app.use('/api', noticeRoutes); // Assuming you have classHistroyRoute defined
 app.use('/api/performance', performanceRoutes);
 app.use('/api/exam', examRoutes);
 app.use('/api/message', messageRoute);
-
+app.use('/api/examCommittee',add_update_exam_committee ); // Importing Exam Committee routes
+app.use('/api/finalmark' ,FinalMarkRoutes) ;
 
 connectDB().then(() => {
   server.listen(port, () => {

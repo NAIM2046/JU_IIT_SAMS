@@ -1,6 +1,51 @@
+const { ObjectId } = require("mongodb");
 const { getDB } = require("../config/db.js");
 require("dotenv").config();
 
+
+const attendanceAddandUpdate = async (req, res) => {
+  try {
+    let { classId, subject, batchNumber, date, records } = req.body;
+
+    // Trim spaces from string values
+    classId = classId.trim();
+    subject = subject.trim();
+    batchNumber = batchNumber.trim();
+    date = date.trim();
+
+    // Clean up each student's record by trimming string fields
+    if (!Array.isArray(records)) {
+      return res.status(400).json({ error: "Records must be an array" });
+    }
+
+    records = records.map((record) => ({
+      studentId: record.studentId.trim(),
+      status: record.status.trim(), // e.g., "present", "absent"
+    }));
+
+    const db = getDB();
+    const attendanceCollection = db.collection("attendanceInfo");
+
+    const filter = { classId, subject, batchNumber, date };
+    const update = { $set: { records } };
+
+    const result = await attendanceCollection.updateOne(filter, update, { upsert: true });
+
+    if (result.upsertedCount > 0) {
+      res.status(201).json({ message: "Attendance inserted successfully." });
+    } else if (result.modifiedCount > 0) {
+      res.status(200).json({ message: "Attendance updated successfully." });
+    } else {
+      res.status(200).json({ message: "No changes made to the attendance." });
+    }
+
+  } catch (error) {
+    console.error("Error in attendanceAddandUpdate:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+  
 
 const getAttendancebyClass_sub_data = async (req, res) => {
   const db = getDB();
@@ -25,7 +70,8 @@ const getAttendancebyClass_sub_data = async (req, res) => {
  const setAttendanceDefault = async (req, res) => {
   const db = getDB();
   const AttendanceInfo = db.collection("attendanceInfo");
-  const { className, subject, date, students, defaultStatus } = req.body;
+  const { className, subject, date,  defaultStatus , batchNumber } = req.body;
+  //console.log(batchNumber) ;
 
   try {
     // Find existing attendance document
@@ -33,6 +79,7 @@ const getAttendancebyClass_sub_data = async (req, res) => {
       class: className,
       subject: subject,
       date: date,
+      batchNumber: batchNumber
     });
 
     if (existing) {
@@ -49,15 +96,17 @@ const getAttendancebyClass_sub_data = async (req, res) => {
 
       return res.json({ message: "Attendance updated successfully" });
     }
-
+   
+     const students =  await db.collection('users').find({role: "student" , class: className} , {projection : {_id: 1}}).toArray() ;
     // Create new attendance document
     const newDoc = {
       class: className,
       subject,
       date,
+      batchNumber: batchNumber,
       records: students.map((student) => ({
         studentId: student._id,
-        roll: student.class_roll,
+       
         status: defaultStatus,
       })),
     };
@@ -74,20 +123,24 @@ const getAttendancebyClass_sub_data = async (req, res) => {
   const db = getDB(); // make sure you are using this correctly
   const AttendanceInfo = db.collection("attendanceInfo");
 
-  const { className, subject, date, studentId, roll, status, students } = req.body;
+  const { className, subject, date, studentId, batchNumber, status } = req.body;
+  console.log("Updating attendance for:", req.body);
+
+  objectStudentId = new ObjectId(studentId) ;
 
   try {
     const existing = await AttendanceInfo.findOne({
       class: className,
       subject,
       date,
+      batchNumber 
     });
 
     if (existing) {
       const existingRecords = existing.records || [];
 
       const recordIndex = existingRecords.findIndex(
-        (r) => r.studentId.toString() === studentId
+        (r) => r.studentId.toString() === objectStudentId.toString()
       );
 
       if (recordIndex !== -1) {
@@ -96,8 +149,8 @@ const getAttendancebyClass_sub_data = async (req, res) => {
       } else {
         // Add new student record
         existingRecords.push({
-          studentId,
-          roll,
+          studentId:objectStudentId,
+         
           status,
         });
       }
@@ -109,11 +162,11 @@ const getAttendancebyClass_sub_data = async (req, res) => {
 
       return res.json({ message: "Student attendance updated successfully" });
     }
-
+   const students =  await db.collection('users').find({role: "student" , class: className} , {projection : {_id: 1}}).toArray() ;
     // If attendance doc doesn't exist, create new one
     const newRecords = students.map((student) => ({
       studentId: student._id,
-      roll: student.class_roll,
+     
       status: student._id === studentId ? status : "",
     }));
 
@@ -121,6 +174,7 @@ const getAttendancebyClass_sub_data = async (req, res) => {
       class: className,
       subject,
       date,
+      batchNumber,
       records: newRecords,
     });
 
@@ -299,64 +353,264 @@ const getAttendanceHistory= async (req , res) =>{
     res.status(500).json({ message: "Server error" });
   }
 }
-const getAttendanceSummary =  async (req , res )=>{
-  
-  const {classId , subject} = req.params ; 
-     //console.log(classId, subject) ;
-  const db = getDB() ; 
-  try{
-    if(!classId || !subject){
-      return res.status(400).json({message: "class and subject are required"})
+const getAttendanceSummary = async (req, res) => {
+  let { classId, subject, batchNumber } = req.params;
+  const db = getDB();
+  console.log(req.params) ;
+  subject = subject.trim() ;
+  try {
+    if (!classId || !subject) {
+      return res.status(400).json({ message: "classId and subject are required" });
     }
-    const students =  await db.collection("users").find({role: "student" , class: classId}, {projection: {name: 1 , class_roll: 1 , photoURL: 1 }}).toArray() ;
-    //console.log(students) ;
-    const studentIds =  students.map(s => s._id.toString()) ;
-   // console.log(studentIds)
-   const summary = await db.collection("attendanceInfo").aggregate([
-    {
-      $match: {class: classId , subject: subject}
-    } ,
-    {
-      $unwind: "$records"
-    },{
-      $match: {"records.studentId": {$in: studentIds}}
-    }, 
-    {
-      $group: {
-         _id : "$records.studentId" , 
-         presentCount: {
-          $sum: {$cond: [{$eq: ["$records.status" , "P"]} , 1 ,0]}
-         },
-         absentCount: {
-            $sum : {$cond : [{$eq : ["$records.status" , "A"]} , 1 ,0]}
-         }
+
+    const result = await db.collection("users").aggregate([
+      {
+        $match: {
+          role: "student",
+          class: classId
+        }
+      },
+      {
+        $lookup: {
+          from: "attendanceInfo",
+          let: { studentId: { $toString: "$_id" } },
+          pipeline: [
+            {
+              $match: {
+                classId: classId,
+                subject: subject,
+                batchNumber: batchNumber
+              }
+            },
+            { $unwind: "$records" },
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$records.studentId", "$$studentId"]
+                }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                presentCount: {
+                  $sum: {
+                    $cond: [{ $eq: ["$records.status", "P"] }, 1, 0]
+                  }
+                },
+                absentCount: {
+                  $sum: {
+                    $cond: [{ $eq: ["$records.status", "A"] }, 1, 0]
+                  }
+                }
+              }
+            }
+          ],
+          as: "attendanceSummary"
+        }
+      },
+      {
+        $addFields: {
+          presentCount: {
+            $ifNull: [{ $arrayElemAt: ["$attendanceSummary.presentCount", 0] }, 0]
+          },
+          absentCount: {
+            $ifNull: [{ $arrayElemAt: ["$attendanceSummary.absentCount", 0] }, 0]
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          class_roll: 1,
+          photoURL: 1,
+          presentCount: 1,
+          absentCount: 1
+        }
       }
-    }
-   ]).toArray() ;
-  // console.log(summary) ;
+    ]).toArray();
 
-  const summaryMap = {} 
-  summary.forEach(s=>{
-    summaryMap[s._id.toString()] = s ; 
-  })
-  const finalList = students.map(student =>{
-    const att = summaryMap[student._id.toString()] ; 
-    return {
-      studentId: student._id , 
-      name: student.name , 
-      class_roll : student.class_roll , 
-      photoURL: student.photoURL , 
-      presentCount: att?att.presentCount:0 ,
-      absentCount: att ? att.absentCount:0
-    }
-  })
-  return res.json(finalList) ;
-
-  }catch(err){
+    res.json(result);
+  } catch (err) {
     console.error("Error in getAttendanceSummary:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getAttendanceHistoryBY_class_subject = async (req, res) => {
+  const db = getDB();
+  const Users = db.collection("users");
+  let { classId, subject , batchNumber} = req.params;
+  subject = subject.trim()  ;
+  console.log(req.params)
+  console.log("Fetching attendance history for class:", classId, "subject:", subject , batchNumber) ;
+
+  try {
+    const result = await Users.aggregate([
+      {
+        $match: {
+          class: classId,
+          role: "student"
+        }
+      },
+      {
+        $lookup: {
+          from: "attendanceInfo",
+          let: { studentId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                classId: classId,
+                subject: subject,
+                batchNumber
+              }
+            },
+            { $unwind: "$records" },
+           {
+  $match: {
+    $expr: {
+      $eq: ["$records.studentId", { $toString: "$$studentId" }]
+    }
   }
 }
+,
+            {
+              $project: {
+                _id: 0,
+                date: 1,
+                status: "$records.status"
+              }
+            }
+          ],
+          as: "attendances"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          studentId: "$_id",
+          name: 1,
+          roll: "$class_roll",
+          attendances: 1
+        }
+      }
+    ]).toArray();
+
+    res.send(result);
+  } catch (error) {
+    console.error("Error fetching attendance history:", error);
+    res.status(500).send({ error: "Internal Server Error" });
+  }
+};
+
+
+const getAttendanceAndPreformaceByAClass = async (req, res) => {
+  const { classId, batchNumber, subject, date } = req.params;
+  const db = getDB();
+  console.log(req.params)
+  try {
+    const result = await db.collection('users').aggregate([
+      {
+        $match: {
+          role: "student",
+          class: classId
+        }
+      },
+      {
+        $lookup: {
+          from: "attendanceInfo",
+          let: { studentId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                classId: classId,
+                subject: subject,
+                date: date,
+                batchNumber: batchNumber
+              }
+            },
+            { $unwind: "$records" },
+            {
+              $match: {
+                $expr: {
+                  $eq: [{ $toObjectId: "$records.studentId" }, "$$studentId"]
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                attendance: "$records.status"
+              }
+            }
+          ],
+          as: "attendanceInfo"
+        }
+      },
+      {
+        $lookup: {
+          from: "performanceInfo",
+          let: { studentId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                classId: classId,
+                subject: subject,
+                date: date,
+                batchNumber: batchNumber
+              }
+            },
+           {
+          
+  $match: {
+    $expr: {
+      $eq: [{ $toObjectId: "$studentId" }, "$$studentId"]
+    }
+  }
+
+},
+            {
+              $project: {
+                _id: 0,
+                value: 1
+              }
+            }
+          ],
+          as: "performanceInfo"
+        }
+      },
+      {
+        $addFields: {
+          attendance: {
+            $ifNull: [{ $arrayElemAt: ["$attendanceInfo.attendance", 0] }, "N/A"]
+          },
+          performance: {
+            $ifNull: [{ $arrayElemAt: ["$performanceInfo.value", 0] }, "N/A"]
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          class: 1,
+          class_roll: 1,
+          photoURL: 1,
+          attendance: 1,
+          performance: 1
+        }
+      }
+    ]).toArray();
+
+    res.json(result);
+  } catch (error) {
+    console.error("Aggregation error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 module.exports = {
   getAttendancebyClass_sub_data,
@@ -366,6 +620,9 @@ module.exports = {
   // Add other functions here as needed
   getAttendanceByStd_subject,
   getAttendanceHistory ,
-  getAttendanceSummary
+  getAttendanceSummary , 
+  getAttendanceHistoryBY_class_subject , 
+  getAttendanceAndPreformaceByAClass,
+  attendanceAddandUpdate
   
 }

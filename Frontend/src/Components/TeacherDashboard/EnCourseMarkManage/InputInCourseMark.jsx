@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
+import useStroge from "../../../stroge/useStroge";
 
 const InputInCourseMark = ({
   classId,
@@ -10,13 +11,15 @@ const InputInCourseMark = ({
   setActive,
   setFullMark,
   setNumber,
+  batchNumber,
 }) => {
   const AxiosSecure = useAxiosPrivate();
   const [markinputlist, setmarkinputlist] = useState([]);
   const [searchRoll, setSearchRoll] = useState("");
-
+  const { user } = useStroge();
+  const storageKey = `mark_${classId}_${subjectCode.trim()}_${taskType}`;
   useEffect(() => {
-    const storageKey = `mark_${classId}_${subjectCode}_${taskType}`;
+    // console.log("helll", storageKey);
     const fetchStudent = async () => {
       try {
         const result = await AxiosSecure.get(
@@ -39,6 +42,7 @@ const InputInCourseMark = ({
     };
 
     const saved = JSON.parse(localStorage.getItem(storageKey));
+    // console.log(saved);
     if (saved) {
       setmarkinputlist(saved);
       setFullMark(saved[0].fullMark);
@@ -46,8 +50,8 @@ const InputInCourseMark = ({
     } else {
       fetchStudent();
     }
-  }, [classId, subjectCode, taskType, number]);
-
+  }, []);
+  //console.log("jjskljf");
   const handleMarkChange = (id, value) => {
     // Allow only numbers or empty string
     if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
@@ -69,22 +73,19 @@ const InputInCourseMark = ({
       });
 
       setmarkinputlist(updatedList);
-      localStorage.setItem(
-        `mark_${classId}_${subjectCode}_${taskType}`,
-        JSON.stringify(updatedList)
-      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedList));
     }
   };
 
   const handleSave = async () => {
-    const hasEmpty = markinputlist.some(
-      (s) => s.mark === "" || isNaN(Number(s.mark))
-    );
+    // const hasEmpty = markinputlist.some(
+    //   (s) => s.mark === "" || isNaN(Number(s.mark))
+    // );
 
-    if (hasEmpty) {
-      alert("❌ Please fill in all marks with valid numbers before saving.");
-      return;
-    }
+    // if (hasEmpty) {
+    //   alert("❌ Please fill in all marks with valid numbers before saving.");
+    //   return;
+    // }
 
     const payload = {
       classId,
@@ -92,22 +93,25 @@ const InputInCourseMark = ({
       Number: markinputlist[0].Number,
       type: taskType,
       fullMark: parseInt(markinputlist[0].fullMark),
+      batchNumber,
+      teacherId: user._id,
       marks: markinputlist.map((s) => ({
         studentId: s.studentId,
         mark: parseFloat(s.mark) || 0,
       })),
     };
+    console.log(payload);
 
     try {
       const res = await AxiosSecure.post(
-        "/api/incoursemark/addAttendanceMark",
+        "/api/incoursemark/add_update_incourse_Mark",
         payload
       );
 
       if (res.data) {
         alert("✅ Marks saved successfully!");
         setActive(false);
-        localStorage.removeItem(`mark_${classId}_${subjectCode}_${taskType}`);
+        localStorage.removeItem(storageKey);
         window.location.reload();
       }
     } catch (error) {

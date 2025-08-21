@@ -11,7 +11,7 @@ import {
   FaChalkboardTeacher,
   FaUser,
 } from "react-icons/fa";
-import { PiExamFill, PiPercent } from "react-icons/pi";
+import { PiExamFill, PiMarkdownLogo, PiPercent } from "react-icons/pi";
 import useStroge from "../../stroge/useStroge";
 
 const TeacherSection = () => {
@@ -75,10 +75,33 @@ const TeacherSection = () => {
       isActive: (currentPath) =>
         currentPath === "/teacherDashboard/manageIncoursemark",
     },
+    {
+      path: "/teacherDashboard/viewAttendanceSummary",
+      icon: <PiPercent className="text-lg" />,
+      label: "View-Attendance-Summary",
+      isActive: (currentPath) =>
+        currentPath === "/teacherDashboard/viewAttendanceSummary",
+    },
+    {
+      path: "/teacherDashboard/finalMarkInput",
+      icon: <PiMarkdownLogo className="text-lg" />,
+      label: "Final-Mark-Input",
+      isActive: (currentPath) =>
+        currentPath === "/teacherDashboard/finalMarkInput",
+    },
   ];
 
+  if (user?.isCommittee) {
+    navItems.push({
+      path: "/ExamCommitteeDashboard",
+      icon: <FaChalkboardTeacher className="text-lg" />,
+      label: "Exam Committee Dashboard",
+      isActive: (currentPath) => currentPath === "/ExamCommitteeDashboard",
+    });
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50 ">
       <Navbar />
 
       {/* Mobile Menu Button */}
@@ -174,7 +197,7 @@ const TeacherSection = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300 mx-auto w-full max-w-7xl">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[calc(100vh-8rem)] p-6">
             <Outlet />
           </div>

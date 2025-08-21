@@ -2,23 +2,26 @@ const { ObjectId } = require("mongodb");
 const { getDB } = require("../config/db.js");
 
 
-const addAttendanceMark = async (req, res) => {
+const add_update_incourse_Mark = async (req, res) => {
   try {
     const db = getDB();
-    const { classId, subjectCode, type, Number, marks, fullMark } = req.body;
-
-    if (!classId || !subjectCode || !type || !Number || !marks || !fullMark) {
+    let { classId, subjectCode, type, Number, marks, fullMark , batchNumber , teacherId} = req.body;
+   classId = classId?.trim();
+subjectCode = subjectCode?.trim();
+type = type?.trim();
+Number = Number?.toString().trim(); // If it's a number
+batchNumber = batchNumber?.trim();
+console.log(req.body) 
+    if (!classId || !subjectCode || !type || !Number || !marks || !fullMark || !batchNumber) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
     console.log("Updating attendance marks...");
-  const users = await db.collection("users").find({ class: classId, role: "student" }).toArray();
-  const studentIds = users.map(user => user._id.toString());
+ 
+  
 
     const filter = { classId, subjectCode, type , Number  ,
-      $or: [
-      { marks: { $elemMatch: { studentId: { $in: studentIds } } } },
-      { marks: { $exists: false } },]
+     batchNumber , teacherId
     };
     console.log(filter) ;
     const updateDoc = {
@@ -50,8 +53,10 @@ const addAttendanceMark = async (req, res) => {
 };
 
 const otherTaskMarkSummary = async(req , res)=>{
-       const {classId , task_type , subject } = req.params
+       let {classId , task_type , subject  , batchNumber} = req.params
+       subject = subject.trim() ;
        //console.log(classId , task_type , subject) 
+       console.log(req.params)
         const db = getDB() ; 
   try{
     if(!classId || !subject){
@@ -59,18 +64,15 @@ const otherTaskMarkSummary = async(req , res)=>{
     }
     const students =  await db.collection("users").find({role: "student" , class: classId}, {projection: {name: 1 , class_roll: 1 , photoURL: 1 }}).toArray() ;
     //console.log(students) ;
-    const studentIds =  students.map(s => s._id.toString()) ;
-   // console.log(studentIds)
+   
  const summary = await db.collection("incourse_marks").aggregate([
   {
-    $match: { classId: classId, subjectCode: subject, type: task_type }
+    $match: { classId: classId, subjectCode: subject, type: task_type , batchNumber }
   },
   {
     $unwind: "$marks"
   },
-  {
-    $match: { "marks.studentId": { $in: studentIds } }
-  },
+ 
   {
     $project: {
       studentId: "$marks.studentId",
@@ -211,8 +213,16 @@ const backEidteFromate = async(req , res)=>{
   }
 }
 const finalMarkSummary = async(req , res) =>{
-  const { classId , subjectCode } = req.params ; 
+  let { classId , subjectCode , batchNumber } = req.params ; 
+
+  classId = classId?.trim();
+subjectCode = subjectCode?.trim();
+
+batchNumber = batchNumber?.trim();
+
   const db = getDB() ;
+
+  console.log(req.params)
           
   try{
     if(!classId || !subjectCode){
@@ -220,18 +230,15 @@ const finalMarkSummary = async(req , res) =>{
     }
     const students =  await db.collection("users").find({role: "student" , class: classId}, {projection: {name: 1 , class_roll: 1 , photoURL: 1 }}).toArray() ;
     //console.log(students) ;
-    const studentIds =  students.map(s => s._id.toString()) ;
-   // console.log(studentIds)
+   
  const summary = await db.collection("incourse_marks").aggregate([
   {
-    $match: { classId: classId, subjectCode: subjectCode, Number: "final" }
+    $match: { classId: classId, subjectCode: subjectCode, Number: "final" , batchNumber }
   },
   {
     $unwind: "$marks"
   },
-  {
-    $match: { "marks.studentId": { $in: studentIds } }
-  },
+ 
   {
     $project: {
       studentId: "$marks.studentId",
@@ -260,9 +267,13 @@ const finalMarkSummary = async(req , res) =>{
 
 
   const summaryMap = {} 
-  summary.forEach(s=>{
-    summaryMap[s._id.toString()] = s.mark ; 
-  })
+ summary.forEach(s => {
+  const id = s._id?.toString();
+  if (id) {
+    summaryMap[id] = s.mark;
+  }
+});
+
  const finalList = students.map(student => {
   const marks = summaryMap[student._id.toString()] || [];
   return {
@@ -302,7 +313,7 @@ const deleteTask = async(req , res)=>{
   
 }
 module.exports = {
-    addAttendanceMark, 
+    add_update_incourse_Mark, 
     otherTaskMarkSummary ,
     otherTaskList ,
     backEidteFromate,

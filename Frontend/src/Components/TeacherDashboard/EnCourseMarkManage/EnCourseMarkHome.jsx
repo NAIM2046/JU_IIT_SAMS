@@ -48,10 +48,17 @@ const EnCourseMarkHome = () => {
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [user.name, AxiosSecurse]);
+  console.log(teacherCourse);
 
-  const handleNavigate = (classId, subjecttitle, subjectCode, taskType) => {
+  const handleNavigate = (
+    classId,
+    subjecttitle,
+    subjectCode,
+    batchNumber,
+    taskType
+  ) => {
     navigate(`/teacherDashboard/incoursemark/${taskType}`, {
-      state: { classId, subjectCode, taskType, subjecttitle },
+      state: { classId, subjectCode, taskType, subjecttitle, batchNumber },
     });
   };
 
@@ -123,6 +130,7 @@ const EnCourseMarkHome = () => {
                             state: {
                               subject,
                               classId: course.classId,
+                              batchNumber: course.batchNumber,
                             },
                           })
                         }
@@ -154,6 +162,7 @@ const EnCourseMarkHome = () => {
                                 course.classId,
                                 subject.title,
                                 subject.code,
+                                course.batchNumber,
                                 "classtest"
                               )
                             }
@@ -172,6 +181,7 @@ const EnCourseMarkHome = () => {
                                   classId: course.classId,
                                   title: subject.title,
                                   subjectCode: subject.code,
+                                  batchNumber: course.batchNumber,
                                 },
                               })
                             }
@@ -186,6 +196,7 @@ const EnCourseMarkHome = () => {
                                 course.classId,
                                 subject.title,
                                 subject.code,
+                                course.batchNumber,
                                 "labtest"
                               )
                             }
@@ -200,6 +211,7 @@ const EnCourseMarkHome = () => {
                                 course.classId,
                                 subject.title,
                                 subject.code,
+                                course.batchNumber,
                                 "project"
                               )
                             }
@@ -214,6 +226,7 @@ const EnCourseMarkHome = () => {
                                 course.classId,
                                 subject.title,
                                 subject.code,
+                                course.batchNumber,
                                 "viva"
                               )
                             }
@@ -228,6 +241,7 @@ const EnCourseMarkHome = () => {
                                 course.classId,
                                 subject.title,
                                 subject.code,
+                                course.batchNumber,
                                 "report"
                               )
                             }
@@ -249,6 +263,7 @@ const EnCourseMarkHome = () => {
                                 subjectCode: subject,
                                 title: subject.title,
                                 classId: course.classId,
+                                batchNumber: course.batchNumber,
                               },
                             }
                           )

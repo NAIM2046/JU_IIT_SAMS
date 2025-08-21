@@ -97,6 +97,7 @@ const TeacherHome = () => {
                       },
                       formattedDate,
                       teacherName: user.name,
+                      batchNumber: schedule.batchNumber,
                     },
                   })
                 }

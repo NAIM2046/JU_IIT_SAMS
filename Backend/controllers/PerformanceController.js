@@ -1,3 +1,4 @@
+const { ObjectId } = require("mongodb");
 const { getDB } = require("../config/db.js");
 require("dotenv").config();
 
@@ -5,6 +6,7 @@ const UpdatePerformance = async (req, res) => {
   const db = getDB();
   const { className, subject, studentId, evaluation } = req.body;
   console.log(req.body);
+  const objectStudentId = new ObjectId(studentId) ;
   const performanceInfo = db.collection("performanceInfo");
 
   const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
@@ -13,7 +15,7 @@ const UpdatePerformance = async (req, res) => {
     const existing = await performanceInfo.findOne({
       class: className,
       subject: subject,
-      studentId: studentId,
+      studentId: objectStudentId,
     });
 
     if (existing) {
@@ -62,7 +64,7 @@ const UpdatePerformance = async (req, res) => {
     } else {
       // Create new performance document
       const newDoc = {
-        studentId,
+        studentId : objectStudentId,
 
         class: className,
         subject,
@@ -83,78 +85,146 @@ const UpdatePerformance = async (req, res) => {
     console.error("Error updating performance:", err);
     res.status(500).json({ error: "Internal server error" });
   }
+};   //not use
+
+const add_updatePerformace = async (req, res) => {
+  try {
+    const db = getDB();
+    const collection = db.collection("performanceInfo");
+
+    const performanceList = req.body;
+    console.log(performanceList) ;
+
+    if (!Array.isArray(performanceList) || performanceList.length === 0) {
+      return res.status(400).json({ message: "Invalid performance data." });
+    }
+
+    const bulkOps = performanceList.map((entry) => {
+      // Trim all string fields
+      const classId = entry.classId?.trim();
+      const subject = entry.subject?.trim();
+      const batchNumber = entry.batchNumber?.trim();
+      const date = entry.date?.trim();
+
+      return {
+        updateOne: {
+          filter: {
+            classId,
+            subject,
+            batchNumber,
+            studentId: entry.studentId,
+            date,
+          },
+          update: {
+            $set: {
+              value: entry.value,
+              classId,
+              subject,
+              batchNumber,
+              date,
+            },
+          },
+          upsert: true,
+        },
+      };
+    });
+
+    const result = await collection.bulkWrite(bulkOps);
+
+    res.status(200).json({
+      message: "Performance data successfully added or updated.",
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      upsertedCount: result.upsertedCount,
+    });
+  } catch (error) {
+    console.error("Error in add_updatePerformance:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
 
 
 const getPerformanceByClassAndSubject = async (req, res) => {
   const db = getDB();
-  const { classId, subjectCode } = req.params;
-  //console.log("Fetching performance for class:", classId, "subject:", subjectCode);
-
+  let { classId, subjectCode, batchNumber } = req.params;
   console.log(req.params)
 
+  classId = classId.trim();
+  subjectCode = subjectCode.trim();
+  batchNumber = batchNumber.trim();
+
   try {
-    const performanceInfo = await db
-      .collection("users")
-      .aggregate([
-        {
-          $match: {
-            class: classId,
-            role: "student", // ✅ ensure only students
-          },
-        },
-        {
-          $lookup: {
-            from: "performanceInfo",
-            let: {
-              studentId: { $toString: "$_id" },
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$studentId", "$$studentId"] },
-                      { $eq: ["$subject", subjectCode] }, // ✅ dynamic subject match
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "performanceRecords", // ✅ must match in next stage
-          },
-        },
-        {
-          $addFields: {
-            performance: { $arrayElemAt: ["$performanceRecords", 0] }, // ✅ fixed this name
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            class: 1,
-            subject: subjectCode,
-            totalTasks: { $ifNull: ["$performance.totalTasks", 0] },
-            excellentCount: { $ifNull: ["$performance.excellentCount", 0] },
-            goodCount: { $ifNull: ["$performance.goodCount", 0] },
-            badCount: { $ifNull: ["$performance.badCount", 0] },
-            latestEvaluation: { $ifNull: ["$performance.latestEvaluation", "N/A"] },
-          },
-        },
-      ])
-      .toArray();
+    const students = await db.collection("users").find(
+      { class: classId, role: "student" },
+      { projection: { name: 1, class: 1, class_roll: 1, photoURL: 1 } }
+    ).toArray();
 
-   // console.log("Performance records:", performanceInfo);
-     const studentIds = performanceInfo.map(student => student._id.toString());
+    const studentIds = students.map(s => s._id.toString());
 
-const markWeights = await db.collection("incourse_marks").aggregate([
+    const performanceSummary = await db.collection("performanceInfo").aggregate([
+      {
+        $match: {
+          classId,
+          subject: subjectCode,
+          batchNumber
+        }
+      },
+      {
+        $match: {
+          studentId: { $in: studentIds }
+        }
+      },
+      {
+        $sort: { date: 1 }
+      },
+      {
+        $group: {
+          _id: "$studentId",
+          totalTasks: { $sum: 1 },
+          excellentCount: {
+            $sum: { $cond: [{ $eq: ["$value", "Excellent"] }, 1, 0] }
+          },
+          goodCount: {
+            $sum: { $cond: [{ $eq: ["$value", "Good"] }, 1, 0] }
+          },
+          badCount: {
+            $sum: { $cond: [{ $eq: ["$value", "Bad"] }, 1, 0] }
+          },
+          naCount: {
+            $sum: { $cond: [{ $eq: ["$value", "N/A"] }, 1, 0] }
+          },
+          latestEvaluation: { $last: "$value" }
+        }
+      }
+    ]).toArray();
+
+    const performanceMap = {};
+    performanceSummary.forEach(p => {
+      performanceMap[p._id] = p;
+    });
+
+    const performanceInfo = students.map(student => {
+      const perf = performanceMap[student._id.toString()] || {};
+      return {
+        studentId: student._id,
+        name: student.name,
+        class_roll: student.class_roll,
+        photoURL: student.photoURL,
+        totalTasks: perf.totalTasks || 0,
+        excellentCount: perf.excellentCount || 0,
+        goodCount: perf.goodCount || 0,
+        badCount: perf.badCount || 0,
+        naCount: perf.naCount || 0,
+        latestEvaluation: perf.latestEvaluation || "N/A"
+      };
+    });
+    const markWeights = await db.collection("incourse_marks").aggregate([
   {
     $match: {
       classId,
       subjectCode,
       type: "performance",
-      "marks.studentId": { $in: studentIds }
+      batchNumber 
     }
   },
   {
@@ -166,24 +236,27 @@ const markWeights = await db.collection("incourse_marks").aggregate([
   }
 ]).toArray();
 
-
-res.json({performanceInfo , markWeights });
+    res.json({performanceInfo , markWeights });
   } catch (err) {
-    console.error("Error fetching performance records:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error in getPerformanceByClassAndSubject:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 
-const savePerformanceInfo = async (req, res) => {
-  const { classId, subjectCode, marks, fullMark, type, Number , markWeights} = req.body;
-  const db = getDB();
 
-const users = await db.collection("users").find({ class: classId, role: "student" }).toArray();
- const studentIds = users.map(user => user._id.toString());
-  const filter = { classId, subjectCode, type, Number, $or: [
-      { marks: { $elemMatch: { studentId: { $in: studentIds } } } },
-      { marks: { $exists: false } } ]}
+const savePerformanceInfo = async (req, res) => {
+  let { classId, subjectCode, marks, fullMark, type, Number , markWeights , batchNumber , teacherId} = req.body;
+  const db = getDB();
+   
+   classId = classId?.trim();
+  subjectCode = subjectCode?.trim();
+  type = type?.trim();
+  batchNumber = batchNumber?.trim();
+  Number = Number?.toString().trim(); 
+
+
+  const filter = { classId, subjectCode, type, Number,batchNumber , teacherId}
 
    
 
@@ -307,4 +380,5 @@ module.exports = {
   getPerformanceById_subeject,
   savePerformanceInfo,
   getFullMarksInfo,
+  add_updatePerformace
 };

@@ -9,6 +9,9 @@ import {
   FaBell,
   FaBars,
   FaTimes,
+  FaBacteria,
+  FaTeamspeak,
+  FaQuestion,
 } from "react-icons/fa";
 import Navbar from "../../Shared/Navbar";
 
@@ -56,6 +59,16 @@ const Admin = () => {
       path: "/adminDashboard/noticeManage",
       icon: <FaBell className="mr-3" />,
       label: "Notice Management",
+    },
+    {
+      path: "/adminDashboard/batchManagement",
+      icon: <FaTeamspeak className="mr-3" />,
+      label: "Batch Management",
+    },
+    {
+      path: "/adminDashboard/QuestionTamplate",
+      icon: <FaQuestion className="mr-3" />,
+      label: "QuestionTamplate",
     },
   ];
 

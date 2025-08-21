@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
+import { data, useLocation } from "react-router-dom";
+import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
 import {
   FiUser,
   FiBook,
@@ -12,184 +12,58 @@ import {
   FiSave,
 } from "react-icons/fi";
 import { FaChalkboardTeacher } from "react-icons/fa";
+import useStroge from "../../../stroge/useStroge";
 
 const EveryClass = () => {
   const location = useLocation();
   const schedule = location.state?.schedule;
   const DateFormate = location.state?.formattedDate;
   const teacherName = location.state?.teacherName;
+  const batchNumber = location.state?.batchNumber;
+  const { user } = useStroge();
   const [students, setStudents] = useState([]);
   const [defaultAttendance, setDefaultAttendance] = useState("");
   const [isAttendanceSubmitted, setIsAttendanceSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const LoStrKey = `${schedule.classId}-${schedule.subject}-${batchNumber}-attendance-${DateFormate}`;
+  const [updataButton, setUpdateButton] = useState(false);
   const AxiosSecure = useAxiosPrivate();
   console.log("Schedule:", schedule);
   console.log("Date:", DateFormate);
   console.log("Teacher Name:", teacherName);
-
+  console.log("batchNumber", batchNumber);
   useEffect(() => {
     const fetchStudents = async () => {
-      try {
-        if (!schedule?.classId || !schedule?.subject) return;
-
-        // 1. Get student list
-        const res = await AxiosSecure.get(
-          `/api/auth/getStudentByClassandSection/${schedule.classId}`
-        );
-
-        let updatedStudents = res.data.map((student) => ({
-          ...student,
-          attendance: "",
-          totalTasks: 0,
-          latestEvaluation: "",
-        }));
-        // console.log("Fetched students:", updatedStudents);
-
-        // 2. Check attendance record
-        try {
-          const attendanceRes = await AxiosSecure.get(
-            `/api/attendance/check/${schedule.classId}/${schedule.subject}/${DateFormate}`
-          );
-          // console.log("Attendance response:", attendanceRes);
-
-          const existingAttendance = attendanceRes.data;
-          if (existingAttendance && existingAttendance.records) {
-            setIsAttendanceSubmitted(true);
-            updatedStudents = updatedStudents.map((student) => {
-              const match = existingAttendance.records.find(
-                (rec) => rec.studentId === student._id
-              );
-              return {
-                ...student,
-                attendance: match ? match.status : "",
-              };
-            });
-          }
-        } catch (error) {
-          console.error("Attendance not found:", error);
-          setIsAttendanceSubmitted(false);
-        }
-
-        // 3. Get performance data
-        try {
-          const performanceRes = await AxiosSecure.get(
-            `/api/performance/byClassAndSubject/${schedule.classId}/${schedule.subject}`
-          );
-          const performanceData = performanceRes.data.performanceInfo;
-          console.log("Performance data:", performanceData);
-
-          updatedStudents = updatedStudents.map((student) => {
-            const performance = performanceData.find(
-              (perf) => perf._id === student._id
-            );
-            return {
-              ...student,
-              totalTasks: performance?.totalTasks || 0,
-              latestEvaluation: performance?.latestEvaluation || "",
-            };
-          });
-        } catch (err) {
-          console.error("Failed to fetch performance:", err);
-        }
-        console.log("Updated students:", updatedStudents);
-        setStudents(updatedStudents);
-      } catch (err) {
-        console.error("Failed to fetch students:", err);
-        setError("Failed to load student data");
-      } finally {
+      const savedData = localStorage.getItem(LoStrKey);
+      if (savedData) {
+        const studentList = JSON.parse(savedData);
+        setStudents(studentList);
+        console.log("Loaded from localStorage");
+        setUpdateButton(true);
         setLoading(false);
+      } else {
+        const res = await AxiosSecure.get(
+          `/api/attendance/getAttendacneAndPerformanceByClass/${schedule.classId}/${batchNumber}/${schedule.subject}/${DateFormate}`
+        );
+        setLoading(false);
+        console.log(res.data);
+        setStudents(res.data);
       }
     };
 
     fetchStudents();
   }, [schedule?.classId, schedule?.subject, DateFormate, AxiosSecure]);
-
-  const updateSingleStudentAttendance = async (studentId, roll, status) => {
-    if (!schedule?.classId || !schedule?.subject) return;
-
-    try {
-      const res = await AxiosSecure.post("/api/attendance/update-single", {
-        className: schedule.classId,
-        subject: schedule.subject,
-        date: DateFormate,
-        studentId,
-        roll,
-        status,
-        students,
-      });
-
-      setStudents((prev) =>
-        prev.map((student) =>
-          student._id === studentId
-            ? { ...student, attendance: status }
-            : student
-        )
-      );
-    } catch (err) {
-      console.error("Failed to update single student attendance:", err);
-    }
-  };
-
-  const handleDefaultAttendanceChange = async (status) => {
-    if (!schedule?.classId || !schedule?.subject) return;
-
-    try {
-      await AxiosSecure.post("/api/attendance/set-default", {
-        className: schedule.classId,
-        subject: schedule.subject,
-        date: DateFormate,
-        students,
-        defaultStatus: status,
-      });
-
-      setStudents((prev) =>
-        prev.map((student) => ({
-          ...student,
-          attendance: status,
-        }))
-      );
-      setDefaultAttendance(status);
-    } catch (err) {
-      console.error("Failed to set default attendance:", err);
-    }
-  };
-
-  const updateStudentPerformance = async (studentId, evaluation) => {
-    try {
-      const res = await AxiosSecure.post("/api/performance/updata", {
-        studentId,
-        subject: schedule.subject,
-        className: schedule.classId,
-        evaluation,
-      });
-
-      const { totalTasks } = res.data;
-
-      setStudents((prev) =>
-        prev.map((student) =>
-          student._id === studentId
-            ? {
-                ...student,
-                totalTasks: totalTasks || 0,
-                latestEvaluation: evaluation,
-              }
-            : student
-        )
-      );
-    } catch (err) {
-      console.error("Failed to update performance:", err);
-    }
-  };
+  console.log(students);
 
   const handleSaveClass = async () => {
     try {
       const info = {
-        className: schedule.classId,
+        classId: schedule.classId,
         subject: schedule.subject,
         type: schedule.type,
         date: DateFormate,
+        batchNumber,
         teacherName: teacherName,
         status: "Completed",
         totalStudents: students.length,
@@ -206,6 +80,79 @@ const EveryClass = () => {
       console.error("Failed to save class history", error);
       alert("Failed to save class. Please try again.");
     }
+  };
+
+  const setLocalStorgeDefaultAttendance = (state) => {
+    const LoStrSaveData = students.map((student) => ({
+      _id: student._id,
+      name: student.name,
+      class_roll: student.class_roll,
+      attendance: state,
+      latestEvaluation: student.latestEvaluation || null,
+      totalTasks: student.totalTasks || 0,
+    }));
+    localStorage.setItem(LoStrKey, JSON.stringify(LoStrSaveData));
+    setStudents(LoStrSaveData);
+    setDefaultAttendance(state);
+    setUpdateButton(true);
+  };
+  const handleChangeattendance = (studentId, state) => {
+    const updatelist = students.map((student) => {
+      if (student._id === studentId) {
+        return { ...student, attendance: state };
+      }
+      return student;
+    });
+    setStudents(updatelist);
+    localStorage.setItem(LoStrKey, JSON.stringify(updatelist));
+    setUpdateButton(true);
+  };
+  const handleChangePerformace = (studentId, value) => {
+    const updatelist = students.map((student) => {
+      if (student._id === studentId) {
+        return { ...student, performance: value };
+      }
+      return student;
+    });
+    setStudents(updatelist);
+    localStorage.setItem(LoStrKey, JSON.stringify(updatelist));
+    setUpdateButton(true);
+  };
+  const handleSaveAttendance = async () => {
+    const Payload = {
+      classId: schedule.classId,
+      subject: schedule.subject,
+      batchNumber,
+      date: DateFormate,
+      records: students.map((std) => ({
+        studentId: std._id,
+        status: std.attendance,
+      })),
+    };
+
+    console.log(Payload);
+    const result = await AxiosSecure.post("api/attendance/add_update", Payload);
+    console.log(result.data);
+    if (schedule.type === "Lab") {
+      const payload2 = students.map((std) => ({
+        classId: schedule.classId,
+        batchNumber,
+        date: DateFormate,
+        studentId: std._id,
+        value: std.performance,
+        subject: schedule.subject,
+      }));
+      console.log(payload2);
+      const res = await AxiosSecure.post(
+        "/api/performance/add_update",
+        payload2
+      );
+      console.log(res.data);
+    }
+    handleSaveClass();
+    localStorage.removeItem(LoStrKey);
+    setUpdateButton(false);
+    alert("add successfully");
   };
 
   if (loading) {
@@ -269,7 +216,7 @@ const EveryClass = () => {
             <h2 className="text-xl font-semibold mb-2 sm:mb-0">Attendance</h2>
             <div className="flex space-x-4">
               <button
-                onClick={() => handleDefaultAttendanceChange("P")}
+                onClick={() => setLocalStorgeDefaultAttendance("P")}
                 disabled={isAttendanceSubmitted}
                 className={`flex items-center px-4 py-2 rounded-lg ${
                   defaultAttendance === "P"
@@ -281,7 +228,7 @@ const EveryClass = () => {
                 Mark All Present
               </button>
               <button
-                onClick={() => handleDefaultAttendanceChange("A")}
+                onClick={() => setLocalStorgeDefaultAttendance("A")}
                 disabled={isAttendanceSubmitted}
                 className={`flex items-center px-4 py-2 rounded-lg ${
                   defaultAttendance === "A"
@@ -310,9 +257,11 @@ const EveryClass = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Roll
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Performance
-                  </th>
+                  {schedule.type === "Lab" && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Performance
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Attendance
                   </th>
@@ -329,77 +278,80 @@ const EveryClass = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                       {student.class_roll}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <div className="flex space-x-2 mb-2">
-                          <button
-                            onClick={() =>
-                              updateStudentPerformance(
-                                student._id,
+                    {schedule.type === "Lab" && (
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <div className="flex space-x-2 mb-2">
+                            <button
+                              onClick={() =>
+                                handleChangePerformace(
+                                  student._id,
 
-                                "Bad"
-                              )
-                            }
-                            className={`flex items-center 
+                                  "Bad"
+                                )
+                              }
+                              className={`flex items-center 
                               ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
                               
                               px-3 py-1 rounded-full text-xs ${
-                                student.latestEvaluation === "Bad"
+                                student.performance === "Bad"
                                   ? "bg-red-100 text-red-800"
                                   : "bg-gray-100 hover:bg-gray-200"
                               }  `}
-                          >
-                            <FiTrendingDown className="mr-1" /> Bad
-                          </button>
-                          <button
-                            onClick={() =>
-                              updateStudentPerformance(
-                                student._id,
+                            >
+                              <FiTrendingDown className="mr-1" /> Bad
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleChangePerformace(
+                                  student._id,
 
-                                "Good"
-                              )
-                            }
-                            className={`flex items-center px-3 py-1 
+                                  "Good"
+                                )
+                              }
+                              className={`flex items-center px-3 py-1 
                               ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
                               rounded-full text-xs ${
-                                student.latestEvaluation === "Good"
+                                student.performance === "Good"
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-gray-100 hover:bg-gray-200"
                               }`}
-                          >
-                            <FiTrendingUp className="mr-1" /> Good
-                          </button>
-                          <button
-                            onClick={() =>
-                              updateStudentPerformance(
-                                student._id,
+                            >
+                              <FiTrendingUp className="mr-1" /> Good
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleChangePerformace(
+                                  student._id,
 
-                                "Excellent"
-                              )
-                            }
-                            className={`flex items-center px-3 
+                                  "Excellent"
+                                )
+                              }
+                              className={`flex items-center px-3 
                               ${student.attendance !== "P" ? "opacity-50 cursor-not-allowed" : ""}
                               py-1 rounded-full text-xs ${
-                                student.latestEvaluation === "Excellent"
+                                student.performance === "Excellent"
                                   ? "bg-green-100 text-green-800"
                                   : "bg-gray-100 hover:bg-gray-200"
                               }`}
-                          >
-                            <FiAward className="mr-1" /> Excellent
-                          </button>
+                            >
+                              <FiAward className="mr-1" /> Excellent
+                            </button>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Tasks: {student.totalTasks || 0} Lest:{" "}
+                            {student.latestEvaluation}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          Tasks: {student.totalTasks || 0}
-                        </div>
-                      </div>
-                    </td>
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex justify-center space-x-4">
                         <button
                           onClick={() =>
-                            updateSingleStudentAttendance(
+                            handleChangeattendance(
                               student._id,
-                              student.class_roll,
+
                               "P"
                             )
                           }
@@ -413,9 +365,9 @@ const EveryClass = () => {
                         </button>
                         <button
                           onClick={() =>
-                            updateSingleStudentAttendance(
+                            handleChangeattendance(
                               student._id,
-                              student.class_roll,
+
                               "A"
                             )
                           }
@@ -438,12 +390,16 @@ const EveryClass = () => {
 
         {/* Save Button */}
         <div className="mt-6 flex justify-end">
-          <button
-            onClick={handleSaveClass}
-            className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-colors"
-          >
-            <FiSave className="mr-2" /> Save Class Data
-          </button>
+          {updataButton && (
+            <button
+              onClick={() => {
+                handleSaveAttendance();
+              }}
+              className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-colors"
+            >
+              <FiSave className="mr-2" /> Save Class Data
+            </button>
+          )}
         </div>
       </div>
     </div>

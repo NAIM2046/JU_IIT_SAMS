@@ -1,5 +1,6 @@
 const express = require('express');
-const { addClassAndSub, getClassAndSub, addSubjectToClass, deleteClass, removeSubjectFromClass, getSubjectbyClass } = require('../controllers/classAndSubController');
+const { addClassAndSub, getClassAndSub, addSubjectToClass, deleteClass, removeSubjectFromClass, getSubjectbyClass, addNewBatch, getBatch, deleteBatch, semesterUdateBatchNumber } = require('../controllers/classAndSubController');
+
 const router = express.Router();
 router.post('/addclassandsub', addClassAndSub);
 router.get('/getclassandsub' , getClassAndSub) ;
@@ -8,5 +9,12 @@ router.delete('/classes/:classNumber', deleteClass);
 router.put('/classes/:classNumber/remove-subject' , removeSubjectFromClass)// Assuming you have a deleteClass function in 
 // your controller
 router.get("/getsubjectbyclass/:class" , getSubjectbyClass) ;
+
+// batch management routes
+router.post('/addnewbatch', addNewBatch);
+router.get('/getbatch', getBatch);
+router.delete('/deletebatch/:id', deleteBatch); // Assuming batchNumber is passed as a URL parameter
+router.post('/update-running-batches' ,semesterUdateBatchNumber) ;
+
  
 module.exports = router;

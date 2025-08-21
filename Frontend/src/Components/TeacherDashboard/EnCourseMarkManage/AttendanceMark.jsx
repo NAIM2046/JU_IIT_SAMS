@@ -3,14 +3,16 @@ import { useLocation } from "react-router-dom";
 import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useStroge from "../../../stroge/useStroge";
 
 const AttendanceMark = () => {
   const location = useLocation();
   const classId = location.state?.classId;
   const subject = location.state?.subject;
   const subjecttitle = location.state?.subjecttitle;
+  const batchNumber = location.state?.batchNumber;
   const AxiosSecure = useAxiosPrivate();
-
+  const { user } = useStroge();
   const [attendanceList, setAttendanceList] = useState([]);
   const [loading, setLoading] = useState(true); // Initialize as true
   const [error, setError] = useState(null);
@@ -29,7 +31,7 @@ const AttendanceMark = () => {
         setLoading(true);
         setError(null);
         const res = await AxiosSecure.get(
-          `api/attendance/getAttendanceSummary/${classId}/${subject.code}`
+          `api/attendance/getAttendanceSummary/${classId}/${subject.code}/${batchNumber}`
         );
         setAttendanceList(res.data);
       } catch (err) {
@@ -43,6 +45,7 @@ const AttendanceMark = () => {
 
     fetchAttendanceSummary();
   }, [classId, subject?.code, AxiosSecure]);
+  console.log(attendanceList);
 
   const handleSaveMarks = async () => {
     if (!classId || !subject?.code) {
@@ -55,7 +58,7 @@ const AttendanceMark = () => {
       const presentPercent =
         total > 0 ? (record.presentCount / total) * 100 : 0;
       return {
-        studentId: record.studentId,
+        studentId: record._id,
         mark: parseFloat(
           ((presentPercent / 100) * totalAttendanceMark).toFixed(2)
         ),
@@ -64,13 +67,15 @@ const AttendanceMark = () => {
 
     try {
       setSaving(true);
-      await AxiosSecure.post("/api/incoursemark/addAttendanceMark", {
+      await AxiosSecure.post("/api/incoursemark/add_update_incourse_Mark", {
         classId,
         subjectCode: subject.code,
         type: "attendance",
         Number: "final",
         marks: marksData,
         fullMark: totalAttendanceMark,
+        batchNumber,
+        teacherId: user._id,
       });
       alert("Attendance marks saved successfully");
     } catch (err) {
@@ -124,10 +129,8 @@ const AttendanceMark = () => {
               className="w-20 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={totalAttendanceMark}
               onChange={(e) => {
-                const value = Math.min(
-                  Math.max(parseInt(e.target.value || 0, 1), 100)
-                );
-                setTotalAttendanceMark(value);
+                const val = parseInt(e.target.value);
+                setTotalAttendanceMark(val);
               }}
             />
           </div>

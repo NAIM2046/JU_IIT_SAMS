@@ -3,12 +3,17 @@ import { useLocation } from "react-router-dom";
 import useAxiosPrivate from "../../../TokenAdd/useAxiosPrivate";
 import { FiSave, FiDownload, FiUser } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
+import useStroge from "../../../stroge/useStroge";
 
 const IncourseFinalMark = () => {
   const location = useLocation();
   const classId = location.state?.classId;
   const subjectCode = location.state?.subjectCode.code;
   const type = location.state?.subjectCode.type;
+  const batchNumber = location.state?.batchNumber;
+
+  const { user } = useStroge();
+  // console.log(batchNumber);
 
   const [finalList, setFinalList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +30,9 @@ const IncourseFinalMark = () => {
         setLoading(true);
         setError(null);
         const res = await AxiosSecure.get(
-          `/api/incoursemark/finalincouremark/${classId}/${subjectCode}`
+          `/api/incoursemark/finalincouremark/${classId}/${subjectCode}/${batchNumber}`
         );
+        console.log(res.data);
         setFinalList(res.data);
       } catch (err) {
         console.error("Failed to fetch data:", err);
@@ -65,7 +71,9 @@ const IncourseFinalMark = () => {
         subjectCode,
         type: "incoursefinal",
         Number: 1,
+        teacherId: user._id,
         fullMark: parseInt(fullmark),
+        batchNumber,
         marks: finalList.map((student) => ({
           studentId: student.studentId,
           mark: parseFloat(computeTotalFinalMark(student.mark)),
@@ -73,7 +81,7 @@ const IncourseFinalMark = () => {
       };
 
       const res = await AxiosSecure.post(
-        "/api/incoursemark/addAttendanceMark",
+        "/api/incoursemark/add_update_incourse_Mark",
         payload
       );
 

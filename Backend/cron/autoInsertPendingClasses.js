@@ -26,18 +26,21 @@ const insertPendingClasses = async () => {
        
     
         const exists = await historyCol.findOne({
-          className: schedule.classId,
+          classId: schedule.classId,
           subject: schedule.subject.code,
           teacherName: schedule.teacherName,
           date: formattedDate,
+          batchNumber: schedule.batchNumber
         });
       
         if (!exists) {
           await historyCol.insertOne({
-            className: schedule.classId,
+            classId: schedule.classId,
             subject: schedule.subject.code,
             teacherName: schedule.teacherName,
+            batchNumber: schedule.batchNumber ,
             date: formattedDate,
+            type: schedule.subject.type,
             status: "pending",
             totalStudents: 0,
             totalPresent: 0,
@@ -57,7 +60,7 @@ const insertPendingClasses = async () => {
 
 // Run daily at 11:59 PM
 const startCronJob = () => {
-  cron.schedule("40 18 * * *", insertPendingClasses);
+  cron.schedule("55 15 * * *", insertPendingClasses);
 };
 
 module.exports = startCronJob;

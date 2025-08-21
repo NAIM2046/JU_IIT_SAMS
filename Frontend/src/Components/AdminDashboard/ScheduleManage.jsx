@@ -51,11 +51,13 @@ const ScheduleManage = () => {
   const [schedules, setSchedules] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [batchNumber, setBatchNumber] = useState("");
 
   const [formData, setFormData] = useState({
     day: "",
     subject: "",
     teacherName: "",
+    teacherId: "",
     room: "",
     startTime: "",
     endTime: "",
@@ -95,11 +97,12 @@ const ScheduleManage = () => {
   useEffect(() => {
     if (!loaded || !selectedClass) return;
 
-    const subjectData = classList.find((cls) => selectedClass === cls.class)
-      ?.subjects || [{}];
+    const subjectData =
+      classList.find((cls) => selectedClass === cls.class) || [];
     console.log("subject filter", subjectData);
     console.log("classList", classList);
-    setSubjectList(subjectData);
+    setSubjectList(subjectData?.subjects);
+    setBatchNumber(subjectData?.batchNumber);
 
     const filteredSchedules = schedules.filter(
       (schedule) => schedule.classId === selectedClass
@@ -156,10 +159,14 @@ const ScheduleManage = () => {
     if (isconflictRoom()) {
       return alert("Room is already booked for this time");
     }
+    if (!batchNumber) {
+      return alert("this semester do not assented any batch");
+    }
 
     const newSchedule = {
       ...formData,
       classId: selectedClass,
+      batchNumber: batchNumber,
       subject: JSON.parse(formData.subject),
     };
 
@@ -200,6 +207,7 @@ const ScheduleManage = () => {
         day: "",
         subject: "",
         teacherName: "",
+        teacherId: "",
         room: "",
         startTime: "",
         endTime: "",
@@ -228,7 +236,8 @@ const ScheduleManage = () => {
   };
   console.log("class Schedule", classSchedule);
   console.log("subject list", subjectList);
-
+  console.log("class and subject ", classList);
+  console.log("batch Number", batchNumber);
   return (
     <div className=" max-w-7xl mx-auto bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg  p-6 mb-6">
@@ -295,6 +304,7 @@ const ScheduleManage = () => {
                               day: schedule.day,
                               subject: JSON.stringify(schedule.subject),
                               teacherName: schedule.teacherName,
+                              teacherId: schedule.teacherId,
                               room: schedule.room,
                               startTime: schedule.startTime,
                               endTime: schedule.endTime,
@@ -343,6 +353,7 @@ const ScheduleManage = () => {
                             <p className="text-sm text-gray-500">
                               Code: {schedule.subject.code}
                             </p>
+                            <p>{schedule.batchNumber}</p>
                           </div>
                         </div>
 
@@ -435,16 +446,23 @@ const ScheduleManage = () => {
                 </label>
                 <select
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.teacherName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, teacherName: e.target.value })
-                  }
+                  value={formData.teacherId}
+                  onChange={(e) => {
+                    const selectedTeacher = teacherlist.find(
+                      (t) => t._id === e.target.value
+                    );
+                    setFormData({
+                      ...formData,
+                      teacherName: selectedTeacher.name,
+                      teacherId: selectedTeacher._id,
+                    });
+                  }}
                 >
                   <option value="" disabled>
                     Select Teacher
                   </option>
                   {teacherlist.map((teacher) => (
-                    <option key={teacher._id} value={teacher.name}>
+                    <option key={teacher._id} value={teacher._id}>
                       {teacher.name}
                     </option>
                   ))}

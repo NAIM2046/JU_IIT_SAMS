@@ -13,7 +13,7 @@ import AdminHome from "../Components/AdminDashboard/AdminHome";
 import AdminClassManage from "../Components/AdminDashboard/AdminClassManage";
 import TeacherHome from "../Components/TeacherDashboard/TeacherHome";
 import TeacherSchedule from "../Components/TeacherDashboard/TeacherSchedule";
-import EveryClass from "../Components/TeacherDashboard/EveryClass";
+
 import AdminNotice from "../Components/AdminDashboard/AdminNotice";
 import StudentHome from "../Components/StudentDashboard/StudentHome";
 import StudentProfile from "../Components/StudentDashboard/StudentProfile";
@@ -37,6 +37,18 @@ import AttendanceMark from "../Components/TeacherDashboard/EnCourseMarkManage/At
 import LabPerformance from "../Components/TeacherDashboard/EnCourseMarkManage/LabPerformance";
 import OtherTasks from "../Components/TeacherDashboard/EnCourseMarkManage/OtherTasks";
 import IncoureFinalMark from "../Components/TeacherDashboard/EnCourseMarkManage/IncoureFinalMark";
+import AttendanceSummaryHome from "../Components/TeacherDashboard/TeacherAttendanceSummary/AttendanceSummaryHome";
+import AttendanceSummary from "../Components/TeacherDashboard/TeacherAttendanceSummary/AttendanceSummary";
+import AddNewBatchandUpdate from "../Components/AdminDashboard/BatchMangement/AddNewBatchandUpdate";
+import ExamCommitteeManage from "../Components/AdminDashboard/BatchMangement/ExamCommitteeManage";
+import EveryClass from "../Components/TeacherDashboard/TeacherClassManage/EveryClass";
+import QestionTamplateHome from "../Components/AdminDashboard/CreateQuestionTamplate/QestionTamplateHome";
+import FinalmarkHome from "../Components/TeacherDashboard/TeacherFinalMark/FinalmarkHome";
+import FinalmarkInput from "../Components/TeacherDashboard/TeacherFinalMark/FinalmarkInput";
+import ExamCommitteeDashboard from "../Components/ExamCommitteeDashboard/ExamCommitteeDashboard";
+import ExamCommitteeRoute from "./ExamCommitteeRoute";
+import SecondExaminerMange from "../Components/ExamCommitteeDashboard/SecondExaminerMange";
+import ResultApprovalHome from "../Components/ExamCommitteeDashboard/ResultApproval/ResultApprovalHome";
 
 const router = createBrowserRouter([
   {
@@ -79,6 +91,18 @@ const router = createBrowserRouter([
       {
         path: "/adminDashboard/noticeManage",
         element: <AdminNotice></AdminNotice>,
+      },
+      {
+        path: "/adminDashboard/batchManagement",
+        element: <AddNewBatchandUpdate></AddNewBatchandUpdate>,
+      },
+      {
+        path: "/adminDashboard/examCommitteeManage/:batchId",
+        element: <ExamCommitteeManage></ExamCommitteeManage>,
+      },
+      {
+        path: "/adminDashboard/QuestionTamplate",
+        element: <QestionTamplateHome></QestionTamplateHome>,
       },
     ],
   },
@@ -138,6 +162,22 @@ const router = createBrowserRouter([
         path: "/teacherDashboard/incoursefinalmark/:subjectCode",
         element: <IncoureFinalMark></IncoureFinalMark>,
       },
+      {
+        path: "/teacherDashboard/viewAttendanceSummary",
+        element: <AttendanceSummaryHome></AttendanceSummaryHome>,
+      },
+      {
+        path: "/teacherDashboard/viewAttendanceSummary/:className/:subjectCode",
+        element: <AttendanceSummary></AttendanceSummary>,
+      },
+      {
+        path: "/teacherDashboard/finalMarkInput",
+        element: <FinalmarkHome></FinalmarkHome>,
+      },
+      {
+        path: "/teacherDashboard/finalMarkInput/:classId/:subjectCode/:batchNumber/:examiner",
+        element: <FinalmarkInput></FinalmarkInput>,
+      },
     ],
   },
   {
@@ -185,6 +225,24 @@ const router = createBrowserRouter([
   {
     path: "/messages",
     element: <Message></Message>,
+  },
+  {
+    path: "/ExamCommitteeDashboard",
+    element: (
+      <ExamCommitteeRoute>
+        <ExamCommitteeDashboard></ExamCommitteeDashboard>
+      </ExamCommitteeRoute>
+    ),
+    children: [
+      {
+        path: "/ExamCommitteeDashboard/SecondExaminerAdd",
+        element: <SecondExaminerMange></SecondExaminerMange>,
+      },
+      {
+        path: "/ExamCommitteeDashboard/ApprovedResult",
+        element: <ResultApprovalHome></ResultApprovalHome>,
+      },
+    ],
   },
 ]);
 

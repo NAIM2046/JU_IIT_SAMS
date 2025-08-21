@@ -8,6 +8,7 @@ import {
   FiTrendingDown,
   FiPercent,
 } from "react-icons/fi";
+import useStroge from "../../../stroge/useStroge";
 
 const LabPerformance = () => {
   const location = useLocation();
@@ -24,16 +25,18 @@ const LabPerformance = () => {
     goodMark: 0,
     badMark: 0,
   });
+  const { user } = useStroge();
 
   const axiosSecure = useAxiosPrivate();
   const obj = location.state;
+  console.log(obj);
 
   useEffect(() => {
     if (!obj) return;
     const fetchPerformanceData = async () => {
       try {
         const response = await axiosSecure.get(
-          `/api/performance/ByClassandSubject/${obj.classId}/${obj.subjectCode}`
+          `/api/performance/ByClassandSubject/${obj.classId}/${obj.subjectCode}/${obj.batchNumber}`
         );
         console.log("Performance data fetched:", response.data);
         const data = response.data.performanceInfo;
@@ -126,7 +129,7 @@ const LabPerformance = () => {
 
     try {
       const marksArray = performanceData.map((student) => ({
-        studentId: student._id, // Ensure _id is studentId
+        studentId: student.studentId, // Ensure _id is studentId
         mark: parseFloat(calculateFinalMark(student)),
       }));
 
@@ -138,6 +141,8 @@ const LabPerformance = () => {
         fullMark: fullMark,
         marks: marksArray,
         markWeights,
+        batchNumber: obj.batchNumber,
+        teacherId: user._id,
       };
       console.log("Final Mark Data:", finalMarkData);
 

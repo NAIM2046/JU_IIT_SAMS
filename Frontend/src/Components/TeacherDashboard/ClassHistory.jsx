@@ -43,14 +43,18 @@ const ClassHistory = () => {
 
   const handleEnterClass = (classData) => {
     const schedule = {
-      classId: classData.className,
+      classId: classData.classId,
       subject: classData.subject,
       type: classData.type, // Assuming type is part of classData
-      teacherName: classData.teacherName,
     };
     const formattedDate = classData.date;
     navigate(`/teacherDashboard/Class/${schedule.classId}`, {
-      state: { schedule, formattedDate, teacherName: user.name },
+      state: {
+        schedule,
+        formattedDate,
+        teacherName: classData.teacherName,
+        batchNumber: classData.batchNumber,
+      },
     });
   };
 
@@ -107,7 +111,7 @@ const ClassHistory = () => {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="font-semibold text-lg text-gray-800">
-                      {item.className}
+                      {item.classId}
                     </h3>
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
@@ -224,7 +228,7 @@ const ClassHistory = () => {
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900">
-                          {item.className}
+                          {item.classId}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600">

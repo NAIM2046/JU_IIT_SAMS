@@ -2,10 +2,10 @@ import React from "react";
 import useStroge from "../stroge/useStroge";
 import { Navigate, useLocation } from "react-router-dom";
 
-const TeacherRoute = ({ children }) => {
+const ExamCommitteeRoute = ({ children }) => {
   const { user, userLoading } = useStroge();
   const location = useLocation();
-  // console.log(user);
+  console.log(user);
 
   // Show loading indicator while checking auth status
   if (userLoading) {
@@ -17,7 +17,7 @@ const TeacherRoute = ({ children }) => {
   }
 
   // Check if user exists and has teacher role
-  if (user && user.role === "teacher") {
+  if (user && user.role === "teacher" && user.isCommittee) {
     return children;
   }
 
@@ -25,4 +25,4 @@ const TeacherRoute = ({ children }) => {
   return <Navigate to="/login" state={{ from: location }} replace />;
 };
 
-export default TeacherRoute;
+export default ExamCommitteeRoute;

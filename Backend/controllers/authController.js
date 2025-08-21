@@ -17,7 +17,14 @@ const loginUser = async (req, res) => {
 
     // Exclude password from user object
     const { password: _, ...userWithoutPassword } = user;
-
+     let isCommittee = false;
+      if (user.role === 'teacher') {
+      // Search exam committees where this teacher is a member
+      const committee = await db.collection('examCommittees').findOne({
+        "committeeMembers.teacherId": user._id.toString()
+      });
+      isCommittee = !!committee;
+    }
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -27,7 +34,7 @@ const loginUser = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: userWithoutPassword
+      user:  { ...userWithoutPassword, isCommittee }
     });
   } catch (err) {
     console.error('Login error:', err);

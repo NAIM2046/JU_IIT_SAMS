@@ -6,9 +6,10 @@ const addClassHistory = async (req, res) => {
   const ClassHistory = db.collection("classHistory");
 
   const {
-    className,
+    classId,
     subject,
     type, 
+    batchNumber,
     date,
     teacherName,
     status,
@@ -19,12 +20,12 @@ const addClassHistory = async (req, res) => {
   console.log(req.body);
 
   // Basic validation
-  if (!className || !subject || !date || !teacherName || totalStudents == null || totalPresent == null || totalAbsent == null || !status || !type) {
+  if (!classId || !subject || !date || !teacherName || totalStudents == null || totalPresent == null || totalAbsent == null || !status || !type || !batchNumber) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
   try {
-    const filter = { className, subject, date };
+    const filter = { classId, subject, date , batchNumber };
 
     const updateDoc = {
       $set: {

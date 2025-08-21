@@ -90,39 +90,44 @@ const getSchedule = async (req, res) => {
     }
   }
 
-  const getteacherSchedule = async(req , res) =>{
-    const db = getDB();
-    const { teacherName } = req.params; // Assuming teacherName is passed as a URL parameter
-    if (!teacherName) {
-      return res.status(400).json({ error: "teacherName is required" });
-    }
-    const scheduleCol = db.collection("schedules");
+ const getteacherSchedule = async (req, res) => {
+  const db = getDB();
+  const { teacherName } = req.params;
 
-    const pipeline = [
-      {
-        $match: {
-          teacherName: teacherName
-        }
-      },
-      {
-        $group: {
-          _id: "$classId",
-          subjects: { $addToSet: "$subject" }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          classId: "$_id",
-          subjects: 1
-        }
-      }
-    ];
-
-    const result = await scheduleCol.aggregate(pipeline).toArray();
-    res.json(result);
-
-
+  if (!teacherName) {
+    return res.status(400).json({ error: "teacherName is required" });
   }
+
+  const scheduleCol = db.collection("schedules");
+
+  const pipeline = [
+    {
+      $match: {
+        teacherName: teacherName
+      }
+    },
+    {
+      $group: {
+        _id: {
+          classId: "$classId",
+          batchNumber: "$batchNumber"
+        },
+        subjects: { $addToSet: "$subject" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        classId: "$_id.classId",
+        batchNumber: "$_id.batchNumber",
+        subjects: 1
+      }
+    }
+  ];
+
+  const result = await scheduleCol.aggregate(pipeline).toArray();
+  res.json(result);
+};
+
 
 module.exports = { addSchedule , getSchedule , getAllSchedule , deleteSchedule , updateSchedule  , getteacherSchedule };

@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const { getDB } = require('../config/db.js');
 require('dotenv').config();
 
@@ -82,12 +83,73 @@ const getSubjectbyClass = async (req, res) => {
   res.status(200).json(result);
 }
 
+const addNewBatch = async (req, res) => {
+  const db = getDB();
+  const { batchNumber, session } = req.body;
+  try {
+    await db.collection('batches').insertOne({ batchNumber, session });
+    res.status(200).json({ message: 'Batch added successfully' });
+  } catch (error) {
+    console.error('Error adding batch:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+const getBatch = async (req, res) => {
+  const db = getDB();
+  try {
+    const batches = await db.collection('batches').find({}).toArray();
+    res.status(200).json(batches);
+  } catch (error) {
+    console.error('Error fetching batches:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+const deleteBatch = async (req, res) => {
+  const db = getDB();
+  const { id} = req.params; // Assuming batchNumber is passed as a URL parameter
+  console.log("Deleting batch:", id); // Debugging line
+  try {
+    const result = await db.collection('batches').deleteOne({ _id : new ObjectId(id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+    res.status(200).json({ message: 'Batch deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting batch:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+const semesterUdateBatchNumber = async (req, res) => {
+  const db = getDB();
+  const { batchNumber, id } = req.body;
+  console.log(req.body); // Debugging line
+  try {
+    const result = await db.collection('classes').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { batchNumber } }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+    res.status(200).json({ message: 'Batch number updated successfully' });
+  } catch (error) {
+    console.error('Error updating batch number:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
 module.exports = {
   addClassAndSub,
   getClassAndSub,
   addSubjectToClass,
   deleteClass,
   removeSubjectFromClass,
-  getSubjectbyClass
+  getSubjectbyClass ,
+  addNewBatch , 
+  getBatch,
+  deleteBatch ,
+  semesterUdateBatchNumber
 
 }

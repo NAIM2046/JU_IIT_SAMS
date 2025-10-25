@@ -13,7 +13,7 @@ const OtherTasks = () => {
   const subjecttitle = location.state?.subjecttitle;
   const batchNumber = location.state?.batchNumber;
   const { user } = useStroge();
-  // console.log(batchNumber);
+  console.log(taskType);
 
   const AxiosSecure = useAxiosPrivate();
   const [studentMarkList, setStudentMarkList] = useState([]);

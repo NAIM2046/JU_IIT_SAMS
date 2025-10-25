@@ -45,14 +45,16 @@ const ClassHistory = () => {
     const schedule = {
       classId: classData.classId,
       subject: classData.subject,
-      type: classData.type, // Assuming type is part of classData
+      type: classData.type,
+      teacherName: classData.teacherName,
+      teacherId: classData.teacherId, // Assuming type is part of classData
     };
     const formattedDate = classData.date;
     navigate(`/teacherDashboard/Class/${schedule.classId}`, {
       state: {
         schedule,
         formattedDate,
-        teacherName: classData.teacherName,
+
         batchNumber: classData.batchNumber,
       },
     });

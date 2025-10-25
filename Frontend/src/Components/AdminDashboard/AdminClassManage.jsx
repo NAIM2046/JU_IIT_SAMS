@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import { toast } from "react-toastify";
-import { FiPlus, FiTrash2, FiX, FiBook, FiSave, FiEdit2 } from "react-icons/fi";
+import {
+  FiPlus,
+  FiTrash2,
+  FiX,
+  FiBook,
+  FiSave,
+  FiEdit2,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiInfo,
+  FiAlertTriangle,
+} from "react-icons/fi";
 
 const AdminClassManage = () => {
   const axiosPrivate = useAxiosPrivate();
@@ -16,9 +26,57 @@ const AdminClassManage = () => {
   const [newSubjectInputs, setNewSubjectInputs] = useState({});
   const [activeTab, setActiveTab] = useState("create");
 
+  // Notification state
+  const [notification, setNotification] = useState({
+    show: false,
+    type: "success", // success, error, warning, info
+    title: "",
+    message: "",
+    duration: 4000,
+  });
+
+  // Confirmation modal state
+  const [confirmation, setConfirmation] = useState({
+    show: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    type: "danger", // danger, warning
+  });
+
   useEffect(() => {
     fetchClasses();
   }, []);
+
+  // Auto-hide notification
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification((prev) => ({ ...prev, show: false }));
+      }, notification.duration);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show, notification.duration]);
+
+  const showNotification = (type, title, message, duration = 4000) => {
+    setNotification({
+      show: true,
+      type,
+      title,
+      message,
+      duration,
+    });
+  };
+
+  const showConfirmation = (title, message, onConfirm, type = "danger") => {
+    setConfirmation({
+      show: true,
+      title,
+      message,
+      onConfirm,
+      type,
+    });
+  };
 
   const fetchClasses = async () => {
     try {
@@ -31,7 +89,7 @@ const AdminClassManage = () => {
       });
       setNewSubjectInputs(inputs);
     } catch (err) {
-      toast.error("Failed to fetch classes");
+      showNotification("error", "Error", "Failed to fetch classes");
       console.error(err);
     } finally {
       setLoading(false);
@@ -45,13 +103,40 @@ const AdminClassManage = () => {
       !courseCredit ||
       !courseType
     ) {
-      toast.warning("Please fill all course fields including type");
+      showNotification(
+        "warning",
+        "Missing Information",
+        "Please fill all course fields including type"
+      );
       return;
     }
     if (subjectList.some((sub) => sub.title === courseTitle)) {
-      toast.warning("This course already exists in the list");
+      showNotification(
+        "warning",
+        "Duplicate Course",
+        "This course already exists in the list"
+      );
       return;
     }
+
+    const codePattern = /^[A-Z]{3}-\d{4}$/;
+    if (!codePattern.test(courseCode.trim())) {
+      showNotification(
+        "warning",
+        "Invalid Format",
+        "Course code must be in format ABC-1234"
+      );
+      return;
+    }
+    if (isNaN(courseCredit) || courseCredit <= 0) {
+      showNotification(
+        "warning",
+        "Invalid Credit",
+        "Credit must be a positive number"
+      );
+      return;
+    }
+
     setSubjectList([
       ...subjectList,
       {
@@ -65,15 +150,32 @@ const AdminClassManage = () => {
     setCourseCode("");
     setCourseCredit("");
     setCourseType("");
+
+    showNotification(
+      "success",
+      "Course Added",
+      "Course added to the list successfully",
+      3000
+    );
   };
 
   const handleRemoveSubjectFromList = (title) => {
     setSubjectList(subjectList.filter((sub) => sub.title !== title));
+    showNotification(
+      "info",
+      "Course Removed",
+      "Course removed from the list",
+      3000
+    );
   };
 
   const handleCreateClass = async () => {
     if (!classNumber || subjectList.length === 0) {
-      toast.warning("Please fill class and courses properly");
+      showNotification(
+        "warning",
+        "Missing Information",
+        "Please fill class and courses properly"
+      );
       return;
     }
     try {
@@ -82,13 +184,17 @@ const AdminClassManage = () => {
         classNumber,
         subjects: subjectList,
       });
-      toast.success(`Class ${classNumber} created successfully`);
+      showNotification(
+        "success",
+        "Success",
+        `Semester ${classNumber} created successfully`
+      );
       setClassNumber("");
       setSubjectList([]);
       fetchClasses();
       setActiveTab("manage");
     } catch (err) {
-      toast.error("Failed to create class");
+      showNotification("error", "Error", "Failed to create semester");
       console.error(err);
     } finally {
       setLoading(false);
@@ -102,9 +208,31 @@ const AdminClassManage = () => {
       !subjectObj.credit ||
       !subjectObj.type
     ) {
-      toast.warning("Please fill all fields including type");
+      showNotification(
+        "warning",
+        "Missing Information",
+        "Please fill all fields including type"
+      );
       return;
     }
+    const codePattern = /^[A-Z]{3}-\d{4}$/;
+    if (!codePattern.test(subjectObj.code.trim())) {
+      showNotification(
+        "warning",
+        "Invalid Format",
+        "Course code must be in format ABC-1234"
+      );
+      return;
+    }
+    if (isNaN(subjectObj.credit) || subjectObj.credit <= 0) {
+      showNotification(
+        "warning",
+        "Invalid Credit",
+        "Credit must be a positive number"
+      );
+      return;
+    }
+
     const subjectObj1 = {
       title: subjectObj.title.trim(),
       code: subjectObj.code.trim(),
@@ -113,18 +241,21 @@ const AdminClassManage = () => {
     };
     try {
       setLoading(true);
-
       await axiosPrivate.put(`/api/classes/${classNumber}/add-subject`, {
         subject: subjectObj1,
       });
-      toast.success(`Course added to Class ${classNumber}`);
+      showNotification(
+        "success",
+        "Success",
+        `Course added to Semester ${classNumber}`
+      );
       setNewSubjectInputs((prev) => ({
         ...prev,
         [classNumber]: { title: "", code: "", credit: "", type: "" },
       }));
       fetchClasses();
     } catch (err) {
-      toast.error("Failed to add course");
+      showNotification("error", "Error", "Failed to add course");
       console.error(err);
     } finally {
       setLoading(false);
@@ -132,45 +263,209 @@ const AdminClassManage = () => {
   };
 
   const handleDeleteClass = async (classNum) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete Class ${classNum} and all its courses?`
-      )
-    )
-      return;
-    try {
-      setLoading(true);
-      await axiosPrivate.delete(`/api/classes/${classNum}`);
-      toast.success(`Class ${classNum} deleted successfully`);
-      fetchClasses();
-    } catch (err) {
-      toast.error("Failed to delete class");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    showConfirmation(
+      "Delete Semester",
+      `Are you sure you want to delete Semester ${classNum} and all its courses? This action cannot be undone.`,
+      async () => {
+        try {
+          setLoading(true);
+          await axiosPrivate.delete(`/api/classes/${classNum}`);
+          showNotification(
+            "success",
+            "Success",
+            `Semester ${classNum} deleted successfully`
+          );
+          fetchClasses();
+        } catch (err) {
+          showNotification("error", "Error", "Failed to delete semester");
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      },
+      "danger"
+    );
   };
 
   const handleRemoveSubject = async (classNum, subject) => {
-    if (!window.confirm(`Remove ${subject.title} from Class ${classNum}?`))
-      return;
-    try {
-      setLoading(true);
-      await axiosPrivate.put(`/api/classes/${classNum}/remove-subject`, {
-        subjectCode: subject.code,
-      });
-      toast.success(`Course removed from Class ${classNum}`);
-      fetchClasses();
-    } catch (err) {
-      toast.error("Failed to remove course");
-      console.error(err);
-    } finally {
-      setLoading(false);
+    showConfirmation(
+      "Remove Course",
+      `Remove "${subject.title}" from Semester ${classNum}?`,
+      async () => {
+        try {
+          setLoading(true);
+          await axiosPrivate.put(`/api/classes/${classNum}/remove-subject`, {
+            subjectCode: subject.code,
+          });
+          showNotification(
+            "success",
+            "Success",
+            `Course removed from Semester ${classNum}`
+          );
+          fetchClasses();
+        } catch (err) {
+          showNotification("error", "Error", "Failed to remove course");
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      },
+      "warning"
+    );
+  };
+
+  // Notification icons based on type
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case "success":
+        return <FiCheckCircle className="h-6 w-6 text-green-500" />;
+      case "error":
+        return <FiAlertCircle className="h-6 w-6 text-red-500" />;
+      case "warning":
+        return <FiAlertTriangle className="h-6 w-6 text-yellow-500" />;
+      case "info":
+        return <FiInfo className="h-6 w-6 text-blue-500" />;
+      default:
+        return <FiInfo className="h-6 w-6 text-blue-500" />;
+    }
+  };
+
+  // Notification background colors
+  const getNotificationBgColor = (type) => {
+    switch (type) {
+      case "success":
+        return "bg-green-50 border-green-200";
+      case "error":
+        return "bg-red-50 border-red-200";
+      case "warning":
+        return "bg-yellow-50 border-yellow-200";
+      case "info":
+        return "bg-blue-50 border-blue-200";
+      default:
+        return "bg-blue-50 border-blue-200";
+    }
+  };
+
+  // Notification text colors
+  const getNotificationTextColor = (type) => {
+    switch (type) {
+      case "success":
+        return "text-green-800";
+      case "error":
+        return "text-red-800";
+      case "warning":
+        return "text-yellow-800";
+      case "info":
+        return "text-blue-800";
+      default:
+        return "text-blue-800";
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Custom Notification */}
+      {notification.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 max-w-sm w-full ${getNotificationBgColor(notification.type)} border rounded-lg shadow-lg p-4 transform transition-all duration-300 ease-in-out`}
+        >
+          <div className="flex items-start space-x-3">
+            {getNotificationIcon(notification.type)}
+            <div className="flex-1">
+              <h3
+                className={`font-semibold ${getNotificationTextColor(notification.type)}`}
+              >
+                {notification.title}
+              </h3>
+              <p
+                className={`text-sm mt-1 ${getNotificationTextColor(notification.type)} opacity-90`}
+              >
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                setNotification((prev) => ({ ...prev, show: false }))
+              }
+              className={`flex-shrink-0 ${getNotificationTextColor(notification.type)} opacity-70 hover:opacity-100 transition-opacity`}
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+          {/* Progress bar */}
+          <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
+            <div
+              className={`h-1 rounded-full transition-all duration-300 ${
+                notification.type === "success"
+                  ? "bg-green-500"
+                  : notification.type === "error"
+                    ? "bg-red-500"
+                    : notification.type === "warning"
+                      ? "bg-yellow-500"
+                      : "bg-blue-500"
+              }`}
+              style={{
+                width: "100%",
+                animation: `shrink ${notification.duration}ms linear forwards`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmation.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
+            <div className="p-6">
+              <div
+                className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
+                  confirmation.type === "danger"
+                    ? "bg-red-100"
+                    : "bg-yellow-100"
+                }`}
+              >
+                {confirmation.type === "danger" ? (
+                  <FiAlertTriangle className="h-6 w-6 text-red-600" />
+                ) : (
+                  <FiAlertCircle className="h-6 w-6 text-yellow-600" />
+                )}
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
+                {confirmation.title}
+              </h3>
+              <p className="text-gray-600 text-center mb-6">
+                {confirmation.message}
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() =>
+                    setConfirmation((prev) => ({ ...prev, show: false }))
+                  }
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    confirmation.onConfirm();
+                    setConfirmation((prev) => ({ ...prev, show: false }));
+                  }}
+                  className={`flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors ${
+                    confirmation.type === "danger"
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-yellow-600 hover:bg-yellow-700"
+                  }`}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">
@@ -193,6 +488,7 @@ const AdminClassManage = () => {
             </button>
           </div>
 
+          {/* Rest of your existing JSX remains the same */}
           {/* Create New Class Section */}
           {activeTab === "create" && (
             <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
@@ -205,16 +501,23 @@ const AdminClassManage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Semester *
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Bsc_1.1"
+                  <select
                     value={classNumber}
                     onChange={(e) => setClassNumber(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Format: Degree_Semester (e.g., Bsc_1.1)
-                  </p>
+                  >
+                    <option value="">Select Semester</option>
+                    <option value="Bsc_1.1">Bsc_1.1</option>
+                    <option value="Bsc_1.2">Bsc_1.2</option>
+                    <option value="Bsc_2.1">Bsc_2.1</option>
+                    <option value="Bsc_2.2">Bsc_2.2</option>
+                    <option value="Bsc_3.1">Bsc_3.1</option>
+                    <option value="Bsc_3.2">Bsc_3.2</option>
+                    <option value="Bsc_4.1">Bsc_4.1</option>
+                    <option value="Bsc_4.2">Bsc_4.2</option>
+                    <option value="Msc_1.1">Msc_1.1</option>
+                    <option value="Msc_1.2">Msc_1.2</option>
+                  </select>
                 </div>
 
                 <div className="space-y-4">
@@ -231,7 +534,7 @@ const AdminClassManage = () => {
                     />
                     <input
                       type="text"
-                      placeholder="Course Code"
+                      placeholder="Course Code (e.g., ICT-1101)"
                       value={courseCode}
                       onChange={(e) => setCourseCode(e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
@@ -442,30 +745,31 @@ const AdminClassManage = () => {
                               type="text"
                               placeholder="Title"
                               value={newSubjectInputs[cls.class]?.title || ""}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const val = e.target.value.trim();
                                 setNewSubjectInputs((prev) => ({
                                   ...prev,
                                   [cls.class]: {
                                     ...prev[cls.class],
-                                    title: e.target.value,
+                                    title: val,
                                   },
-                                }))
-                              }
+                                }));
+                              }}
                               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             />
                             <input
                               type="text"
                               placeholder="Code"
                               value={newSubjectInputs[cls.class]?.code || ""}
-                              onChange={(e) =>
+                              onChange={(e) => {
                                 setNewSubjectInputs((prev) => ({
                                   ...prev,
                                   [cls.class]: {
                                     ...prev[cls.class],
                                     code: e.target.value,
                                   },
-                                }))
-                              }
+                                }));
+                              }}
                               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             />
                             <input
@@ -528,6 +832,18 @@ const AdminClassManage = () => {
           )}
         </div>
       </div>
+
+      {/* Add CSS for progress bar animation */}
+      <style jsx>{`
+        @keyframes shrink {
+          from {
+            width: 100%;
+          }
+          to {
+            width: 0%;
+          }
+        }
+      `}</style>
     </div>
   );
 };

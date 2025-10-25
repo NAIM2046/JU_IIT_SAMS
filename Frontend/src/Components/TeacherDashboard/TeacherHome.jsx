@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import useStroge from "../../stroge/useStroge";
 import { useNavigate } from "react-router-dom";
-import { FiClock, FiBook, FiUsers, FiHome, FiCalendar } from "react-icons/fi";
+import {
+  FiClock,
+  FiBook,
+  FiUsers,
+  FiHome,
+  FiCalendar,
+  FiXCircle,
+} from "react-icons/fi";
 
 const formatTime = (timeStr) => {
   const [hourStr, minuteStr] = timeStr.split(":");
@@ -35,17 +42,14 @@ const TeacherHome = () => {
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const teacherName = user.name;
+        const teacherId = user._id;
         const res = await AxiosSecure.get("/api/getallschedule");
 
         const todaySchedules = [];
         console.log("Fetched schedules:", res.data);
         console.log("user", user);
         res.data.forEach((schedule) => {
-          if (
-            schedule.teacherName === teacherName &&
-            schedule.day === todayName
-          ) {
+          if (schedule.teacherId === teacherId && schedule.day === todayName) {
             todaySchedules.push(schedule);
           }
         });
@@ -63,6 +67,28 @@ const TeacherHome = () => {
   }, [user.name, todayName, AxiosSecure]);
   console.log("Schedules for today:", schedules);
   console.log(user);
+
+  const handleCardClick = (schedule) => {
+    if (!schedule.active) {
+      return; // Don't navigate if schedule is inactive
+    }
+
+    navigate(`/teacherDashboard/Class/${schedule.classId}`, {
+      state: {
+        schedule: {
+          classId: schedule.classId,
+          subject: schedule.subject.code,
+          type: schedule.subject.type,
+          teacherId: schedule.teacherId,
+          teacherName: schedule.teacherName,
+          subjectName: schedule.subject.title,
+        },
+        formattedDate,
+        teacherName: user.name,
+        batchNumber: schedule.batchNumber,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -86,51 +112,96 @@ const TeacherHome = () => {
             {schedules.map((schedule, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-100"
-                onClick={() =>
-                  navigate(`/teacherDashboard/Class/${schedule.classId}`, {
-                    state: {
-                      schedule: {
-                        classId: schedule.classId,
-                        subject: schedule.subject.code,
-                        type: schedule.subject.type,
-                      },
-                      formattedDate,
-                      teacherName: user.name,
-                      batchNumber: schedule.batchNumber,
-                    },
-                  })
-                }
+                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 transform ${
+                  schedule.active
+                    ? "hover:shadow-lg hover:-translate-y-1 cursor-pointer border border-blue-500"
+                    : "cursor-not-allowed opacity-70 border border-gray-300"
+                }`}
+                onClick={() => handleCardClick(schedule)}
               >
                 <div className="p-6">
-                  <div className=" justify-between items-start mb-4">
-                    <h2 className="text-xl font-semibold text-gray-800 truncate">
+                  {/* Status Badge */}
+                  {!schedule.active && (
+                    <div className="flex items-center justify-end mb-2">
+                      <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center">
+                        <FiXCircle className="mr-1" />
+                        Inactive
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="justify-between items-start mb-4">
+                    <h2
+                      className={`text-xl font-semibold truncate ${
+                        schedule.active ? "text-gray-800" : "text-gray-500"
+                      }`}
+                    >
                       {schedule.subject.title}
                     </h2>
-                    <p className="">{schedule.subject.code}</p>
-                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    <p
+                      className={
+                        schedule.active ? "text-gray-600" : "text-gray-400"
+                      }
+                    >
+                      {schedule.subject.code}
+                    </p>
+                    <span
+                      className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                        schedule.active
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
                       {schedule.classId}
                     </span>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="flex items-center text-gray-600">
-                      <FiClock className="mr-2 text-blue-500" />
+                    <div
+                      className={`flex items-center ${
+                        schedule.active ? "text-gray-600" : "text-gray-400"
+                      }`}
+                    >
+                      <FiClock
+                        className={`mr-2 ${
+                          schedule.active ? "text-blue-500" : "text-gray-400"
+                        }`}
+                      />
                       <span className="font-semibold mb-1">
                         {formatTime(schedule.startTime)} –{" "}
                         {formatTime(schedule.endTime)}
                       </span>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <FiHome className="mr-2 text-blue-500" />
+                    <div
+                      className={`flex items-center ${
+                        schedule.active ? "text-gray-600" : "text-gray-400"
+                      }`}
+                    >
+                      <FiHome
+                        className={`mr-2 ${
+                          schedule.active ? "text-blue-500" : "text-gray-400"
+                        }`}
+                      />
                       <span>Room: {schedule.room}</span>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-6 py-3 border-t border-gray-100">
-                  <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                    View Class Details →
-                  </button>
+                <div
+                  className={`px-6 py-3 border-t ${
+                    schedule.active
+                      ? "bg-gray-50 border-gray-100"
+                      : "bg-gray-100 border-gray-200"
+                  }`}
+                >
+                  {schedule.active ? (
+                    <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                      View Class Details →
+                    </button>
+                  ) : (
+                    <button className="text-gray-500 font-medium text-sm cursor-not-allowed">
+                      Class Inactive
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

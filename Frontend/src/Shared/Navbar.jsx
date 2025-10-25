@@ -69,7 +69,7 @@ const Navbar = () => {
                 to={`/${user.role}Dashboard`}
                 className="text-gray-600 hover:text-green-600 px-2 py-1 text-sm md:text-xl font-medium transition-colors"
               >
-                Dashboard
+                DASHBORD
               </Link>
             )}
           </nav>

@@ -610,6 +610,53 @@ const getAttendanceAndPreformaceByAClass = async (req, res) => {
   }
 };
 
+const getAttendanceForStudent = async (req, res) => {
+  const db = getDB();
+  const AttendanceInfo = db.collection("attendanceInfo");
+  let { studentId, classId, subject } = req.params;
+  classId = classId.trim() ;
+  subject = subject.trim() ;
+  console.log(req.params) ;
+
+  try {
+    const attendanceData = await AttendanceInfo.aggregate([
+      { $match: { classId, subject } },
+      { $unwind: "$records" },
+      { $match: { "records.studentId": studentId } },
+      {
+        $addFields: {
+          parsedDate: {
+            $dateFromString: {
+              dateString: {
+                $concat: [
+                  { $substrBytes: ["$date", 2, 2] }, "-",    // month
+                  { $substrBytes: ["$date", 0, 2] }, "-",    // day
+                  { $substrBytes: ["$date", 4, 4] }          // year
+                ]
+              },
+              format: "%m-%d-%Y"
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          date: {
+            $dateToString: { format: "%d/%m/%Y", date: "$parsedDate" }
+          },
+          status: "$records.status"
+        }
+      },
+      { $sort: { parsedDate: 1 } }
+    ]).toArray();
+
+    res.status(200).json(attendanceData);
+  } catch (err) {
+    console.error("Error fetching attendance for student:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 module.exports = {
@@ -623,6 +670,7 @@ module.exports = {
   getAttendanceSummary , 
   getAttendanceHistoryBY_class_subject , 
   getAttendanceAndPreformaceByAClass,
-  attendanceAddandUpdate
+  attendanceAddandUpdate ,
+  getAttendanceForStudent
   
 }

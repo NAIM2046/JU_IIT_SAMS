@@ -36,7 +36,8 @@ const ExamCommitteeDashboard = () => {
         const result = await AxiosSecure.get(
           `/api/examCommittee/getTeacherInvolvementCommittee/${user._id}`
         );
-        const runningList = result.data.filter((c) => c.status === "runing");
+        console.log(result.data);
+        const runningList = result.data.filter((c) => c.status === "running");
         setRunningCommitteeList(runningList);
 
         const urlCommitteeId = searchParams.get("committeeId");
@@ -92,7 +93,7 @@ const ExamCommitteeDashboard = () => {
       {
         path: "/ExamCommitteeDashboard/SecondExaminerAdd",
         icon: <FaUser />,
-        label: "Second Examiner Add",
+        label: " Examiner Add",
         isActive: (p) => p.includes("SecondExaminerAdd"),
       },
       {
@@ -102,15 +103,15 @@ const ExamCommitteeDashboard = () => {
         isActive: (p) => p.includes("RoutineCreate"),
       },
       {
-        path: "/ExamCommitteeDashboard/ResultAnalysis",
+        path: "/ExamCommitteeDashboard/FinalResult",
         icon: <PiPercent />,
-        label: "Result Analysis",
-        isActive: (p) => p.includes("ResultAnalysis"),
+        label: "Final Result Publish",
+        isActive: (p) => p.includes("FinalResult"),
       },
       {
         path: "/ExamCommitteeDashboard/ApprovedResult",
         icon: <PiMarkdownLogo />,
-        label: "Approved Result",
+        label: "Result Analysis",
         isActive: (p) => p.includes("ApprovedResult"),
       }
     );

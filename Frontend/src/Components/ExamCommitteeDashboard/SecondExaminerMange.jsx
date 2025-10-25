@@ -59,7 +59,9 @@ const SecondExaminerMange = () => {
   const fetchTeacher = async () => {
     try {
       const result = await AxiosSecure.get("/api/auth/getTeacher");
-      setTeacherList(result.data);
+      console.log(result);
+      const activeTeacher = result.data.filter((item) => item.active === true);
+      setTeacherList(activeTeacher);
     } catch (err) {
       console.error("Error fetching teachers:", err);
     }
@@ -79,6 +81,7 @@ const SecondExaminerMange = () => {
       console.error("Error fetching class info:", err);
     }
   };
+  console.log(classInfo);
 
   const fetchExistingExaminer = async () => {
     if (!selectedCommittee) return;
@@ -96,8 +99,8 @@ const SecondExaminerMange = () => {
             ? {
                 teacherId: exam.firstExaminerId,
                 teacherName: exam.firstExaminer,
-                firstExaminerSubmit: exam.firstExaminerSubmit ? true : false,
-                firstExaminerUpdate: exam.firstExaminerUpdate ? true : false,
+                firstExaminerSubmit: exam?.firstExaminerSubmit ? true : false,
+                firstExaminerUpdate: exam?.firstExaminerUpdate ? true : false,
               }
             : null,
           second: exam.secondExaminerId
@@ -177,15 +180,20 @@ const SecondExaminerMange = () => {
         subjectTeacherMap[subject.code]?.third?.teacherName || null,
       thirdExaminerId:
         subjectTeacherMap[subject.code]?.third?.teacherId || null,
-      firstExaminerUpdate: subjectTeacherMap[subject.code]?.firstExaminerUpdate,
+      firstExaminerUpdate:
+        subjectTeacherMap[subject.code]?.first?.firstExaminerUpdate ?? true,
       secondExaminerUpdate:
-        subjectTeacherMap[subject.code]?.secondExaminerUpdate,
-      thirdExaminerUpdate: subjectTeacherMap[subject.code]?.thirdExaminerUpdate,
-      firstExaminerSubmit: subjectTeacherMap[subject.code]?.firstExaminerSubmit,
+        subjectTeacherMap[subject.code]?.second?.secondExaminerUpdate ?? true,
+      thirdExaminerUpdate:
+        subjectTeacherMap[subject.code]?.third?.thirdExaminerUpdate ?? true,
+      firstExaminerSubmit:
+        subjectTeacherMap[subject.code]?.first?.firstExaminerSubmit ?? false,
       secondExaminerSubmit:
-        subjectTeacherMap[subject.code]?.secondExaminerSubmit,
-      thirdExaminerSubmit: subjectTeacherMap[subject.code]?.thirdExaminerSubmit,
+        subjectTeacherMap[subject.code]?.second?.secondExaminerSubmit ?? false,
+      thirdExaminerSubmit:
+        subjectTeacherMap[subject.code]?.third?.thirdExaminerSubmit ?? false,
     }));
+    console.log(payload);
 
     try {
       const res = await AxiosSecure.post(

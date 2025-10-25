@@ -122,9 +122,9 @@ const DeleteUser = async (req, res) => {
         } })
       .toArray();
 
-    if (!students || students.length === 0) {
-      return res.status(404).json({ message: 'No students found' });
-    }
+    // if (!students || students.length === 0) {
+    //   return res.status(404).json({ message: 'No students found' });
+    // }
 
     res.json(students);
   } catch (err) {
@@ -176,7 +176,56 @@ const updateUser = async (req, res) => {
 };
 
 
+ const updateProfile_photo = async(req , res)=>{
+
+    try{
+       const db = getDB();
+    const users = db.collection("users");
+
+    const { id } = req.params; 
+    const { photoURL } = req.body; 
+
+    if (!photoURL) {
+      return res.status(400).json({ message: "photoURL is required" });
+    }
+     
+    const result = await users.updateOne(
+      {
+      _id: new ObjectId(id) 
+      } ,
+    { $set:{ photoURL:photoURL}}
+  )
+  console.log(result) ;
+   res.json({ message: "Profile photo updated successfully", photoURL });
+
+
+    }catch(error){
+      console.error("Error updating profile photo:", error);
+    res.status(500).json({ message: "Internal server error" });
+    }
+ }
+
+ const update_class_students =  async (req , res) => {
+  try {
+    const { studentIds, newClass } = req.body;
+    const db = getDB();
+    const usersCollection = db.collection("users");
+    const objectIds = studentIds.map(id => new ObjectId(id));
+    const result = await usersCollection.updateMany(
+      { _id: { $in: objectIds } },
+      { $set: { class: newClass } }
+    );
+    res.json({
+      message: `${result.modifiedCount} students updated to class ${newClass}`,
+    });
+  }
+  catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ message: "Failed to update students", error });
+  }
+};
+ 
 
 
 
-module.exports = { loginUser, AddUser, getTeacher, getStudent , DeleteUser , getStudentByClassandSection  , getUserbyId , updateUser};
+module.exports = { loginUser, AddUser, getTeacher, getStudent , DeleteUser , getStudentByClassandSection  , getUserbyId , updateUser , updateProfile_photo , update_class_students };

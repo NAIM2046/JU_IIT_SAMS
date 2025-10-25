@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import useStroge from "../../stroge/useStroge";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import { FiClock, FiBook, FiMapPin, FiCalendar, FiUser } from "react-icons/fi";
+import {
+  FiClock,
+  FiBook,
+  FiMapPin,
+  FiCalendar,
+  FiUser,
+  FiPower,
+} from "react-icons/fi";
 
 const formatTime = (timeStr) => {
   const [hourStr, minuteStr] = timeStr.split(":");
@@ -57,6 +64,43 @@ const TeacherSchedule = () => {
     fetchData();
   }, [user.name, AxiosSecure]);
 
+  console.log(allSchedules);
+
+  const toggleScheduleStatus = async (schedule) => {
+    const confirm = window.confirm(
+      `Are you sure you want to ${
+        schedule.active ? "deactivate" : "activate"
+      } this class?`
+    );
+    if (!confirm) return;
+    setLoading(true);
+    try {
+      const updatedSchedule = {
+        ...schedule,
+        active: !schedule.active,
+      };
+
+      const res = await AxiosSecure.put(`/api/updateactivestatus/`, {
+        teacherId: schedule.teacherId,
+        courseCode: schedule.subject.code,
+        status: updatedSchedule.active,
+      });
+      console.log(res.data);
+      // const responseSchedule = res.data;
+      setAllSchedules((prev) =>
+        prev.map((s) =>
+          s.subject.code === updatedSchedule.subject.code
+            ? { ...s, active: updatedSchedule.active }
+            : s
+        )
+      );
+    } catch (error) {
+      console.error("Error updating schedule status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -108,39 +152,131 @@ const TeacherSchedule = () => {
                       {schedulesForDay.map((schedule) => (
                         <div
                           key={schedule._id}
-                          className="border-l-4 border-blue-500 rounded-lg bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+                          className={`border-l-4 rounded-lg bg-white p-4 shadow-sm hover:shadow-md transition-shadow ${
+                            schedule.isActive === false
+                              ? "border-gray-300 opacity-70 bg-gray-50"
+                              : "border-blue-500"
+                          }`}
                         >
                           <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-lg font-bold text-gray-800">
+                            <h3
+                              className={`text-lg font-bold ${
+                                schedule.isActive === false
+                                  ? "text-gray-500"
+                                  : "text-gray-800"
+                              }`}
+                            >
                               {schedule.subject?.title}
                             </h3>
-                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                              {schedule.subject?.type}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full ${
+                                  schedule.active === false
+                                    ? "bg-gray-200 text-gray-600"
+                                    : "bg-blue-100 text-blue-800"
+                                }`}
+                              >
+                                {schedule.subject?.type}
+                              </span>
+                              <button
+                                onClick={() => toggleScheduleStatus(schedule)}
+                                className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
+                                  schedule.active === false
+                                    ? "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                                    : "bg-green-100 text-green-600 hover:bg-green-200"
+                                }`}
+                                title={
+                                  schedule.active === false
+                                    ? "Activate class"
+                                    : "Deactivate class"
+                                }
+                              >
+                                <FiPower
+                                  className={`text-sm ${
+                                    schedule.active === false
+                                      ? "text-gray-500"
+                                      : "text-green-600"
+                                  }`}
+                                />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="space-y-2">
-                            <div className="flex items-center text-gray-600">
-                              <FiBook className="mr-2 text-blue-500" />
+                            <div
+                              className={`flex items-center ${
+                                schedule.active === false
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              <FiBook
+                                className={`mr-2 ${
+                                  schedule.active === false
+                                    ? "text-gray-400"
+                                    : "text-blue-500"
+                                }`}
+                              />
                               <span>{schedule.subject?.code}</span>
                             </div>
 
-                            <div className="flex items-center text-gray-600">
-                              <FiClock className="mr-2 text-purple-500" />
+                            <div
+                              className={`flex items-center ${
+                                schedule.active === false
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              <FiClock
+                                className={`mr-2 ${
+                                  schedule.active === false
+                                    ? "text-gray-400"
+                                    : "text-purple-500"
+                                }`}
+                              />
                               <span>
                                 {formatTime(schedule.startTime)} -{" "}
                                 {formatTime(schedule.endTime)}
                               </span>
                             </div>
 
-                            <div className="flex items-center text-gray-600">
-                              <FiMapPin className="mr-2 text-green-500" />
+                            <div
+                              className={`flex items-center ${
+                                schedule.active === false
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              <FiMapPin
+                                className={`mr-2 ${
+                                  schedule.active === false
+                                    ? "text-gray-400"
+                                    : "text-green-500"
+                                }`}
+                              />
                               <span>Room: {schedule.room}</span>
                             </div>
 
-                            <div className="mt-3 pt-2 border-t border-gray-100">
-                              <span className="inline-block bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">
+                            <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center">
+                              <span
+                                className={`inline-block text-sm px-3 py-1 rounded-full ${
+                                  schedule.active === false
+                                    ? "bg-gray-200 text-gray-600"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
                                 Class: {schedule.classId}
+                              </span>
+                              <span
+                                className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                  schedule.active === false
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-green-100 text-green-800"
+                                }`}
+                              >
+                                {schedule.active === false
+                                  ? "Inactive"
+                                  : "Active"}
                               </span>
                             </div>
                           </div>

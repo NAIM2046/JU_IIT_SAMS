@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import { FaTrash, FaEdit, FaUserTie, FaTimes, FaCheck } from "react-icons/fa";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const Teacher = () => {
   const axiosPrivate = useAxiosPrivate();
@@ -11,11 +9,26 @@ const Teacher = () => {
   const [formErrors, setFormErrors] = useState({});
   const [currentTeacher, setCurrentTeacher] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showNotification, setShowNotification] = useState({
+    show: false,
+    message: "",
+    type: "", // 'success' or 'error'
+  });
 
   // Fetch teachers on component mount
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  // Auto-hide notification after 3 seconds
+  useEffect(() => {
+    if (showNotification.show) {
+      const timer = setTimeout(() => {
+        setShowNotification({ show: false, message: "", type: "" });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showNotification.show]);
 
   const fetchTeachers = async () => {
     try {
@@ -23,7 +36,11 @@ const Teacher = () => {
       const res = await axiosPrivate.get("/api/auth/getTeacher");
       setTeacherList(res.data);
     } catch (error) {
-      toast.error("Failed to fetch teachers");
+      setShowNotification({
+        show: true,
+        message: "Error fetching teachers",
+        type: "error",
+      });
       console.error("Error fetching teachers:", error);
     } finally {
       setLoading(false);
@@ -37,8 +54,8 @@ const Teacher = () => {
       fullname: form.fullname.value,
       name: form.name.value,
       age: form.age.value,
-      fathername: form.fathername.value,
-      mothername: form.mothername.value,
+      active: form.active.checked,
+      academicNumber: form.academicNumber.value === "yes",
       description: form.description.value,
       email: form.email.value,
       password: "123456",
@@ -49,8 +66,6 @@ const Teacher = () => {
     // Validate form
     const errors = {};
     if (!formData.name) errors.name = "Name is required";
-    if (!formData.age || isNaN(formData.age))
-      errors.age = "Valid age is required";
     if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
       errors.email = "Valid email is required";
     }
@@ -68,13 +83,21 @@ const Teacher = () => {
       setLoading(true);
       const response = await axiosPrivate.post("/api/auth/adduser", formData);
       if (response.data) {
-        toast.success("Teacher added successfully!");
+        setShowNotification({
+          show: true,
+          message: "Teacher added successfully!",
+          type: "success",
+        });
       }
 
       form.reset();
       fetchTeachers(); // Refresh the teacher list
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to add teacher");
+      setShowNotification({
+        show: true,
+        message: error.response?.data?.message || "Failed to add teacher",
+        type: "error",
+      });
       console.error("Error adding teacher:", error);
     } finally {
       setLoading(false);
@@ -88,10 +111,18 @@ const Teacher = () => {
     try {
       setLoading(true);
       await axiosPrivate.delete(`/api/auth/deleteuser/${id}`);
-      toast.success("Teacher deleted successfully!");
+      setShowNotification({
+        show: true,
+        message: "Teacher deleted successfully!",
+        type: "success",
+      });
       setTeacherList((prev) => prev.filter((teacher) => teacher._id !== id));
     } catch (error) {
-      toast.error("Failed to delete teacher");
+      setShowNotification({
+        show: true,
+        message: "Failed to delete teacher",
+        type: "error",
+      });
       console.error("Error deleting teacher:", error);
     } finally {
       setLoading(false);
@@ -115,8 +146,8 @@ const Teacher = () => {
       fullname: form.fullname.value,
       name: form.name.value,
       age: form.age.value,
-      fathername: form.fathername.value,
-      mothername: form.mothername.value,
+      active: form.active.checked,
+      academicNumber: form.academicNumber.value === "yes",
       description: form.description.value,
       email: form.email.value,
     };
@@ -124,8 +155,6 @@ const Teacher = () => {
     // Validate form
     const errors = {};
     if (!formData.name) errors.name = "Name is required";
-    if (!formData.age || isNaN(formData.age))
-      errors.age = "Valid age is required";
     if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
       errors.email = "Valid email is required";
     }
@@ -143,14 +172,22 @@ const Teacher = () => {
         formData
       );
       if (response.data) {
-        toast.success("Teacher updated successfully!");
+        setShowNotification({
+          show: true,
+          message: "Teacher updated successfully!",
+          type: "success",
+        });
         setIsEditing(false);
         setCurrentTeacher(null);
         fetchTeachers(); // Refresh the teacher list
-         form.reset();
+        form.reset();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update teacher");
+      setShowNotification({
+        show: true,
+        message: error.response?.data?.message || "Failed to update teacher",
+        type: "error",
+      });
       console.error("Error updating teacher:", error);
     } finally {
       setLoading(false);
@@ -159,6 +196,29 @@ const Teacher = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Notification */}
+      {showNotification.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+            showNotification.type === "success"
+              ? "bg-green-100 border border-green-400 text-green-700"
+              : "bg-red-100 border border-red-400 text-red-700"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span>{showNotification.message}</span>
+            <button
+              onClick={() =>
+                setShowNotification({ show: false, message: "", type: "" })
+              }
+              className="ml-4 text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Teacher Form */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
         <div className="p-6">
@@ -167,7 +227,10 @@ const Teacher = () => {
             {isEditing ? "Edit Teacher" : "Add New Teacher"}
           </h2>
 
-          <form onSubmit={isEditing ? handleUpdateTeacher : handleAddTeacher} className="space-y-4">
+          <form
+            onSubmit={isEditing ? handleUpdateTeacher : handleAddTeacher}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -177,11 +240,13 @@ const Teacher = () => {
                   type="text"
                   name="fullname"
                   defaultValue={isEditing ? currentTeacher.fullname : ""}
-                  className={`w-full px-3 py-2 border rounded-md ${formErrors.name ? "border-red-500" : "border-gray-300"}`}
+                  className={`w-full px-3 py-2 border rounded-md ${formErrors.fullname ? "border-red-500" : "border-gray-300"}`}
                   placeholder="Teacher's full name"
                 />
-                {formErrors.name && (
-                  <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                {formErrors.fullname && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.fullname}
+                  </p>
                 )}
               </div>
               <div>
@@ -202,7 +267,7 @@ const Teacher = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Age *
+                  Age
                 </label>
                 <input
                   type="number"
@@ -218,28 +283,22 @@ const Teacher = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Father's Name
+                  Academic Number
                 </label>
-                <input
-                  type="text"
-                  name="fathername"
-                  defaultValue={isEditing ? currentTeacher.fathername : ""}
+                <select
+                  name="academicNumber"
+                  defaultValue={
+                    isEditing
+                      ? currentTeacher.academicNumber
+                        ? "yes"
+                        : "no"
+                      : "yes"
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="Father's name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mother's Name
-                </label>
-                <input
-                  type="text"
-                  name="mothername"
-                  defaultValue={isEditing ? currentTeacher.mothername : ""}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="Mother's name"
-                />
+                >
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
               </div>
 
               <div>
@@ -258,6 +317,22 @@ const Teacher = () => {
                     {formErrors.email}
                   </p>
                 )}
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="active"
+                  id="active"
+                  defaultChecked={isEditing ? currentTeacher.active : true}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="active"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  Active Teacher
+                </label>
               </div>
             </div>
 
@@ -331,7 +406,10 @@ const Teacher = () => {
                       Email
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Age
+                      Academic Number
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -351,7 +429,7 @@ const Teacher = () => {
                               {teacher.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {teacher.description?.substring(0, 30)}...
+                              {teacher.fullname}
                             </div>
                           </div>
                         </div>
@@ -359,8 +437,27 @@ const Teacher = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {teacher.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {teacher.age}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            teacher.academicNumber
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {teacher.academicNumber ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            teacher.active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {teacher.active ? "Active" : "Inactive"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button

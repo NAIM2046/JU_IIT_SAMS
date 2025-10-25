@@ -312,12 +312,66 @@ const deleteTask = async(req , res)=>{
   }
   
 }
+
+const getAstudent_Mark = async(req , res)=>{
+  const db = getDB() ; 
+  const {classId , subjectCode , studentId} = req.body ; 
+  try{
+     const result = await db
+      .collection("incourse_marks").aggregate([
+        {
+          $match:{
+            classId ,
+            subjectCode,
+            "marks.studentId" : studentId 
+        
+          }
+
+        },
+        {
+          $unwind: "$marks"
+        } ,
+        {
+          $match: { 
+            "marks.studentId" : studentId
+          }
+        },
+        {
+          $group : {
+            _id : "$type" ,
+            records: {
+              $push: {
+                Number: "$Number" ,
+                fullMark:"$fullMark",
+                obtainedMark: "$marks.mark",
+               
+              createdAt: "$createdAt",
+              }
+            }
+          }
+        },
+        {
+          $project: {
+            _id: 0 ,
+            type: "$_id" ,
+            records:1
+          }
+        }
+      ]).toArray() ;
+      res.json(result) ;
+  }catch(error){
+    console.error(error);
+    res.status(500).json({ message: "Error fetching student marks", error });
+  }
+}
 module.exports = {
     add_update_incourse_Mark, 
     otherTaskMarkSummary ,
     otherTaskList ,
     backEidteFromate,
     finalMarkSummary ,
-    deleteTask
+    deleteTask ,
+    getAstudent_Mark ,
+
    
 }

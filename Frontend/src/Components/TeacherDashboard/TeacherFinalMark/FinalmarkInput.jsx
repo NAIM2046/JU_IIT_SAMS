@@ -34,7 +34,7 @@ const FinalmarkInput = () => {
       // Restore expansion state
       const initialExpanded = {};
       parsedData.forEach((student) => {
-        initialExpanded[student._id] = true;
+        initialExpanded[student._id] = false;
       });
       setExpandedStudents(initialExpanded);
       setLoading(false);
@@ -46,6 +46,7 @@ const FinalmarkInput = () => {
         const result = await AxiosSecure.get(
           `api/finalmark/get_students_mark/${obj.classId}/${obj.subject}/${obj.batchNumber}/${obj.examiner}`
         );
+        console.log(result.data);
         setStudents(result.data);
         const initialExpanded = {};
         result.data.forEach((student) => {
@@ -279,6 +280,9 @@ const FinalmarkInput = () => {
                     {student.studentName}
                   </h2>
                   <p className="text-gray-600">Roll: {student.class_roll}</p>
+                  {student.isRetake && (
+                    <span className="text-red-500 text-sm">(Retake)</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="bg-green-50 px-3 py-1 rounded-md">

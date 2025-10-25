@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
-  FaBook,
+  FaCalendarAlt,
   FaHome,
-  FaUsers,
-  FaIdCard,
-  FaBell,
-  FaChartLine,
-  FaTrophy,
-  FaListAlt,
+  FaUser,
+  FaExclamationTriangle,
+  FaBullhorn,
+  FaChartBar,
+  FaAward,
+  FaClipboardCheck,
+  FaBars,
+  FaTimes,
+  FaChevronRight,
+  FaUserGraduate,
 } from "react-icons/fa";
-import { MdOutlineFormatListNumbered } from "react-icons/md";
 import useStroge from "../../stroge/useStroge";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
 import Navbar from "../../Shared/Navbar";
@@ -19,259 +22,327 @@ import Footer from "../../Shared/Footer";
 const StudentSection = () => {
   const AxiosSecure = useAxiosPrivate();
   const { user } = useStroge();
-  const [ranklist, setRanklist] = useState([]);
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const classNumber = user?.class;
-
+  // Close sidebar on route change
   useEffect(() => {
-    if (classNumber) {
-      AxiosSecure.get(`/api/exam/rank_summary/${classNumber}`).then((res) => {
-        setRanklist(res.data);
-      });
-    }
-  }, [AxiosSecure, classNumber]);
+    setSidebarOpen(false);
+  }, [location]);
 
-  const currentStudentRank = ranklist.find(
-    (student) => student._id === user?._id
-  );
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const navigationItems = [
+    {
+      to: "/studentDashboard/classroutine",
+      icon: <FaCalendarAlt className="text-lg" />,
+      label: "Class Routine",
+      description: "Check your daily schedule",
+      color: "from-blue-500 to-cyan-500",
+    },
+    {
+      to: "/studentDashboard/incourse_mark",
+      icon: <FaChartBar className="text-lg" />,
+      label: "Incourse Mark",
+      description: "Monitor your grades",
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      to: "/studentDashboard/semester_final",
+      icon: <FaAward className="text-lg" />,
+      label: "Semester Final Result",
+      description: "View final results",
+      color: "from-yellow-500 to-orange-500",
+    },
+    {
+      to: "/studentDashboard/attendance",
+      icon: <FaClipboardCheck className="text-lg" />,
+      label: "Attendance",
+      description: "Check presence records",
+      color: "from-purple-500 to-pink-500",
+    },
+    {
+      to: "/studentDashboard/profile",
+      icon: <FaUser className="text-lg" />,
+      label: "Profile",
+      description: "Update personal info",
+      color: "from-indigo-500 to-blue-500",
+    },
+    {
+      to: "/studentDashboard/fail_sub_list",
+      icon: <FaExclamationTriangle className="text-lg" />,
+      label: "Fail Subjects",
+      description: "Review retake courses",
+      color: "from-red-500 to-pink-500",
+    },
+    {
+      to: "/studentDashboard/notice",
+      icon: <FaBullhorn className="text-lg" />,
+      label: "Notices",
+      description: "College announcements",
+      color: "from-gray-600 to-gray-700",
+    },
+    {
+      to: "/studentDashboard/exam_routine",
+      icon: <FaCalendarAlt className="text-lg" />,
+      label: "Exam Routine",
+      description: "Exam schedule planner",
+      color: "from-gray-600 to-gray-700",
+    },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       <Navbar />
 
       {/* Mobile Header */}
-      <div className="md:hidden bg-white shadow-sm px-4 py-3 flex justify-between items-center sticky top-0 z-30">
-        <h2 className="text-lg font-semibold text-blue-600">
-          Student Dashboard
-        </h2>
+      <div className="md:hidden bg-white shadow-lg border-b border-gray-200 px-4 py-4 flex justify-between items-center sticky top-0 ">
+        <div className="flex items-center space-x-3">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl shadow-md">
+            <FaUserGraduate className="text-white text-lg" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Student Portal
+            </h2>
+            <p className="text-xs text-gray-500">
+              Welcome, {user?.name?.split(" ")[0] || "Student"}!
+            </p>
+          </div>
+        </div>
         <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="text-gray-600 focus:outline-none"
+          onClick={toggleSidebar}
+          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 shadow-sm"
         >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
+          {sidebarOpen ? (
+            <FaTimes className="text-gray-700 text-xl" />
+          ) : (
+            <FaBars className="text-gray-700 text-xl" />
+          )}
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row flex-1">
-        {/* Sidebar - Light Blue */}
+      <div className="flex flex-1">
+        {/* Sidebar */}
         <aside
-          className={`${sidebarOpen ? "block absolute z-20 w-64 h-full" : "hidden"} 
-          md:block bg-white w-64 border-r border-gray-200 shadow-sm`}
+          className={`transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          ${isCollapsed ? "w-30" : "w-80"} 
+          md:translate-x-0 transition-all duration-300 ease-in-out fixed md:static 
+          inset-y-0 left-0 bg-white shadow-2xl z-30 border-r border-gray-200
+          overflow-y-auto flex flex-col`}
         >
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-gray-700 mb-6 px-2">
-              Student Menu
-            </h3>
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <div
+              className={`flex items-center justify-between ${isCollapsed ? "flex-col space-y-4" : ""}`}
+            >
+              <div
+                className={`flex items-center ${isCollapsed ? "flex-col text-center" : "space-x-3"}`}
+              >
+                <div className="bg-white/20 p-3 rounded-2xl shadow-lg">
+                  <FaUserGraduate className="text-2xl" />
+                </div>
+                {!isCollapsed && (
+                  <div>
+                    <h1 className="text-xl font-bold">Student Dashboard</h1>
+                    <p className="text-blue-100 text-sm opacity-90">
+                      {user?.department || "Computer Science"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Collapse Button */}
+              <button
+                onClick={toggleCollapse}
+                className={`hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 ${isCollapsed ? "rotate-180" : ""}`}
+              >
+                <FaChevronRight className="text-white text-sm" />
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-1 p-4">
             <nav>
-              <ul className="space-y-1">
-                {[
-                  {
-                    to: "/studentDashboard/classroutine",
-                    icon: <FaHome />,
-                    label: "Class Routine",
-                  },
-                  {
-                    to: "/studentDashboard/performance",
-                    icon: <FaChartLine />,
-                    label: "Performance",
-                  },
-                  {
-                    to: "/studentDashboard/ranklist",
-                    icon: <FaTrophy />,
-                    label: "Rank List",
-                  },
-                  {
-                    to: "/studentDashboard/attendance",
-                    icon: <FaListAlt />,
-                    label: "Attendance History",
-                  },
-                  {
-                    to: "/studentDashboard/profile",
-                    icon: <FaUsers />,
-                    label: "Profile",
-                  },
-                  {
-                    to: "/studentDashboard/reportCard",
-                    icon: <FaIdCard />,
-                    label: "Report Card",
-                  },
-                  {
-                    to: "/studentDashboard/notice",
-                    icon: <FaBell />,
-                    label: "Notices",
-                  },
-                ].map((item, index) => (
+              <ul className="space-y-2">
+                {navigationItems.map((item, index) => (
                   <li key={index}>
                     <NavLink
                       to={item.to}
                       onClick={() => setSidebarOpen(false)}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-600 hover:bg-blue-50 hover:text-blue-600 ${
-                          isActive ? "bg-blue-50 text-blue-600 font-medium" : ""
-                        }`
+                        `group flex items-center p-4  rounded-2xl transition-all duration-300 relative overflow-hidden
+                        ${
+                          isActive
+                            ? `bg-gradient-to-r ${item.color} text-white shadow-lg transform scale-105`
+                            : "bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md border border-gray-100"
+                        }
+                        ${isCollapsed ? "justify-center " : ""}`
                       }
                     >
-                      <span className="text-blue-500">{item.icon}</span>
-                      <span>{item.label}</span>
+                      {/* Background glow effect */}
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-r ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+                      ></div>
+
+                      <div
+                        className={`relative flex items-center ${isCollapsed ? "" : "space-x-4"} w-full`}
+                      >
+                        <div
+                          className={`p-3 rounded-xl shadow-sm ${({
+                            isActive,
+                          }) =>
+                            isActive
+                              ? "bg-white/20"
+                              : `bg-gradient-to-r ${item.color} text-white`}`}
+                        >
+                          {item.icon}
+                        </div>
+
+                        {!isCollapsed && (
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-current">
+                              {item.label}
+                            </div>
+                            <div
+                              className={`text-sm ${({ isActive }) =>
+                                isActive ? "text-blue-100" : "text-gray-500"}`}
+                            >
+                              {item.description}
+                            </div>
+                          </div>
+                        )}
+
+                        {!isCollapsed && (
+                          <FaChevronRight
+                            className={`text-sm transition-transform duration-300 ${({
+                              isActive,
+                            }) =>
+                              isActive
+                                ? "text-white transform translate-x-1"
+                                : "text-gray-400"}`}
+                          />
+                        )}
+                      </div>
+
+                      {/* Tooltip for collapsed state */}
+                      {isCollapsed && (
+                        <div className="absolute left-full ml-2 px-1 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 shadow-lg">
+                          <div className="font-semibold">{item.label}</div>
+                          <div className="text-gray-300 text-xs">
+                            {item.description}
+                          </div>
+                        </div>
+                      )}
                     </NavLink>
                   </li>
                 ))}
 
-                <li className="border-t border-gray-100 my-2"></li>
+                {/* Separator */}
+                <li className="border-t border-gray-200 my-4"></li>
 
+                {/* Additional Links */}
                 <li>
                   <NavLink
                     to="/"
                     onClick={() => setSidebarOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+                    className={({ isActive }) =>
+                      `group flex items-center p-4 rounded-2xl transition-all duration-300
+                      ${isActive ? "bg-blue-50 text-blue-600 border border-blue-200" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}
+                      ${isCollapsed ? "justify-center" : ""}`
+                    }
                   >
-                    <span className="text-blue-500">
-                      <FaHome />
-                    </span>
-                    <span>Back to Home</span>
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-sm">
+                      <FaHome className="text-lg" />
+                    </div>
+                    {!isCollapsed && (
+                      <span className="ml-4 font-medium">Back to Home</span>
+                    )}
                   </NavLink>
                 </li>
               </ul>
             </nav>
           </div>
+
+          {/* User Profile Section */}
+          {!isCollapsed && (
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center space-x-3 p-3 bg-white rounded-2xl shadow-sm border border-gray-200">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-md">
+                    {user?.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt="Profile"
+                        className="w-full h-full rounded-2xl object-cover"
+                      />
+                    ) : (
+                      <FaUserGraduate className="text-white text-lg" />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-800 truncate">
+                    {user?.name || "Student"}
+                  </p>
+                  <p className="text-sm text-gray-600 truncate">
+                    {user?.studentId || "ID: N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 bg-white md:bg-gray-50 p-4 md:p-6">
-          <Outlet />
-        </main>
+        {/* Overlay for mobile menu */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-        {/* Right Profile Panel - Light Gray */}
-        <aside className="w-full md:w-72 lg:w-80 p-4 bg-white md:bg-gray-50">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">
-              Your Academic Profile
-            </h4>
-
-            {currentStudentRank ? (
-              <div className="space-y-5">
-                {/* Rank Display */}
-                <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
-                  <div>
-                    <p className="text-sm text-gray-500">Current Rank</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      #{currentStudentRank.rank}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Total Marks</p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {currentStudentRank.totalGetMarks}
-                      <span className="text-gray-400">
-                        /{currentStudentRank.totalFullMark}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
+        {/* Main Content Area */}
+        <main
+          className={`flex-1 transition-all duration-300 ${isCollapsed ? "md:ml-0" : ""}`}
+        >
+          <div className="p-4 md:p-6 lg:p-8">
+            {/* Content Header */}
+            <div className="mb-6 md:mb-8">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Progress</span>
-                    <span>
-                      {Math.round(
-                        (currentStudentRank.totalGetMarks /
-                          currentStudentRank.totalFullMark) *
-                          100
-                      )}
-                      %
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500"
-                      style={{
-                        width: `${(currentStudentRank.totalGetMarks / currentStudentRank.totalFullMark) * 100}%`,
-                      }}
-                    ></div>
-                  </div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    Welcome {user?.name?.split(" ")[0] || "Student"}! 👋
+                  </h1>
                 </div>
 
-                {/* Badge */}
-                <div className="text-center pt-4">
-                  {(() => {
-                    const percentage =
-                      (currentStudentRank.totalGetMarks /
-                        currentStudentRank.totalFullMark) *
-                      100;
-                    let badge = {
-                      title: "",
-                      color: "",
-                      emoji: "",
-                      bg: "",
-                      remark: "",
-                    };
-
-                    if (percentage >= 80) {
-                      badge = {
-                        title: "Gold Scholar",
-                        color: "text-yellow-600",
-                        emoji: "🥇",
-                        bg: "bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200",
-                        remark: "Exceptional Performance!",
-                      };
-                    } else if (percentage >= 50) {
-                      badge = {
-                        title: "Silver Achiever",
-                        color: "text-gray-700",
-                        emoji: "🥈",
-                        bg: "bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200",
-                        remark: "Great Progress!",
-                      };
-                    } else {
-                      badge = {
-                        title: "Rising Star",
-                        color: "text-blue-600",
-                        emoji: "⭐",
-                        bg: "bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200",
-                        remark: "Keep Improving!",
-                      };
-                    }
-
-                    return (
-                      <div className={`${badge.bg} p-4 rounded-lg border`}>
-                        <div className="text-4xl mb-2">{badge.emoji}</div>
-                        <h5 className={`font-semibold ${badge.color}`}>
-                          {badge.title}
-                        </h5>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {badge.remark}
-                        </p>
-                      </div>
-                    );
-                  })()}
-                </div>
+                {/* Mobile collapse button */}
+                <button
+                  onClick={toggleCollapse}
+                  className="hidden md:flex items-center justify-center w-10 h-10 rounded-2xl bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200"
+                >
+                  <FaChevronRight
+                    className={`text-gray-600 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
+                  />
+                </button>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="animate-pulse flex justify-center">
-                  <div className="h-8 w-8 bg-blue-200 rounded-full"></div>
-                </div>
-                <p className="text-gray-500 mt-3">
-                  Loading your academic data...
-                </p>
-              </div>
-            )}
+            </div>
+
+            {/* Content Container */}
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-200 min-h-[calc(100vh-12rem)] p-6 md:p-8 transition-all duration-300 hover:shadow-md">
+              <Outlet />
+            </div>
           </div>
-        </aside>
+        </main>
       </div>
 
       <Footer />

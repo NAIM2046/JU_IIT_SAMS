@@ -12,8 +12,11 @@ const noticeRoutes = require('./routes/NoticeRoutes.js');
 const examRoutes = require('./routes/examRoutes.js');
 const messageRoute = require('./routes/messageRoutes.js');
 const InCourseMarkRoutes = require('./routes/InCourseMarkRoutes.js')
-const add_update_exam_committee = require('./routes/ExamCommitteeRoutes.js'); // Importing Exam Committee routes
+const exam_committeeRouter = require('./routes/ExamCommitteeRoutes.js'); // Importing Exam Committee routes
 const FinalMarkRoutes =  require('./routes/FinalMarkRoutes.js')
+const FinalResultRoutes = require('./routes/FinalResultRoutes.js');
+const examRoutineRoutes = require('./routes/examRoutineRoutes.js')
+const PasswordChangeRoutes = require('./routes/PasswordChangeRoutes.js');
 const { startCronJobUpdata } = require("./cron/Monthly_update.js");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -95,8 +98,11 @@ app.use('/api', noticeRoutes); // Assuming you have classHistroyRoute defined
 app.use('/api/performance', performanceRoutes);
 app.use('/api/exam', examRoutes);
 app.use('/api/message', messageRoute);
-app.use('/api/examCommittee',add_update_exam_committee ); // Importing Exam Committee routes
+app.use('/api/examCommittee',exam_committeeRouter ); // Importing Exam Committee routes
 app.use('/api/finalmark' ,FinalMarkRoutes) ;
+app.use('/api/final-results',FinalResultRoutes ); // Final Results Route
+app.use('/api/exam_routine' , examRoutineRoutes)
+app.use('/api/password' , PasswordChangeRoutes) ;
 
 connectDB().then(() => {
   server.listen(port, () => {

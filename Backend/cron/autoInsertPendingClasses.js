@@ -9,6 +9,13 @@ const insertPendingClasses = async () => {
 
     const today = new Date();
    const day = today.toLocaleString("en-US", { weekday: "long" });
+   console.log("Today is:", day);
+    const  collection = db.collection("Status");
+    const class_on_off = await collection.findOne({ name: "classStatus" });
+    if (class_on_off.status === "off") {
+      console.log("Class is off today. No pending classes inserted.");
+      return;
+    }
 
  // e.g., "Tuesday"
     const formattedDate = `${String(today.getDate()).padStart(2, "0")}${String(
@@ -20,12 +27,9 @@ const insertPendingClasses = async () => {
 
     for (const schedule of schedules) {
       
-      if (schedule.day !== day) continue; // Only process today's schedule
+      if (schedule.day !== day || !schedule.active) continue; // Only process today's schedule and active ones
 
-      
-       
-    
-        const exists = await historyCol.findOne({
+      const exists = await historyCol.findOne({
           classId: schedule.classId,
           subject: schedule.subject.code,
           teacherName: schedule.teacherName,
@@ -38,6 +42,8 @@ const insertPendingClasses = async () => {
             classId: schedule.classId,
             subject: schedule.subject.code,
             teacherName: schedule.teacherName,
+            subjectName: schedule.subject.name,
+            teacherId: schedule.teacherId,
             batchNumber: schedule.batchNumber ,
             date: formattedDate,
             type: schedule.subject.type,
@@ -58,9 +64,9 @@ const insertPendingClasses = async () => {
   }
 };
 
-// Run daily at 11:59 PM
+// Run daily at 4:04 PM
 const startCronJob = () => {
-  cron.schedule("55 15 * * *", insertPendingClasses);
+  cron.schedule("04 16 * * *", insertPendingClasses);
 };
 
 module.exports = startCronJob;

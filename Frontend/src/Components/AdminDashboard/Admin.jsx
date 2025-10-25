@@ -48,7 +48,7 @@ const Admin = () => {
     {
       path: "/adminDashboard/manageschedule",
       icon: <FaBook className="mr-3" />,
-      label: "Manage Schedule",
+      label: "Schedule Management",
     },
     {
       path: "/adminDashboard/classManage",
@@ -69,6 +69,16 @@ const Admin = () => {
       path: "/adminDashboard/QuestionTamplate",
       icon: <FaQuestion className="mr-3" />,
       label: "QuestionTamplate",
+    },
+    {
+      path: "/adminDashboard/semesterUpdate",
+      icon: <FaBacteria className="mr-3" />,
+      label: "Update Semester",
+    },
+    {
+      path: "/adminDashboard/profile",
+      icon: <FaUserGraduate className="mr-3" />,
+      label: "Profile",
     },
   ];
 
@@ -119,7 +129,7 @@ const Admin = () => {
                       to={item.path}
                       end={item.end} // Use the end prop for exact matching
                       className={({ isActive }) =>
-                        `flex items-center px-4 py-3 rounded-lg transition-colors
+                        `flex items-center px-2 py-3 rounded-lg transition-colors
                         ${
                           isActive
                             ? "bg-orange-600 text-white font-medium"
@@ -132,24 +142,15 @@ const Admin = () => {
                     </NavLink>
                   </li>
                 ))}
+                <NavLink
+                  to="/"
+                  className="flex items-center px-4 py-3 rounded-lg hover:bg-orange-400 transition-colors"
+                >
+                  <FaHome className="mr-3" />
+                  Back to Home
+                </NavLink>
               </ul>
             </nav>
-
-            {/* Divider and Home Link */}
-            <div className="mt-auto">
-              <div className="border-t border-orange-400 my-4"></div>
-              <ul className="space-y-2">
-                <li>
-                  <NavLink
-                    to="/"
-                    className="flex items-center px-4 py-3 rounded-lg hover:bg-orange-400 transition-colors"
-                  >
-                    <FaHome className="mr-3" />
-                    Back to Home
-                  </NavLink>
-                </li>
-              </ul>
-            </div>
           </div>
         </aside>
 

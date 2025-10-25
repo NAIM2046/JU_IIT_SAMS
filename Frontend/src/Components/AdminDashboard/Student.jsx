@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from "react";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { FiEdit, FiTrash2, FiUserPlus, FiX, FiSave } from "react-icons/fi";
+import {
+  FiEdit,
+  FiTrash2,
+  FiUserPlus,
+  FiX,
+  FiSave,
+  FiCheck,
+  FiXCircle,
+} from "react-icons/fi";
 import { FaSearch, FaUserGraduate } from "react-icons/fa";
 import { ImSpinner8 } from "react-icons/im";
 
@@ -17,6 +23,29 @@ const Student = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentStudent, setCurrentStudent] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "", // 'success' or 'error'
+  });
+
+  // Show notification
+  const showNotification = (message, type) => {
+    setNotification({
+      show: true,
+      message,
+      type,
+    });
+
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      setNotification({
+        show: false,
+        message: "",
+        type: "",
+      });
+    }, 3000);
+  };
 
   // Fetch student data
   const fetchStudent = async () => {
@@ -26,7 +55,7 @@ const Student = () => {
       setStudent(response.data);
       setError(null);
     } catch (error) {
-      setError("Failed to fetch students");
+      showNotification("Failed to fetch student data", "error");
       console.error("Error fetching student data:", error);
     } finally {
       setLoading(false);
@@ -54,6 +83,18 @@ const Student = () => {
     const form = e.target;
     const formData = new FormData(form);
 
+    // Validation
+    if (
+      !formData.get("name") ||
+      !formData.get("reg_no") ||
+      !formData.get("class_roll") ||
+      !formData.get("email") ||
+      !formData.get("class")
+    ) {
+      showNotification("Please fill in all required fields", "error");
+      return;
+    }
+
     const studentInfo = {
       role: "student",
       name: formData.get("name") || "",
@@ -65,15 +106,9 @@ const Student = () => {
       hall_name: formData.get("hallname") || "",
       password: "123456",
       gender: formData.get("gender") || "",
-      guardians: {
-        fatherName: formData.get("fathername") || "",
-        motherName: formData.get("mothername") || "",
-        phoneNumber: formData.get("phonenumber") || "",
-      },
       email: formData.get("email") || "",
+      phoneNumber: formData.get("phonenumber") || "",
       photoURL: "https://i.ibb.co/G9wkJbX/user.webp",
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
     try {
@@ -84,7 +119,7 @@ const Student = () => {
           `/api/auth/updateuser/${currentStudent._id}`,
           studentInfo
         );
-        toast.success("Student updated successfully");
+        showNotification("Student updated successfully", "success");
       } else {
         // Add new student
         const response = await axiosPrivate.post(
@@ -92,7 +127,7 @@ const Student = () => {
           studentInfo
         );
         if (response.data) {
-          toast.success("Student added successfully");
+          showNotification("Student added successfully", "success");
         }
       }
       form.reset();
@@ -101,7 +136,8 @@ const Student = () => {
       setIsFormOpen(false);
       fetchStudent();
     } catch (error) {
-      toast.error(error.response?.data?.message || "An error occurred");
+      const errorMessage = error.response?.data?.message || "An error occurred";
+      showNotification(errorMessage, "error");
       console.error("Error:", error);
     } finally {
       setLoading(false);
@@ -125,9 +161,9 @@ const Student = () => {
       setLoading(true);
       await axiosPrivate.delete(`/api/auth/deleteuser/${id}`);
       setStudent((prev) => prev.filter((s) => s._id !== id));
-      toast.success("Student deleted successfully");
+      showNotification("Student deleted successfully", "success");
     } catch (error) {
-      toast.error("Failed to delete student");
+      showNotification("Failed to delete student", "error");
       console.error("Error deleting student:", error);
     } finally {
       setLoading(false);
@@ -137,13 +173,51 @@ const Student = () => {
   // Filter students based on search term
   const filteredStudents = student.filter(
     (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchTerm.toLowerCase())
+      s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Custom Notification */}
+      {notification.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 max-w-sm w-full p-4 rounded-lg shadow-lg border-l-4 ${
+            notification.type === "success"
+              ? "bg-green-50 border-green-500 text-green-800"
+              : "bg-red-50 border-red-500 text-red-800"
+          }`}
+        >
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              {notification.type === "success" ? (
+                <FiCheck className="h-5 w-5 text-green-500" />
+              ) : (
+                <FiXCircle className="h-5 w-5 text-red-500" />
+              )}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{notification.message}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <button
+                onClick={() =>
+                  setNotification({ show: false, message: "", type: "" })
+                }
+                className={`inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  notification.type === "success"
+                    ? "text-green-500 hover:bg-green-100 focus:ring-green-500"
+                    : "text-red-500 hover:bg-red-100 focus:ring-red-500"
+                }`}
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex items-center">
@@ -238,12 +312,13 @@ const Student = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Gender
+                    Gender *
                   </label>
                   <select
                     name="gender"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     defaultValue={currentStudent?.gender || ""}
+                    required
                   >
                     <option value="">Choose Gender</option>
                     <option value="male">Male</option>
@@ -257,12 +332,13 @@ const Student = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Semester
+                    Semester *
                   </label>
                   <select
                     name="class"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     defaultValue={currentStudent?.class || ""}
+                    required
                   >
                     <option value="">Select Semester</option>
                     {classlist.map((cls, index) => (
@@ -344,34 +420,7 @@ const Student = () => {
                 </div>
               </div>
 
-              {/* Guardian Information */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Father's Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    name="fathername"
-                    placeholder="Father's Name"
-                    defaultValue={currentStudent?.guardians?.fatherName || ""}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mother's Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    name="mothername"
-                    placeholder="Mother's Name"
-                    defaultValue={currentStudent?.guardians?.motherName || ""}
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number
@@ -381,7 +430,7 @@ const Student = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     name="phonenumber"
                     placeholder="Phone Number"
-                    defaultValue={currentStudent?.guardians?.phoneNumber || ""}
+                    defaultValue={currentStudent?.phoneNumber || ""}
                   />
                 </div>
               </div>
@@ -507,7 +556,7 @@ const Student = () => {
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          {s.name.charAt(0).toUpperCase()}
+                          {s.name?.charAt(0).toUpperCase() || "U"}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">

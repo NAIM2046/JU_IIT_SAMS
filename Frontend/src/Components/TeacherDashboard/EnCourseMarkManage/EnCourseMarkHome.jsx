@@ -148,6 +148,7 @@ const EnCourseMarkHome = () => {
                                 course.classId,
                                 subject.title,
                                 subject.code,
+                                course.batchNumber,
                                 "assignment"
                               )
                             }

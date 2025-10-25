@@ -16,14 +16,14 @@ import TeacherSchedule from "../Components/TeacherDashboard/TeacherSchedule";
 
 import AdminNotice from "../Components/AdminDashboard/AdminNotice";
 import StudentHome from "../Components/StudentDashboard/StudentHome";
-import StudentProfile from "../Components/StudentDashboard/StudentProfile";
+//import StudentProfile from "../Components/StudentDashboard/StudentProfile";
 import StudentSchedule from "../Components/StudentDashboard/StudentSchedule";
 import StudentNotice from "../Components/StudentDashboard/StudentNotice";
 import TeacherNotice from "../Components/TeacherDashboard/TeacherNotice";
 
 import ClassHistory from "../Components/TeacherDashboard/ClassHistory";
-import ExamHome from "../Pages/Exam/ExamHome";
-import RankList from "../Components/StudentDashboard/RankList";
+//import ExamHome from "../Pages/Exam/ExamHome";
+//import RankList from "../Components/StudentDashboard/RankList";
 import SubjectsPer_Summ from "../Components/StudentDashboard/SubjectsPer_Summ";
 import ReportCard from "../Components/StudentDashboard/ReportCard";
 import StudentRoute from "./StudentRoute";
@@ -49,6 +49,15 @@ import ExamCommitteeDashboard from "../Components/ExamCommitteeDashboard/ExamCom
 import ExamCommitteeRoute from "./ExamCommitteeRoute";
 import SecondExaminerMange from "../Components/ExamCommitteeDashboard/SecondExaminerMange";
 import ResultApprovalHome from "../Components/ExamCommitteeDashboard/ResultApproval/ResultApprovalHome";
+import FinalResultPublice from "../Components/ExamCommitteeDashboard/FinalResultPubl/FinalResultPublice";
+import ExamCommitteeHome from "../Components/ExamCommitteeDashboard/Home/ExamCommitteeHome";
+import ExamRoutineCreate from "../Components/ExamCommitteeDashboard/ExamRoutine/ExamRoutineCreate";
+import CommitteeHistory from "../Components/ExamCommitteeDashboard/CommittteeHistory/CommitteeHistory";
+import Profile from "../Pages/Profile/Profile";
+import ForgotPassword from "../Pages/PasswordChange/ForgotPassword";
+import ResetPassword from "../Pages/PasswordChange/ResetPassword";
+import Update_Semester from "../Components/AdminDashboard/SemesterUpdate/Update_Semester";
+import InCourseMark from "../Components/StudentDashboard/InCourseMark/InCourseMark";
 
 const router = createBrowserRouter([
   {
@@ -104,6 +113,14 @@ const router = createBrowserRouter([
         path: "/adminDashboard/QuestionTamplate",
         element: <QestionTamplateHome></QestionTamplateHome>,
       },
+      {
+        path: "/adminDashboard/semesterUpdate",
+        element: <Update_Semester></Update_Semester>,
+      },
+      {
+        path: "/adminDashboard/profile",
+        element: <Profile></Profile>,
+      },
     ],
   },
   {
@@ -131,8 +148,8 @@ const router = createBrowserRouter([
         element: <TeacherNotice></TeacherNotice>,
       },
       {
-        path: "/teacherDashboard/exam",
-        element: <ExamHome></ExamHome>,
+        path: "/teacherDashboard/profile",
+        element: <Profile></Profile>,
       },
       {
         path: "/teacherDashboard/classhistory",
@@ -194,7 +211,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/studentDashboard/profile",
-        element: <StudentProfile></StudentProfile>,
+        element: <Profile></Profile>,
       },
       {
         path: "/studentDashboard/classroutine",
@@ -205,8 +222,8 @@ const router = createBrowserRouter([
         element: <StudentNotice></StudentNotice>,
       },
       {
-        path: "/studentDashboard/ranklist",
-        element: <RankList></RankList>,
+        path: "/studentDashboard/incourse_mark",
+        element: <InCourseMark></InCourseMark>,
       },
       {
         path: "/studentDashboard/performance",
@@ -235,6 +252,10 @@ const router = createBrowserRouter([
     ),
     children: [
       {
+        path: "/ExamCommitteeDashboard",
+        element: <ExamCommitteeHome></ExamCommitteeHome>,
+      },
+      {
         path: "/ExamCommitteeDashboard/SecondExaminerAdd",
         element: <SecondExaminerMange></SecondExaminerMange>,
       },
@@ -242,7 +263,27 @@ const router = createBrowserRouter([
         path: "/ExamCommitteeDashboard/ApprovedResult",
         element: <ResultApprovalHome></ResultApprovalHome>,
       },
+      {
+        path: "/ExamCommitteeDashboard/FinalResult",
+        element: <FinalResultPublice></FinalResultPublice>,
+      },
+      {
+        path: "/ExamCommitteeDashboard/RoutineCreate",
+        element: <ExamRoutineCreate></ExamRoutineCreate>,
+      },
+      {
+        path: "/ExamCommitteeDashboard/History",
+        element: <CommitteeHistory></CommitteeHistory>,
+      },
     ],
+  },
+  {
+    path: "/ForgotPassword",
+    element: <ForgotPassword></ForgotPassword>,
+  },
+  {
+    path: "/resetPassword/:token",
+    element: <ResetPassword></ResetPassword>,
   },
 ]);
 

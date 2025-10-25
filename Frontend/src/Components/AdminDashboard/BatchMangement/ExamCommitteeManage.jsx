@@ -108,7 +108,9 @@ const ExamCommitteeManage = () => {
         classId: classSub.class,
         batchNumber: classSub.batchNumber,
         committeeMembers: finalList,
-        status: "runing",
+        status: "running",
+        final_mark_submit: [],
+        final_result_publish: false,
       });
       showNotification("Committee updated successfully!", "success");
       setExistingCommittee(finalList);

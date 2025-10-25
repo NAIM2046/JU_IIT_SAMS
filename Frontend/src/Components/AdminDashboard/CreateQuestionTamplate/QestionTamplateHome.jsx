@@ -78,6 +78,7 @@ const QuestionTemplateHome = () => {
           );
 
           const data = res.data;
+          //console.log(data);
           setHoldQuestionFullMark(String(data?.holdquestionfullmark || ""));
           setQuestions(data?.questionMark || []);
 
@@ -134,7 +135,7 @@ const QuestionTemplateHome = () => {
       }
     }
 
-    if (totalQuestionFullMark !== Number(holdQuestionFullMark)) {
+    if (totalQuestionFullMark < Number(holdQuestionFullMark)) {
       alert(
         `Total of all question full marks (${totalQuestionFullMark}) does not match overall full mark (${holdQuestionFullMark})`
       );

@@ -1,156 +1,308 @@
 import React, { useEffect, useState } from "react";
-import useStroge from "../../stroge/useStroge";
 import useAxiosPrivate from "../../TokenAdd/useAxiosPrivate";
-import { FiCalendar, FiBook, FiCheckCircle, FiXCircle } from "react-icons/fi";
-import { PulseLoader } from "react-spinners";
+import useStroge from "../../stroge/useStroge";
 
 const StudentsAttendance = () => {
-  const { user } = useStroge();
-  const [attendance, setAttendance] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const AxiosSecure = useAxiosPrivate();
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [classInfo, setClassInfo] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { user } = useStroge();
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectSubjectlist, setSelectSubjectList] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [stats, setStats] = useState({ present: 0, absent: 0, total: 0 });
 
+  // ✅ Fetch all class and subject info on mount
   useEffect(() => {
-    const fetchAttendance = async () => {
+    const fetchClassInfo = async () => {
+      try {
+        const response = await AxiosSecure.get("/api/getclassandsub");
+        setClassInfo(response.data);
+      } catch (error) {
+        console.error("Error fetching class info:", error);
+      }
+    };
+    fetchClassInfo();
+  }, [AxiosSecure]);
+
+  // ✅ Calculate attendance statistics
+  useEffect(() => {
+    if (attendanceData.length > 0) {
+      const present = attendanceData.filter(
+        (record) => record.status === "P"
+      ).length;
+      const absent = attendanceData.filter(
+        (record) => record.status === "A"
+      ).length;
+      const total = attendanceData.length;
+
+      setStats({ present, absent, total });
+    } else {
+      setStats({ present: 0, absent: 0, total: 0 });
+    }
+  }, [attendanceData]);
+
+  // ✅ Fetch attendance data when both class and subject are selected
+  useEffect(() => {
+    if (!selectedClass || !selectedSubject) return;
+
+    const fetchAttendanceData = async () => {
+      setLoading(true);
       try {
         const response = await AxiosSecure.get(
-          `/api/attendance/getAttendanceHistory/${user._id}/${user.class}`
+          `/api/attendance/getAttendanceForStudent/${user._id}/${selectedClass}/${selectedSubject}`
         );
-        setAttendance(response.data || []);
-        setError(null);
+        setAttendanceData(response.data);
       } catch (error) {
         console.error("Error fetching attendance data:", error);
-        setError("Failed to load attendance data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
+    fetchAttendanceData();
+  }, [AxiosSecure, user._id, selectedClass, selectedSubject]);
 
-    if (user?._id && user?.class) {
-      fetchAttendance();
-    }
-  }, [user]);
-
-  // Group by month for better organization
-  const groupByMonth = (records) => {
-    const months = {};
-
-    records.forEach((recordGroup) => {
-      const date = new Date(recordGroup.parsedDate);
-      const monthYear = `${date.toLocaleString("default", { month: "long" })} ${date.getFullYear()}`;
-
-      if (!months[monthYear]) {
-        months[monthYear] = [];
-      }
-
-      months[monthYear].push(recordGroup);
-    });
-
-    return months;
+  // ✅ Format date like 08102025 → 08/10/2025
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    return dateStr.replace(/(\d{2})(\d{2})(\d{4})/, "$1/$2/$3");
   };
 
-  const attendanceByMonth = groupByMonth(attendance);
+  // ✅ Get attendance percentage
+  const getAttendancePercentage = () => {
+    if (stats.total === 0) return 0;
+    return Math.round((stats.present / stats.total) * 100);
+  };
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Attendance History</h2>
-        <p className="text-gray-600">View your attendance records by date</p>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <PulseLoader color="#3B82F6" size={10} />
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                📚 Student Attendance
+              </h1>
+              <p className="text-gray-600">
+                Track your attendance records for different classes and subjects
+              </p>
+            </div>
+            {stats.total > 0 && (
+              <div className="mt-4 md:mt-0 bg-blue-50 rounded-lg p-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-700">
+                    {getAttendancePercentage()}%
+                  </div>
+                  <div className="text-sm text-blue-600">
+                    Overall Attendance
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      ) : error ? (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
-          <p className="text-red-700">{error}</p>
-        </div>
-      ) : attendance.length === 0 ? (
-        <div className="bg-blue-50 rounded-lg p-6 text-center">
-          <FiCalendar className="mx-auto text-4xl text-blue-400 mb-3" />
-          <h3 className="text-lg font-medium text-gray-800 mb-1">
-            No Attendance Records
-          </h3>
-          <p className="text-gray-600">
-            Your attendance records will appear here once available.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(attendanceByMonth).map(([month, records]) => (
-            <div key={month} className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg">
-                {month}
-              </h3>
 
-              <div className="space-y-3">
-                {records.map((recordGroup, idx) => (
-                  <div
-                    key={idx}
-                    className="border border-gray-200 rounded-xl p-4 shadow-sm bg-white hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <FiCalendar className="text-blue-500" />
-                      </div>
-                      <h3 className="font-medium text-gray-700">
-                        {new Date(recordGroup.parsedDate).toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          }
-                        )}
-                      </h3>
-                    </div>
+        {/* Selection Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Class Selection */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              🏫 Select Semester
+            </label>
+            <select
+              value={selectedClass}
+              onChange={(e) => {
+                const selected = e.target.value;
+                setSelectedClass(selected);
+                const selectedClassData = classInfo.find(
+                  (cls) => cls.class === selected
+                );
+                setSelectSubjectList(
+                  selectedClassData ? selectedClassData.subjects : []
+                );
+                setSelectedSubject("");
+                setAttendanceData([]);
+              }}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            >
+              <option value="">Choose a Semester...</option>
+              {classInfo.map((cls) => (
+                <option key={cls.class} value={cls.class}>
+                  {cls.class}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                    <div className="flex gap-3">
-                      {recordGroup.records.map((record, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
-                        >
-                          <div className="bg-purple-100 p-2 rounded-full">
-                            <FiBook className="text-purple-500" />
+          {/* Subject Selection */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              📖 Select Course
+            </label>
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              disabled={!selectedClass}
+              className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                !selectedClass ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
+            >
+              <option value="">Choose a subject...</option>
+              {selectSubjectlist?.map((sub, index) => (
+                <option key={index} value={sub.code}>
+                  {sub.title} ({sub.code})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        {stats.total > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-green-700">
+                {stats.present}
+              </div>
+              <div className="text-sm text-green-600 font-medium">Present</div>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-red-700">
+                {stats.absent}
+              </div>
+              <div className="text-sm text-red-600 font-medium">Absent</div>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-blue-700">
+                {stats.total}
+              </div>
+              <div className="text-sm text-blue-600 font-medium">
+                Total Classes
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div className="flex justify-center items-center space-x-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="text-gray-600 font-medium">
+                Loading attendance data...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Attendance Data Table */}
+        {!loading && attendanceData.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Attendance Records
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Day
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {attendanceData.map((record, index) => {
+                    const date = new Date(
+                      formatDate(record.date).split("/").reverse().join("-")
+                    );
+                    const dayName = date.toLocaleDateString("en-US", {
+                      weekday: "long",
+                    });
+
+                    return (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatDate(record.date)}
                           </div>
-                          <div className="flex">
-                            <p className="font-medium text-gray-800">
-                              {record.subject}
-                            </p>
-                          </div>
-                          <div
-                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-                              record.status === "A"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-green-100 text-green-800"
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">{dayName}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              record.status === "P"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {record.status === "A" ? (
+                            {record.status === "P" ? (
                               <>
-                                <FiXCircle className="inline mr-1" />
-                                Absent
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                Present
                               </>
                             ) : (
                               <>
-                                <FiCheckCircle className="inline mr-1" />
-                                Present
+                                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                Absent
                               </>
                             )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading &&
+          selectedClass &&
+          selectedSubject &&
+          attendanceData.length === 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+              <div className="text-gray-400 text-6xl mb-4">📊</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Attendance Records Found
+              </h3>
+              <p className="text-gray-500 max-w-md mx-auto">
+                No attendance data available for {selectedSubject} in{" "}
+                {selectedClass} class yet.
+              </p>
+            </div>
+          )}
+
+        {/* Initial State */}
+        {!selectedClass && !loading && (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+            <div className="text-gray-400 text-6xl mb-4">🎓</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Welcome to Attendance Tracker
+            </h3>
+            <p className="text-gray-500 max-w-md mx-auto">
+              Select your class and subject to view your attendance records and
+              statistics.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

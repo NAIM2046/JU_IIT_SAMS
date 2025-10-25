@@ -129,5 +129,24 @@ const getSchedule = async (req, res) => {
   res.json(result);
 };
 
+const updatedActiveStatus = async (req, res) => {
+  const db = getDB();
+  const { teacherId , courseCode , status} = req.body;
+  console.log(req.body) ;
+  if (!teacherId || !courseCode || typeof status !== 'boolean') {
+    return res.status(400).json({ message: 'Invalid input data' });
+  }
+  try {
+    const result = await db.collection('schedules').updateMany(
+      { teacherId: teacherId , "subject.code": courseCode },
+      { $set: { active: status } }
+    );
 
-module.exports = { addSchedule , getSchedule , getAllSchedule , deleteSchedule , updateSchedule  , getteacherSchedule };
+    res.status(200).json({ message: 'Schedule updated successfully', result });
+  } catch (error) {
+    console.error('Error updating schedule:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+module.exports = { addSchedule , getSchedule , getAllSchedule , deleteSchedule , updateSchedule  , getteacherSchedule , updatedActiveStatus };

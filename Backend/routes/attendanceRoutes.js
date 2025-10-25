@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAttendancebyClass_sub_data, setAttendanceDefault, updataAttendanceSingle, getAttendanceByStudentId, getAttendanceByStd_subject, getAttendanceHistory, getAttendanceAsubject, getAttendanceSummary, getAttendanceHistoryBY_class_subject, getAttendanceAndPreformaceByAClass, attendanceAddandUpdate,  } = require('../controllers/dailyUpdateController');
+const { getAttendancebyClass_sub_data, setAttendanceDefault, updataAttendanceSingle, getAttendanceByStudentId, getAttendanceByStd_subject, getAttendanceHistory, getAttendanceAsubject, getAttendanceSummary, getAttendanceHistoryBY_class_subject, getAttendanceAndPreformaceByAClass, attendanceAddandUpdate, getAttendanceForStudent,  } = require('../controllers/dailyUpdateController');
 
 const router = express.Router();
 
@@ -14,4 +14,5 @@ router.get('/getAttendanceSummary/:classId/:subject/:batchNumber' , getAttendanc
 router.get("/getAttendanceHistoryBY_class_subject/:classId/:subject/:batchNumber", getAttendanceHistoryBY_class_subject);
 router.get("/getAttendacneAndPerformanceByClass/:classId/:batchNumber/:subject/:date" , getAttendanceAndPreformaceByAClass) 
 router.post('/add_update' , attendanceAddandUpdate) ,
+router.get('/getAttendanceForStudent/:studentId/:classId/:subject' , getAttendanceForStudent) ;
 module.exports =  router;

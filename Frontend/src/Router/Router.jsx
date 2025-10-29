@@ -58,6 +58,8 @@ import ForgotPassword from "../Pages/PasswordChange/ForgotPassword";
 import ResetPassword from "../Pages/PasswordChange/ResetPassword";
 import Update_Semester from "../Components/AdminDashboard/SemesterUpdate/Update_Semester";
 import InCourseMark from "../Components/StudentDashboard/InCourseMark/InCourseMark";
+import SemesterFinalResult from "../Components/StudentDashboard/semesterFinalResult/SemesterFinalResult";
+import FailSubjectList from "../Components/StudentDashboard/FailSubjectList/FailSubjectList";
 
 const router = createBrowserRouter([
   {
@@ -237,6 +239,14 @@ const router = createBrowserRouter([
         path: "/studentDashboard/attendance",
         element: <StudentsAttendance></StudentsAttendance>,
       },
+      {
+        path: "/studentDashboard/semesterFinalResult",
+        element: <SemesterFinalResult></SemesterFinalResult>,
+      } ,
+      {
+        path: "/studentDashboard/failSubjects",
+        element: <FailSubjectList></FailSubjectList>,
+      }
     ],
   },
   {

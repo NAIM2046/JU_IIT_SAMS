@@ -55,7 +55,7 @@ const StudentSection = () => {
       color: "from-green-500 to-emerald-500",
     },
     {
-      to: "/studentDashboard/semester_final",
+      to: "/studentDashboard/semesterFinalResult",
       icon: <FaAward className="text-lg" />,
       label: "Semester Final Result",
       description: "View final results",
@@ -76,7 +76,7 @@ const StudentSection = () => {
       color: "from-indigo-500 to-blue-500",
     },
     {
-      to: "/studentDashboard/fail_sub_list",
+      to: "/studentDashboard/failSubjects",
       icon: <FaExclamationTriangle className="text-lg" />,
       label: "Fail Subjects",
       description: "Review retake courses",

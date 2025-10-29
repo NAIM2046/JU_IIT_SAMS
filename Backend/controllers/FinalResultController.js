@@ -281,5 +281,41 @@ const final_mark_insert = async (req, res) => {
   }
 };
 
+const getFinalResultsAstudent = async (req, res) => {
+  const db = getDB();
+  const { studentId, classId } = req.params;
+  console.log("Fetching final results for student:", { studentId, classId });
 
-module.exports = { getFinalResults, final_mark_insert };
+  try {
+    const result = await db.collection("semester_final_results").findOne({
+      studentId,
+      classId
+     
+    });
+
+    if (!result) {
+      return res.status(404).json({ error: "Final results not found" });
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching final results:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getFailSubjects = async (req, res) => {
+  const db = getDB();
+  const { studentId } = req.params;
+  console.log("Fetching fail subjects for student:", studentId);
+  try {
+    const failSubjects = await db.collection("failed_subjects").find({ studentId }).toArray();
+    res.status(200).json(failSubjects);
+  } catch (error) {
+    console.error("Error fetching fail subjects:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+module.exports = { getFinalResults, final_mark_insert, getFinalResultsAstudent , getFailSubjects };

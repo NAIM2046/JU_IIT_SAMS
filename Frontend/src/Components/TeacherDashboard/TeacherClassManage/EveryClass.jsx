@@ -16,7 +16,7 @@ import {
   FiSmartphone,
 } from "react-icons/fi";
 import { FaChalkboardTeacher } from "react-icons/fa";
-import useStroge from "../../../stroge/useStroge";
+
 
 const EveryClass = () => {
   const location = useLocation();
@@ -24,7 +24,7 @@ const EveryClass = () => {
   const DateFormate = location.state?.formattedDate;
   const teacherName = location.state?.teacherName;
   const batchNumber = location.state?.batchNumber;
-  const { user } = useStroge();
+  
   const [students, setStudents] = useState([]);
   const [defaultAttendance, setDefaultAttendance] = useState("");
   const [isAttendanceSubmitted, setIsAttendanceSubmitted] = useState(false);
@@ -77,6 +77,7 @@ const EveryClass = () => {
 
     fetchStudents();
   }, [schedule?.classId, schedule?.subject, DateFormate, AxiosSecure]);
+  console.log(students) ;
 
   const handleSaveClass = async () => {
     try {

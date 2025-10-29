@@ -505,110 +505,122 @@ const getAttendanceHistoryBY_class_subject = async (req, res) => {
 };
 
 
+
 const getAttendanceAndPreformaceByAClass = async (req, res) => {
   const { classId, batchNumber, subject, date } = req.params;
   const db = getDB();
-  console.log(req.params)
+
+ // console.log("Fetching attendance and performance for:", req.params);
+
   try {
-    const result = await db.collection('users').aggregate([
+    let result = await db.collection('attendanceInfo').aggregate([
       {
         $match: {
-          role: "student",
-          class: classId
+          classId,
+          batchNumber,
+          subject,
+          date
         }
       },
       {
-        $lookup: {
-          from: "attendanceInfo",
-          let: { studentId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                classId: classId,
-                subject: subject,
-                date: date,
-                batchNumber: batchNumber
-              }
-            },
-            { $unwind: "$records" },
-            {
-              $match: {
-                $expr: {
-                  $eq: [{ $toObjectId: "$records.studentId" }, "$$studentId"]
-                }
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                attendance: "$records.status"
-              }
-            }
-          ],
-          as: "attendanceInfo"
+        $unwind: "$records"
+      },
+      {
+        $project: {
+          _id: 0,
+          studentId: "$records.studentId",
+          attendance: "$records.status"
         }
       },
       {
-        $lookup: {
-          from: "performanceInfo",
-          let: { studentId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                classId: classId,
-                subject: subject,
-                date: date,
-                batchNumber: batchNumber
-              }
-            },
-           {
-          
-  $match: {
-    $expr: {
-      $eq: [{ $toObjectId: "$studentId" }, "$$studentId"]
-    }
-  }
-
-},
-            {
-              $project: {
-                _id: 0,
-                value: 1
-              }
-            }
-          ],
-          as: "performanceInfo"
-        }
-      },
-      {
+        // Convert studentId string → ObjectId
         $addFields: {
-          attendance: {
-            $ifNull: [{ $arrayElemAt: ["$attendanceInfo.attendance", 0] }, "N/A"]
-          },
-          performance: {
-            $ifNull: [{ $arrayElemAt: ["$performanceInfo.value", 0] }, "N/A"]
+          studentIdObj: {
+            $convert: {
+              input: "$studentId",
+              to: "objectId",
+              onError: null,
+              onNull: null
+            }
           }
         }
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "studentIdObj",
+          foreignField: "_id",
+          as: "studentInfo"
+        }
+      },
+      {
+        $unwind: "$studentInfo"
+      },
+      {
         $project: {
-          _id: 1,
-          name: 1,
-          class: 1,
-          class_roll: 1,
-          photoURL: 1,
-          attendance: 1,
-          performance: 1
+          _id: 0,
+          studentId: "$studentInfo._id",
+          name: "$studentInfo.name",
+          roll: "$studentInfo.class_roll",
+          photoURL: "$studentInfo.photoURL",
+          attendance: 1
         }
       }
     ]).toArray();
 
+   // console.log("Attendance Result:", result);
+
+    // if no attendance found, return all students with "N/A"
+    if (result.length === 0) {
+      let students = await db.collection('users')
+        .find({ role: 'student', class: classId })
+        .project({ _id: 1, name: 1, class_roll: 1, photoURL: 1 })
+        .toArray();
+
+      result = students.map(student => ({
+        studentId: student._id,
+        name: student.name,
+        roll: student.class_roll,
+        photoURL: student.photoURL,
+        attendance: "N/A",
+        performance: "N/A"
+      }));
+
+      return res.json(result);
+    }
+
+    // Fetch performance data
+    const performanceData = await db.collection('performanceInfo').findOne({
+      classId,
+      batchNumber,
+      subject,
+      date
+    });
+
+    const performanceMap = {};
+   if (performanceData && Array.isArray(performanceData.records)) {
+  performanceData.records.forEach(record => {
+    performanceMap[record.studentId] = record.value;
+  });
+} else {
+  console.warn("No valid performance records found for:", { classId, batchNumber, subject, date });
+}
+
+    // Merge performance data with attendance
+    result = result.map(student => ({
+      ...student,
+      performance: performanceMap[student.studentId?.toString()] || "N/A"
+    }));
+
+   // console.log("Final Result:", result);
     res.json(result);
+
   } catch (error) {
     console.error("Aggregation error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const getAttendanceForStudent = async (req, res) => {
   const db = getDB();

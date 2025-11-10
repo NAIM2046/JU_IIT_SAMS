@@ -21,6 +21,12 @@ const isTimeConflict = (newStart, newEnd, exStart, exEnd) => {
   const newEndMinutes = toMinutes(newEnd);
   const exStartMinutes = toMinutes(exStart);
   const exEndMinutes = toMinutes(exEnd);
+  console.log("Checking conflict:", {
+    newStart,
+    newEnd,
+    exStart,
+    exEnd,
+  });
   return (
     (newStartMinutes < exEndMinutes && newEndMinutes > exStartMinutes) ||
     (exStartMinutes < newEndMinutes && exEndMinutes > newStartMinutes)

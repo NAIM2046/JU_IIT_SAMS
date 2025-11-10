@@ -93,7 +93,7 @@ const add_updatePerformace = async (req, res) => {
     const collection = db.collection("performanceInfo");
 
     const performanceList = req.body;
-    console.log(performanceList) ;
+    console.log( "performance info ",performanceList) ;
 
     if (!Array.isArray(performanceList) || performanceList.length === 0) {
       return res.status(400).json({ message: "Invalid performance data." });
@@ -117,7 +117,7 @@ const add_updatePerformace = async (req, res) => {
           },
           update: {
             $set: {
-              value: entry.value,
+              value: entry.value || "A",
               classId,
               subject,
               batchNumber,

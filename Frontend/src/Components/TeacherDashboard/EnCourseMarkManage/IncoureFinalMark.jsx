@@ -50,6 +50,7 @@ const IncourseFinalMark = () => {
     )
   ).sort();
 
+
   const computeTotalFinalMark = (marks) => {
     let totalObtained = 0;
     let totalFullMark = 0;
@@ -107,7 +108,7 @@ const IncourseFinalMark = () => {
       const headers = [
         "Roll",
         "Name",
-        ...typeColumns.map((type) => `${type}`),
+        ...typeColumns.map((type) => `${type} `),
         `Total (${fullmark})`,
       ];
 
@@ -181,11 +182,10 @@ const IncourseFinalMark = () => {
             <button
               onClick={handleSaveFinalMarks}
               disabled={saving || finalList.length === 0}
-              className={`flex items-center px-4 py-2 rounded-md transition ${
-                saving || finalList.length === 0
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
+              className={`flex items-center px-4 py-2 rounded-md transition ${saving || finalList.length === 0
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
             >
               {saving ? (
                 <ClipLoader size={18} color="#ffffff" className="mr-2" />
@@ -197,11 +197,10 @@ const IncourseFinalMark = () => {
             <button
               onClick={handleDownloadCSV}
               disabled={downloading || finalList.length === 0}
-              className={`flex items-center px-4 py-2 rounded-md transition ${
-                downloading || finalList.length === 0
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700 text-white"
-              }`}
+              className={`flex items-center px-4 py-2 rounded-md transition ${downloading || finalList.length === 0
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
             >
               {downloading ? (
                 <ClipLoader size={18} color="#ffffff" className="mr-2" />

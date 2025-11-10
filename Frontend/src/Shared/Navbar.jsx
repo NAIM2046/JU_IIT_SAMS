@@ -1,17 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useStroge from "../stroge/useStroge";
-import { FaRegCommentAlt } from "react-icons/fa";
+import { FaRegCommentAlt, FaSignOutAlt } from "react-icons/fa";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import { useEffect } from "react";
-import { useState } from "react";
 import useAxiosPrivate from "../TokenAdd/useAxiosPrivate";
 
 const Navbar = () => {
   const { user, setUser } = useStroge();
   const [unseenMessageCount, setUnseenMessageCount] = useState(0);
   const [unseenNotificationCount, setUnseenNotificationCount] = useState(0);
-
   const axiosSecure = useAxiosPrivate();
   const navigate = useNavigate();
 
@@ -27,62 +24,58 @@ const Navbar = () => {
       // Fetch unseen messages
       axiosSecure
         .get(`/api/message/getTotalunseenMessage/${user?._id}`)
-        .then((res) => {
-          setUnseenMessageCount(res.data.totalUnseenMessages);
-        })
+        .then((res) => setUnseenMessageCount(res.data.totalUnseenMessages))
         .catch((err) => console.error("Error fetching messages:", err));
 
       // Fetch unseen notifications
       axiosSecure
         .get(`/api/notifications/unseen-count/${user?._id}`)
-        .then((res) => {
-          setUnseenNotificationCount(res.data.count);
-        })
+        .then((res) => setUnseenNotificationCount(res.data.count))
         .catch((err) => console.error("Error fetching notifications:", err));
     }
   }, [user?._id, axiosSecure]);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-1">
-              <div className="w-12 h-12 md:w-32 rounded-md flex items-center justify-center">
+              <div className="w-10 h-10 md:w-12 rounded-md flex items-center justify-center">
                 <img
                   src="https://i.ibb.co/N2HxDsdJ/logo-IIT-01-1.png"
                   alt="IIT JU Logo"
                   className="h-full object-contain"
                 />
               </div>
-              <span className="text-xl font-semibold text-gray-800 hidden md:inline">
+              <span className="text-lg md:text-xl font-semibold text-gray-800 hidden md:inline">
                 IIT JU Portal
               </span>
             </Link>
           </div>
 
-          {/* Only Dashboard Link */}
+          {/* Dashboard Link */}
           <nav className="flex items-center">
             {user && (
               <Link
                 to={`/${user.role}Dashboard`}
-                className="text-gray-600 hover:text-green-600 px-2 py-1 text-sm md:text-xl font-medium transition-colors"
+                className="text-gray-600 hover:text-green-600 px-2 py-1 text-sm md:text-lg font-medium transition-colors"
               >
-                DASHBORD
+                DASHBOARD
               </Link>
             )}
           </nav>
 
           {/* User Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-5">
             {user ? (
-              <div className="flex items-center gap-3 md:gap-8">
+              <>
                 {/* Notification Icon */}
                 <Link to="/notifications" className="relative p-2">
                   <IoMdNotificationsOutline className="h-6 w-6 text-gray-600 hover:text-green-600" />
                   {unseenNotificationCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                       {unseenNotificationCount > 9
                         ? "9+"
                         : unseenNotificationCount}
@@ -90,17 +83,17 @@ const Navbar = () => {
                   )}
                 </Link>
 
-                {/* Messages Icon with Badge */}
+                {/* Messages Icon */}
                 <Link to="/messages" className="relative p-2">
                   <FaRegCommentAlt className="h-6 w-6 text-gray-600 hover:text-green-600" />
                   {unseenMessageCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                       {unseenMessageCount > 9 ? "9+" : unseenMessageCount}
                     </span>
                   )}
                 </Link>
 
-                {/* User Profile */}
+                {/* Profile */}
                 <div className="flex items-center gap-2">
                   <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-green-100">
                     <img
@@ -116,13 +109,25 @@ const Navbar = () => {
                     {user.name}
                   </span>
                 </div>
+
+                {/* Logout Buttons (responsive) */}
+                {/* Desktop: Text button */}
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 rounded-md border border-red-600 transition-colors"
+                  className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 rounded-md border border-red-600 transition-colors"
                 >
                   Logout
                 </button>
-              </div>
+
+                {/* Mobile: Icon button */}
+                <button
+                  onClick={handleLogout}
+                  className="sm:hidden p-2 text-red-600 hover:text-white hover:bg-red-600 rounded-md border border-red-600 transition-colors"
+                  title="Logout"
+                >
+                  <FaSignOutAlt className="h-5 w-5" />
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"

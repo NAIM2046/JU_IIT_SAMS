@@ -578,28 +578,31 @@ const getAttendanceAndPreformaceByAClass = async (req, res) => {
         .toArray();
 
       result = students.map(student => ({
-        studentId: student._id,
+        _id: student._id.toString(),
         name: student.name,
-        roll: student.class_roll,
+        class_roll: student.class_roll,
         photoURL: student.photoURL,
         attendance: "N/A",
         performance: "N/A"
       }));
 
+      console.log("No attendance found, returning all students with N/A:", result);
+
       return res.json(result);
     }
 
     // Fetch performance data
-    const performanceData = await db.collection('performanceInfo').findOne({
+    const performanceData = await db.collection('performanceInfo').find({
       classId,
       batchNumber,
       subject,
       date
-    });
+    }).toArray();
+    //console.log("Performance Data:", performanceData);
 
     const performanceMap = {};
-   if (performanceData && Array.isArray(performanceData.records)) {
-  performanceData.records.forEach(record => {
+   if (performanceData && Array.isArray(performanceData)) {
+  performanceData.forEach(record => {
     performanceMap[record.studentId] = record.value;
   });
 } else {
@@ -608,10 +611,15 @@ const getAttendanceAndPreformaceByAClass = async (req, res) => {
 
     // Merge performance data with attendance
     result = result.map(student => ({
-      ...student,
+      _id: student.studentId.toString(),
+      name: student.name,
+      class_roll: student.class_roll,
+      photoURL: student.photoURL,
+      attendance: student.attendance,
       performance: performanceMap[student.studentId?.toString()] || "N/A"
     }));
-
+  
+     
    // console.log("Final Result:", result);
     res.json(result);
 

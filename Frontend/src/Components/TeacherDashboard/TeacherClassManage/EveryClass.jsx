@@ -77,7 +77,7 @@ const EveryClass = () => {
 
     fetchStudents();
   }, [schedule?.classId, schedule?.subject, DateFormate, AxiosSecure]);
-  console.log(students) ;
+  console.log("students", students);
 
   const handleSaveClass = async () => {
     try {
@@ -108,8 +108,8 @@ const EveryClass = () => {
       name: student.name,
       class_roll: student.class_roll,
       attendance: state,
-      latestEvaluation: student.latestEvaluation || null,
-      totalTasks: student.totalTasks || 0,
+      photoURL: student.photoURL,
+      performance: student.performance,
     }));
     localStorage.setItem(LoStrKey, JSON.stringify(LoStrSaveData));
     setStudents(LoStrSaveData);
@@ -134,6 +134,7 @@ const EveryClass = () => {
   };
 
   const handleChangePerformace = (studentId, value) => {
+    console.log(studentId, value);
     const updatelist = students.map((student) => {
       if (student._id === studentId && student.attendance === "P") {
         return { ...student, performance: value };
@@ -164,16 +165,17 @@ const EveryClass = () => {
       await AxiosSecure.post("api/attendance/add_update", Payload);
 
       if (schedule.type === "Lab" && saveWithPerformance) {
-        const payload2 = students
-          .filter((std) => std.attendance === "P")
-          .map((std) => ({
+        const payload2 = students.map((std) => ({
             classId: schedule.classId,
             batchNumber,
             date: DateFormate,
             studentId: std._id,
-            value: std.performance,
+            value: std.performance ||"A",
             subject: schedule.subject,
           }));
+
+
+          console.log("performance payload", payload2);
 
         if (payload2.length > 0) {
           await AxiosSecure.post("/api/performance/add_update", payload2);

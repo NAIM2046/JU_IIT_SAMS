@@ -338,7 +338,7 @@ const StudentSection = () => {
             </div>
 
             {/* Content Container */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-200 min-h-[calc(100vh-12rem)] p-6 md:p-8 transition-all duration-300 hover:shadow-md">
+            <div className="bg-white  rounded-3xl shadow-sm border border-gray-200 min-h-[calc(100vh-12rem)] p-6 md:p-8 transition-all duration-300 hover:shadow-md">
               <Outlet />
             </div>
           </div>

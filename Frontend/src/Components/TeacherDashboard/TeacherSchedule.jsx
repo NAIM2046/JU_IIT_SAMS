@@ -18,16 +18,6 @@ const formatTime = (timeStr) => {
   return `${hour}:${minuteStr} ${ampm}`;
 };
 
-const days = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
 // Color palette for different days
 const dayColors = {
   Sunday: "bg-gradient-to-r from-purple-500 to-pink-500",
@@ -46,6 +36,37 @@ const TeacherSchedule = () => {
   const AxiosSecure = useAxiosPrivate();
   const teacherName = user?.name;
 
+  // Get today's day name and reorder days array
+  const getOrderedDays = () => {
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    
+    const today = new Date().getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const todayName = days[today];
+    
+    // Reorder array: today first, then the remaining days
+    const reorderedDays = [
+      todayName,
+      ...days.filter(day => day !== todayName)
+    ];
+    
+    return reorderedDays;
+  };
+
+  const [orderedDays, setOrderedDays] = useState([]);
+
+  useEffect(() => {
+    // Set ordered days when component mounts
+    setOrderedDays(getOrderedDays());
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -63,8 +84,6 @@ const TeacherSchedule = () => {
 
     fetchData();
   }, [user.name, AxiosSecure]);
-
-  console.log(allSchedules);
 
   const toggleScheduleStatus = async (schedule) => {
     const confirm = window.confirm(
@@ -86,7 +105,6 @@ const TeacherSchedule = () => {
         status: updatedSchedule.active,
       });
       console.log(res.data);
-      // const responseSchedule = res.data;
       setAllSchedules((prev) =>
         prev.map((s) =>
           s.subject.code === updatedSchedule.subject.code
@@ -130,20 +148,31 @@ const TeacherSchedule = () => {
         </div>
 
         <div className="space-y-6">
-          {days.map((day) => {
+          {orderedDays.map((day) => {
             const schedulesForDay = allSchedules
               .filter((schedule) => schedule.day === day)
               .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+            // Check if this day is today
+            const isToday = day === getOrderedDays()[0];
+
             return (
               <div
                 key={day}
-                className="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg"
+                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg ${
+                  isToday ? "ring-2 ring-blue-500 ring-opacity-50" : ""
+                }`}
               >
-                <div className={`${dayColors[day]} p-4`}>
+                <div className={`${dayColors[day]} p-4 relative`}>
+                  {isToday && (
+                    <span className="absolute top-2 right-2 bg-white text-blue-600 text-xs font-bold px-2 py-1 rounded-full">
+                      TODAY
+                    </span>
+                  )}
                   <h2 className="text-xl font-bold text-white flex items-center">
                     <FiCalendar className="mr-2" />
                     {day}
+                    {isToday && " (Today)"}
                   </h2>
                 </div>
                 <div className="p-4">
@@ -156,7 +185,7 @@ const TeacherSchedule = () => {
                             schedule.isActive === false
                               ? "border-gray-300 opacity-70 bg-gray-50"
                               : "border-blue-500"
-                          }`}
+                          } ${isToday ? "ring-1 ring-blue-200" : ""}`}
                         >
                           <div className="flex justify-between items-start mb-2">
                             <h3
@@ -290,7 +319,7 @@ const TeacherSchedule = () => {
                         No classes scheduled
                       </p>
                       <p className="text-gray-400 text-sm mt-1">
-                        Enjoy your day off!
+                        {isToday ? "No classes today!" : "Enjoy your day off!"}
                       </p>
                     </div>
                   )}

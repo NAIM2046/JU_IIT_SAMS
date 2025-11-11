@@ -75,6 +75,38 @@ const add_update_Question_Tamplate = async (req, res) => {
       await final_marks.bulkWrite(bulkOps);
     }
 
+    const retakeStudents = await db
+      .collection("failed_subjects")
+      .find({ classId, subjectCode: subject })
+      .toArray();
+
+    console.log(retakeStudents);
+
+    const bulkOps1 = retakeStudents.map(student => ({
+      updateOne: {
+        filter: { studentId: student.studentId, classId, subject, batchNumber: student.batchNumber },
+        update: {
+          $set: {
+            studentId: student.studentId,
+            classId,
+            subject,
+            batchNumber,
+            holdquestionfullmark,
+            holdquestionobtionmark,
+            examinerList,
+            updatedAt: new Date(),
+          },
+          $setOnInsert: { createdAt: new Date() },
+        },
+        upsert: true,
+      },
+    }))
+
+    if (bulkOps.length) {
+      await final_marks.bulkWrite(bulkOps1);
+    }
+
+
     return res.status(200).json({
       message: "Template upserted and student examiner entries synced"
     });
@@ -88,7 +120,7 @@ const add_update_Question_Tamplate = async (req, res) => {
 const get_question_template = async (req, res) => {
   try {
     let { classId, subject, batchNumber } = req.params;
-   // console.log( "quwnknkv", req.params)
+    // console.log( "quwnknkv", req.params)
 
     if (!classId || !subject || !batchNumber) {
       return res.status(400).json({ message: "Missing parameters" });
@@ -100,7 +132,7 @@ const get_question_template = async (req, res) => {
 
     const template = await collection.findOne({ classId, subject, batchNumber });
 
-   
+
 
     return res.status(200).json(template);
   } catch (error) {
@@ -244,7 +276,7 @@ const get_students_mark = async (req, res) => {
     results.forEach(item => {
       if (!seen.has(item.studentId.toString())) {
         seen.set(item.studentId.toString(), item);
-      }else{
+      } else {
         // If already exists, update to mark retake = true
         const existing = seen.get(item.studentId.toString());
         existing.isRetake = existing.isRetake || item.isRetake;
@@ -280,13 +312,13 @@ const updata_students_marks = async (req, res) => {
       return res.status(400).json({ success: false, message: "Examiner type is required" });
     }
     const updateCheckField =
-        examinerType === "1st"
-          ? "firstExaminerId"
-          : examinerType === "2nd"
+      examinerType === "1st"
+        ? "firstExaminerId"
+        : examinerType === "2nd"
           ? "secondExaminerId"
           : "thirdExaminerId";
 
-          
+
 
 
     // Build bulk update operations
@@ -295,7 +327,7 @@ const updata_students_marks = async (req, res) => {
 
       return {
         updateOne: {
-          filter: { _id: new ObjectId(student._id) , "examinerList.examiner": examinerType },
+          filter: { _id: new ObjectId(student._id), "examinerList.examiner": examinerType },
           update: {
             $set: {
               "examinerList.$.holdquestionfullmark": Number(student.holdquestionfullmark) || 0,
@@ -318,19 +350,19 @@ const updata_students_marks = async (req, res) => {
     // If updates successful and submitInfo provided, mark examiner submission as complete
     if (result.modifiedCount > 0 && submitInfo) {
 
-       //console.log("Examiner submission marked as complete");
+      //console.log("Examiner submission marked as complete");
       let { classId, batchNumber, subject } = submitInfo;
       subject = subject.trim();
-     // console.log({ classId, batchNumber, subject, examinerType });
+      // console.log({ classId, batchNumber, subject, examinerType });
 
       // Dynamically build update field in examiners collection
       const submitField =
         examinerType === "1st"
           ? "firstExaminerSubmit"
           : examinerType === "2nd"
-          ? "secondExaminerSubmit"
-          : "thirdExaminerSubmit";
-          console.log("Submit field:", submitField);
+            ? "secondExaminerSubmit"
+            : "thirdExaminerSubmit";
+      console.log("Submit field:", submitField);
 
 
       await db.collection("examiners").updateOne(
@@ -343,7 +375,7 @@ const updata_students_marks = async (req, res) => {
         }
       );
     }
-  
+
 
     res.json({
       success: true,
@@ -534,46 +566,46 @@ const getDiffStudentsBySubject = async (req, res) => {
   }
 };
 
-const updateExamCommiteFinalMark = async(req , res) =>{
+const updateExamCommiteFinalMark = async (req, res) => {
   const db = getDB();
- const{ payload , committeeUpdate} = req.body;
-// console.log(req.body)
-// console.log("Update payload:", payload);
-console.log("Committee update:", committeeUpdate);
+  const { payload, committeeUpdate } = req.body;
+  // console.log(req.body)
+  // console.log("Update payload:", payload);
+  console.log("Committee update:", committeeUpdate);
   try {
-     const bulkOps = payload.map(student => ({
-       updateOne: {
-         filter: { _id: new ObjectId(student._id) },
-         update: { $set: { holdquestionobtionmark: Number(student.finalMark) } }
-       }
-     }));
+    const bulkOps = payload.map(student => ({
+      updateOne: {
+        filter: { _id: new ObjectId(student._id) },
+        update: { $set: { holdquestionobtionmark: Number(student.finalMark) } }
+      }
+    }));
 
-     const result = await db.collection("final_marks").bulkWrite(bulkOps);
+    const result = await db.collection("final_marks").bulkWrite(bulkOps);
 
-     // Update exam committee information
-     if (committeeUpdate) {
-       await db.collection("examCommittees").updateOne(
-         { _id: new ObjectId(committeeUpdate._id) },
-          { $addToSet: { final_mark_submit: committeeUpdate.subject } }
-       );
-     }
+    // Update exam committee information
+    if (committeeUpdate) {
+      await db.collection("examCommittees").updateOne(
+        { _id: new ObjectId(committeeUpdate._id) },
+        { $addToSet: { final_mark_submit: committeeUpdate.subject } }
+      );
+    }
 
     // console.log("Bulk update result:", result);
-     res.status(200).json({ success: true, result });
+    res.status(200).json({ success: true, result });
   } catch (error) {
-     console.error("Error updating final marks:", error);
-     res.status(500).json({ success: false, error: error.message });
+    console.error("Error updating final marks:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 }
 
 
 module.exports = {
-    add_update_Question_Tamplate,
-    get_question_template ,
-    get_students_mark,
-    updata_students_marks,
-    get1st_2nd_3rd_ExaminerFinalMarks ,
-    getDiffStudentsBySubject,
-    updateExamCommiteFinalMark
+  add_update_Question_Tamplate,
+  get_question_template,
+  get_students_mark,
+  updata_students_marks,
+  get1st_2nd_3rd_ExaminerFinalMarks,
+  getDiffStudentsBySubject,
+  updateExamCommiteFinalMark
 
 }

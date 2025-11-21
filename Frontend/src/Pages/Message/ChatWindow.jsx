@@ -187,7 +187,7 @@ const ChatWindow = ({
             <h3 className="font-semibold">
               {activeChat?.receiver?.name || activeChat?.groupName}
             </h3>
-            <p className="text-xs text-gray-600">Online</p>
+           { activeChat?.isActive && ( <p className="text-xs text-gray-600">Online</p>)}
           </div>
         </div>
         <div className="flex space-x-4 text-gray-600">
@@ -269,7 +269,7 @@ const ChatWindow = ({
                         ) : msg.deliveredTo?.length > 0 ? (
                           <span>✅ Delivered</span>
                         ) : (
-                          <span>⌛ Sending</span>
+                          <span>⌛ Send</span>
                         )}
                       </p>
                     )}

@@ -250,12 +250,13 @@ const ChatList = ({
     <div className="w-full h-full border-r border-gray-300 bg-white">
       {/* Header */}
       <div className="bg-gray-100 p-3 flex justify-between items-center">
-        <div>
+        <div className="flex items-center space-x-3">
           <img
             src={user.photoURL || "https://i.ibb.co/G9wkJbX/user.webp"}
             alt="Profile"
             className="w-10 h-10 rounded-full"
           />
+          <p>{user.name}</p>
         </div>
         <div className="flex space-x-4 text-gray-600">
           {user.role === "teacher" && (

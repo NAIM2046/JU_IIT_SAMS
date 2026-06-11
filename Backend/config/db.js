@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
-const client = new MongoClient(`mongodb+srv://${process.env.DB_USER2}:${process.env.DB_PASS2}@cluster0.rxtq2m7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`);
+const client = new MongoClient(`mongodb+srv://20223656652naim_db_user:mqohGnd9bk7tNmgh@cluster0.zgd1dpt.mongodb.net/?appName=Cluster0`);
 let db;
 
 const connectDB = async () => {

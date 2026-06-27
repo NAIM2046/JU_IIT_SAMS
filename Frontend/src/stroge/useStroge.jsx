@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const Base_url = "http://localhost:5000";
-//const Base_url = "https://juiitsams-production.up.railway.app";
+//const Base_url = "http://localhost:5000";
+const Base_url = "https://juiitsams-production.up.railway.app";
 
 const getUserFromLocalStorage = () => {
   try {

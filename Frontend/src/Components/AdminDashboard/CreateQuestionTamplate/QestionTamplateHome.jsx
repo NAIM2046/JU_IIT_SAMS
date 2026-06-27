@@ -53,7 +53,7 @@ const QuestionTemplateHome = () => {
     setSelectClass(selectClassName);
     setSelectSubject("");
     const selectedData = class_subject.find(
-      (item) => item.class === selectClassName
+      (item) => item.class === selectClassName,
     );
     if (selectedData) {
       setSubjects(selectedData.subjects || []);
@@ -74,7 +74,7 @@ const QuestionTemplateHome = () => {
         setIsLoading(true);
         try {
           const res = await AxiosSecure.get(
-            `/api/finalmark/get_question_template/${selectClass}/${selectSubject}/${batchNumber}`
+            `/api/finalmark/get_question_template/${selectClass}/${selectSubject}/${batchNumber}`,
           );
 
           const data = res.data;
@@ -109,7 +109,7 @@ const QuestionTemplateHome = () => {
     for (const question of questions) {
       if (!question.qNo) {
         alert(
-          `Please enter question number for question ${questions.indexOf(question) + 1}`
+          `Please enter question number for question ${questions.indexOf(question) + 1}`,
         );
         return false;
       }
@@ -124,12 +124,12 @@ const QuestionTemplateHome = () => {
 
       const subTotal = question.subQuestions.reduce(
         (sum, subQ) => sum + Number(subQ.fullMark),
-        0
+        0,
       );
 
       if (subTotal !== qFullMark) {
         alert(
-          `Sub-question total (${subTotal}) does not match full mark (${qFullMark}) for Question ${question.qNo}`
+          `Sub-question total (${subTotal}) does not match full mark (${qFullMark}) for Question ${question.qNo}`,
         );
         return false;
       }
@@ -137,7 +137,7 @@ const QuestionTemplateHome = () => {
 
     if (totalQuestionFullMark < Number(holdQuestionFullMark)) {
       alert(
-        `Total of all question full marks (${totalQuestionFullMark}) does not match overall full mark (${holdQuestionFullMark})`
+        `Total of all question full marks (${totalQuestionFullMark}) does not match overall full mark (${holdQuestionFullMark})`,
       );
       return false;
     }
@@ -223,12 +223,12 @@ const QuestionTemplateHome = () => {
     try {
       await AxiosSecure.post(
         "api/finalmark/add_update_Question_Tamplate",
-        payload
+        payload,
       );
       alert("Question template saved successfully!");
     } catch (error) {
       console.error("Save error:", error);
-      alert("Error saving template: " + (error?.message || "Unknown error"));
+      //alert("Error saving template: " + (error?.message || "Unknown error"));
     } finally {
       setIsSaving(false);
     }
@@ -435,7 +435,7 @@ const QuestionTemplateHome = () => {
                                   qIndex,
                                   subIndex,
                                   "number",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -454,7 +454,7 @@ const QuestionTemplateHome = () => {
                                   qIndex,
                                   subIndex,
                                   "fullMark",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
